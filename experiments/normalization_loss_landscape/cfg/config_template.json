@@ -1,0 +1,31 @@
+{
+    
+    #system parameters
+    "use_gpu": true,
+    #number of gpus
+    "num_gpus": 1,
+    #which gpu to use
+    "gpu": 0,
+    
+    # network architecture
+    "network":"VGG16",
+    "num_hidden_layers": "not specified", 
+
+    # optimizer/agent/learner
+    "agent": "bp",
+    "opt": "sgd",
+    "step_size": 0.01,
+    "momentum": 0.9,
+    "weight_decay": 0.0005,
+    "batch_size": 128,
+
+    
+
+
+
+    
+
+
+       
+
+}
