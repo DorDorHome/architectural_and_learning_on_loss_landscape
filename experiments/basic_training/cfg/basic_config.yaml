@@ -1,0 +1,5 @@
+defaults:
+  learner: "bp"
+    opt: "sgd"
+    lr: 0.01
+
