@@ -1,10 +1,10 @@
 # identical to the conv_net implementation in loss of plasiticity paper, for easy comparison
 
 import torch.nn as nn
-
+from omegaconf import DictConfig
 
 class ConvNet(nn.Module):
-    def __init__(self, num_classes=2):
+    def __init__(self, config: ):
         """
         Convolutional Neural Network with 3 convolutional layers followed by 3 fully connected layers
         """

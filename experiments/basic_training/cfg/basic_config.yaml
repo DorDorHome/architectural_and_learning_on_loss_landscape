@@ -1,5 +1,14 @@
-defaults:
-  learner: "bp"
-    opt: "sgd"
-    lr: 0.01
+net: "ConvNet"
+
+# setup for dataset:
+data: "CIFAR10"
+data_dir: 
+num_classes: 10
+
+
+# setup for learner(includes optimizer, and learning rate):
+learner: "backprop"
+opt: "sgd"
+lr: 0.01
+momentum: 0.9
 
