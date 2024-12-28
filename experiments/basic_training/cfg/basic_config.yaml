@@ -1,53 +1,36 @@
 experiments:
   runs: 1
   seed: 42
+  device: 'cuda'
+  epochs: 10
 
 data:
   dataset: 'mnist'
+  num_classes: 10
   data_path: 
-  
+  batch_size: 128
 
-
-network:
-  type: 'vgg'
+net:
+  type: 'ConvNet'
   params:
-    num_classes: 
-
+    num_classes: ${data.num_classes} 
 
 
 learner:
-  type: 'bp'
-  opt: "sgd"
-  lr: 0.01
+  type: 'backprop' # Choices: 'backprop', 'continual_backprop'
+  step_size: 0.01
+  loss: 'nll' # Choices: 'nll', 'mse', for classification and regression respectively
+  opt: 'adam'
+  beta_1: 0.95
+  beta_2: 0.999
+  weight_decay: 0.01
+  to_perturb: false
+  perturb_scale: 0.05
+  device: ${experiments.device}
+  momentum: 0.9
 
-
-
-num_classes: ${experiment.data.num_classes} # Interpolation to avoid duplication
-learner:
-type: 'backprop' # Choices: 'backprop', 'continual_backprop'
-backprop:
-step_size: 0.01
-loss: 'mse'
-optimizer: 'adam'
-beta_1: 0.95
-beta_2: 0.999
-weight_decay: 0.01
-to_perturb: true
-perturb_scale: 0.05
-device: 'cuda'
-momentum: 0.9
-continual_backprop:
-step_size: 0.001
-loss: 'nll'
-optimizer: 'sgd'
-beta_1: 0.9
-beta_2: 0.999
-weight_decay: 0.0005
-momentum: 0.95
-replacement_rate: 0.002
-decay_rate: 0.85
-maturity_threshold: 150
-util_type: 'entropy'
-init: 'xavier'
-accumulate: true
-outgoing_random: true
+evaluation:
+  eval_freq_epoch: 1
+  eval_metrics: ['accuracy', 'loss']
+  save_dir: 'results_raw'
+  save_name: 'basic_training'
