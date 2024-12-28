@@ -27,8 +27,14 @@ from src.utils.miscellaneous import nll_accuracy as accuracy
 @hydra.main(config_path="cfg", config_name="basic_config")
 def main(cfg):
     print(OmegaConf.to_yaml(cfg))
+    if cfg.net == 'ConvNet':
+        net = ConvNet(cfg)
     
-    # initialize Hydra:
+    # setup learner:
+    if cfg.learner == 'bp':
+        learner = Backprop(net, cfg)
+        
+    
 
 if __name__ == "__main__":
     main()

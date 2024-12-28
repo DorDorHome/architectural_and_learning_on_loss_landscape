@@ -1,5 +1,53 @@
-defaults:
-  learner: "bp"
-    opt: "sgd"
-    lr: 0.01
+experiments:
+  runs: 1
+  seed: 42
 
+data:
+  dataset: 'mnist'
+  data_path: 
+  
+
+
+network:
+  type: 'vgg'
+  params:
+    num_classes: 
+
+
+
+learner:
+  type: 'bp'
+  opt: "sgd"
+  lr: 0.01
+
+
+
+num_classes: ${experiment.data.num_classes} # Interpolation to avoid duplication
+learner:
+type: 'backprop' # Choices: 'backprop', 'continual_backprop'
+backprop:
+step_size: 0.01
+loss: 'mse'
+optimizer: 'adam'
+beta_1: 0.95
+beta_2: 0.999
+weight_decay: 0.01
+to_perturb: true
+perturb_scale: 0.05
+device: 'cuda'
+momentum: 0.9
+continual_backprop:
+step_size: 0.001
+loss: 'nll'
+optimizer: 'sgd'
+beta_1: 0.9
+beta_2: 0.999
+weight_decay: 0.0005
+momentum: 0.95
+replacement_rate: 0.002
+decay_rate: 0.85
+maturity_threshold: 150
+util_type: 'entropy'
+init: 'xavier'
+accumulate: true
+outgoing_random: true
