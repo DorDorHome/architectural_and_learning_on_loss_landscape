@@ -77,7 +77,7 @@ class Learner(ABC):
         if loss not in loss_funcs:
             raise ValueError(f"Unsupported loss type: {loss}")
 
-        return loss_funcs
+        return loss_funcs[loss]
 
     @abstractmethod
     def learn(self, x: torch.Tensor, target: torch.Tensor):

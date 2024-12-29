@@ -9,6 +9,17 @@ from abc import ABC, abstractmethod
 
 from torch.optim import optimizer
 from omegaconf import DictConfig
+
+# import the BackpropConfig class from the config file in configs folder in the
+# parent directory of the project:
+import sys
+from pathlib import Path
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(PROJECT_ROOT))
+
+
+
+
 class Backprop(Learner):
     def __init__(self, net: nn.Module, config: DictConfig):
         super().__init__(net, config)

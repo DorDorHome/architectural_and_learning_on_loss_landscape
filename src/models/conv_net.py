@@ -4,12 +4,12 @@ import torch.nn as nn
 from omegaconf import DictConfig
 
 class ConvNet(nn.Module):
-    def __init__(self, config : DictConfig):
+    def __init__(self, config: DictConfig ):
         """
         Convolutional Neural Network with 3 convolutional layers followed by 3 fully connected layers
         """
-        num_classes = config.num_classes
         super().__init__()
+        num_classes = config.num_classes
         self.conv1 = nn.Conv2d(3, 32, 5)
         self.conv2 = nn.Conv2d(32, 64, 3)
         self.conv3 = nn.Conv2d(64, 128, 3)
