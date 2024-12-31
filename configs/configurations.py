@@ -1,14 +1,14 @@
 # dataclasses for configurations objects:
 
 from torch._C import device
-from dataclass import dataclass, field 
+from dataclasses import dataclass, field 
 from typing import Optional, Union
 from hydra.core.config_store import ConfigStore
 import torch
 
 @dataclass
 class DataConfig:
-    dataset: str: 'mnist'
+    dataset: str= 'mnist'
     data_path: Optional[Union[None, str]] = None
     num_classes: Optional[Union[None, int]] = 10
     shuffle: Optional[Union[None, bool]] = False
@@ -18,11 +18,11 @@ class DataConfig:
 class NetParams:
     num_classes: int = 10
 
-@datacalss
+@dataclass
 class BaseLearnerConfig:
     type: str 
     device: str = 'cuda'
-    opt: str = 'adam #or 'sgd'
+    opt: str = 'adam' #or 'sgd'
     step_size: float= 0.001
     beta_1: float = 0.9
     beta_2: float = 0.999
@@ -64,3 +64,7 @@ class ExperimentConfig:
         # Ensure that network.num_classes matches data.num_classes
         if self.net.num_classes != self.data.num_classes:
             raise ValueError("network.params.num_classes must match data.num_classes")
+        
+# Register the configurations with Hydra
+cs = ConfigStore.instance()
+cs.store(name="experiment_config", node=ExperimentConfig)
