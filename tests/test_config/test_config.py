@@ -30,7 +30,7 @@ from hydra.core.config_store import ConfigStore
 import sys
 from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
-sys.path.insert(0, str(PROJECT_ROOT))
+sys.path.append(str(PROJECT_ROOT))
 
 from configs.configurations import ExperimentConfig, cs
 
@@ -40,7 +40,7 @@ from configs.configurations import ExperimentConfig, cs
 # test configuration loading
 def test_config_loading():
     """Test the loading of configurations."""
-    with initialize(config_path="experiments/basic_training/cfg"):
+    with initialize(config_path='../../experiments/basic_training/cfg', version_base="1.1"):
         cfg = compose(config_name="basic_config")
 
     # convert hydra dictconfig to dataclass:
@@ -48,9 +48,9 @@ def test_config_loading():
     
     
 
-    assert is_dataclass(cfg)
+    assert is_dataclass(experiment_cfg)
     
-    assert isinstance(cfg, ExperimentConfig)
+    assert isinstance(experiment_cfg, ExperimentConfig)
 
     # Assertions to verify the correctness
     assert experiment_cfg.runs == 1
@@ -73,7 +73,7 @@ def test_config_loading():
 
 def test_config_constraints():
     # Create a configuration with mismatched num_classes
-    with initialize(config_path="experiments/basic_training/cfg"):
+    with initialize(config_path="../../experiments/basic_training/cfg",version_base="1.1"):
         # Manually compose a config with mismatched num_classes
         cfg = compose(
             overrides=[

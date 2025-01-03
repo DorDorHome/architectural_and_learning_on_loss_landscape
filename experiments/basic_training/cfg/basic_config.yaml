@@ -12,7 +12,7 @@ experiments:
   # network architecture:
   net:
     type: 'ConvNet'
-    num_classes: ${data.num_classes} 
+    num_classes: ${experiments.data.num_classes} 
   # learning algorithm:
   learner:
     type: 'backprop' # Choices: 'backprop', 'continual_backprop'
