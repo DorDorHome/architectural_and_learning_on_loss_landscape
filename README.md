@@ -6,7 +6,9 @@
 
 
 write model loading.
-
+- model factory, outline from chatgpt
+- use VGG and convnet first
+- test model loading.
 
 - write backprop
 - test_backprop.py 
