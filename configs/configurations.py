@@ -19,7 +19,18 @@ class DataConfig:
 
 @dataclass
 class NetParams:
-    num_classes: int = 10
+    num_classes: Optional[Union[None, int]] = 10
+    in_channels: Optional[Union[None, int]] = 1
+    out_channels: Optional[Union[None, int]] = 10
+    kernel_size: Optional[Union[None, int]] = 5
+    class Config:
+        version_base = "1.1"
+
+#dataclass for network configurations
+@dataclass
+class NetConfig:
+    type: str
+    params: Optional[Union[None, NetParams]] = None
     class Config:
         version_base = "1.1"
 
@@ -76,7 +87,7 @@ class ExperimentConfig:
     device: str = 'cuda'
     epochs: int = 10
     data: DataConfig = DataConfig()
-    net: NetParams = NetParams()
+    net: NetConfig = NetConfig(type='ConvNet')
     learner: Union[BackpropConfig] = BackpropConfig()
     evaluation: Union[EvaluationConfig, None] = EvaluationConfig()
     

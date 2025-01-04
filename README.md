@@ -3,7 +3,13 @@
 # to-do:
 
 - test_config.py (done!)
-- test_backprop.py
+
+
+write model loading.
+
+
+- write backprop
+- test_backprop.py 
 - generate results_raw from basic_config
 - plot results
 
@@ -14,9 +20,6 @@ For each subfolder in experiments (test on basic_training):
 - this should generate many cfg corresponding to different hyperparm for experiments
 - design save logic for single_expr, so that different settings can be saved in results/results_raw 
 - 
-
-
-
 
 
 - use superivsed_factory.py to centralize the creation of learners in src.algos.supervised
