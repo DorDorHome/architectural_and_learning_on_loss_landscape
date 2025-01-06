@@ -1,15 +1,24 @@
 # identical to the conv_net implementation in loss of plasiticity paper, for easy comparison
+# notice the predict method is different from the usual forward method
 
 import torch.nn as nn
+
+# original implementation:
 from omegaconf import DictConfig
 
+# use NetParams dataclass from configurations.py:
+from configs.configurations import NetParams
+
 class ConvNet(nn.Module):
-    def __init__(self, config: DictConfig ):
+    def __init__(self, config: NetParams ):
         """
         Convolutional Neural Network with 3 convolutional layers followed by 3 fully connected layers
         """
         super().__init__()
         num_classes = config.num_classes
+        #in_channels, out_channels, kernel_size are not implemented
+        
+        
         self.conv1 = nn.Conv2d(3, 32, 5)
         self.conv2 = nn.Conv2d(32, 64, 3)
         self.conv3 = nn.Conv2d(64, 128, 3)

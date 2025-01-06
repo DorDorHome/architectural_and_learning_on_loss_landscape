@@ -8,9 +8,14 @@ import sys
 # import the Backprop class in basic_backprop.py file, contained in the supervised folder:
 from src.algos.supervised.basic_backprop import Backprop
 
+
 def create_learner(config: DictConfig):
     if config.type == 'backprop':
         return Backprop(config)
+    
+    # for support of torchvision models:
+    
+    
 
 
     
