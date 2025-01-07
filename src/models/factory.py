@@ -8,8 +8,8 @@ import pathlib
 PROJECT_ROOT = pathlib.Path(__file__).resolve().parent.parent.parent
 sys.path.append(str(PROJECT_ROOT))
 
-from conv_net import ConvNet
-from VGG16_custom import vgg_with_internal_performance_track_custom_classifier
+from src.models.conv_net import ConvNet
+#from VGG16_custom import vgg_with_internal_performance_track_custom_classifier
 
 from configs.configurations import NetConfig, NetParams  # Assuming NetParams is defined here
 
@@ -30,13 +30,18 @@ def model_factory(config: NetConfig) -> Any:
     model_type = config.type
     
     # if model_type = 'convnet', return an instance of ConvNet:
-    if model_type == 'convnet':
-        if config.params is None:
+    if model_type == 'ConvNet':
+        if config.netparams is None:
             raise ValueError("config.params cannot be None for ConvNet")
-        return ConvNet(config.params)
+        return ConvNet(config.netparams)
     
-    if model_type =='vgg_custom':
-        if config.params is None:
-            raise ValueError("config.params cannot be None for VGG16_custom")
-        return vgg_with_internal_performance_track_custom_classifier(config.params)
+    else:
+        # If the model type is not supported, raise a ValueError
+        raise ValueError(f"Unsupported model type: {model_type}")
+    
+    
+    # if model_type =='vgg_custom':
+    #     if config.params is None:
+    #         raise ValueError("config.params cannot be None for VGG16_custom")
+    #     return vgg_with_internal_performance_track_custom_classifier(config.params)
     
