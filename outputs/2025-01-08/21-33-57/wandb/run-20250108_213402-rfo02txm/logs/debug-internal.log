@@ -1,0 +1,16 @@
+{"time":"2025-01-08T21:34:02.124500094+08:00","level":"INFO","msg":"using version","core version":"0.18.5"}
+{"time":"2025-01-08T21:34:02.124523468+08:00","level":"INFO","msg":"created symlink","path":"/hdda/models/my_own_models/architectural_and_learning_on_loss_landscape/outputs/2025-01-08/21-33-57/wandb/run-20250108_213402-rfo02txm/logs/debug-core.log"}
+{"time":"2025-01-08T21:34:02.232769246+08:00","level":"INFO","msg":"created new stream","id":"rfo02txm"}
+{"time":"2025-01-08T21:34:02.232806476+08:00","level":"INFO","msg":"stream: started","id":"rfo02txm"}
+{"time":"2025-01-08T21:34:02.232856009+08:00","level":"INFO","msg":"writer: Do: started","stream_id":{"value":"rfo02txm"}}
+{"time":"2025-01-08T21:34:02.232895504+08:00","level":"INFO","msg":"handler: started","stream_id":{"value":"rfo02txm"}}
+{"time":"2025-01-08T21:34:02.232973932+08:00","level":"INFO","msg":"sender: started","stream_id":"rfo02txm"}
+{"time":"2025-01-08T21:34:02.636634003+08:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2025-01-08T21:46:43.639867469+08:00","level":"INFO","msg":"stream: closing","id":"rfo02txm"}
+{"time":"2025-01-08T21:46:43.639901052+08:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2025-01-08T21:46:43.64045578+08:00","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2025-01-08T21:46:44.628574178+08:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2025-01-08T21:46:44.873874992+08:00","level":"INFO","msg":"handler: closed","stream_id":{"value":"rfo02txm"}}
+{"time":"2025-01-08T21:46:44.873905159+08:00","level":"INFO","msg":"writer: Close: closed","stream_id":{"value":"rfo02txm"}}
+{"time":"2025-01-08T21:46:44.873956165+08:00","level":"INFO","msg":"sender: closed","stream_id":"rfo02txm"}
+{"time":"2025-01-08T21:46:44.873998996+08:00","level":"INFO","msg":"stream: closed","id":"rfo02txm"}

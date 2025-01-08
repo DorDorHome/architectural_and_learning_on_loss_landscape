@@ -1,0 +1,9 @@
+{"time":"2025-01-08T20:56:49.52547812+08:00","level":"INFO","msg":"using version","core version":"0.18.5"}
+{"time":"2025-01-08T20:56:49.525500081+08:00","level":"INFO","msg":"created symlink","path":"/hdda/models/my_own_models/architectural_and_learning_on_loss_landscape/outputs/2025-01-08/20-56-45/wandb/run-20250108_205649-5igkhaiv/logs/debug-core.log"}
+{"time":"2025-01-08T20:56:49.634452484+08:00","level":"INFO","msg":"created new stream","id":"5igkhaiv"}
+{"time":"2025-01-08T20:56:49.634490937+08:00","level":"INFO","msg":"stream: started","id":"5igkhaiv"}
+{"time":"2025-01-08T20:56:49.634547063+08:00","level":"INFO","msg":"handler: started","stream_id":{"value":"5igkhaiv"}}
+{"time":"2025-01-08T20:56:49.634623918+08:00","level":"INFO","msg":"sender: started","stream_id":"5igkhaiv"}
+{"time":"2025-01-08T20:56:49.634512287+08:00","level":"INFO","msg":"writer: Do: started","stream_id":{"value":"5igkhaiv"}}
+{"time":"2025-01-08T20:56:50.043981366+08:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2025-01-08T20:57:20.303077299+08:00","level":"INFO","msg":"api: retrying error","error":"Post \"https://api.wandb.ai/graphql\": net/http: request canceled (Client.Timeout exceeded while awaiting headers)"}

@@ -1,5 +1,11 @@
 # to-do
 
+# suitability of different models to dataset:
+
+conv_net.ConvNet class is designed for image input of size [3, 32, 32]. Different input image size would need to be resized.
+
+VGG in general can handle input shape [3, 224, 224]
+
 # requirements of model form:
 
 The difference between the standard pytorch module and the model here is that:

@@ -1,0 +1,7 @@
+{"time":"2025-01-08T19:13:06.316822334+08:00","level":"INFO","msg":"using version","core version":"0.18.5"}
+{"time":"2025-01-08T19:13:06.316849896+08:00","level":"INFO","msg":"created symlink","path":"/hdda/models/my_own_models/architectural_and_learning_on_loss_landscape/outputs/2025-01-08/19-13-02/wandb/run-20250108_191306-n03c79au/logs/debug-core.log"}
+{"time":"2025-01-08T19:13:06.42651633+08:00","level":"INFO","msg":"created new stream","id":"n03c79au"}
+{"time":"2025-01-08T19:13:06.42655343+08:00","level":"INFO","msg":"stream: started","id":"n03c79au"}
+{"time":"2025-01-08T19:13:06.426634172+08:00","level":"INFO","msg":"handler: started","stream_id":{"value":"n03c79au"}}
+{"time":"2025-01-08T19:13:06.426877582+08:00","level":"INFO","msg":"sender: started","stream_id":"n03c79au"}
+{"time":"2025-01-08T19:13:06.4268873+08:00","level":"INFO","msg":"writer: Do: started","stream_id":{"value":"n03c79au"}}

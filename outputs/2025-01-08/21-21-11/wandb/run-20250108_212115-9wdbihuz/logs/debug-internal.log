@@ -1,0 +1,8 @@
+{"time":"2025-01-08T21:21:15.797107075+08:00","level":"INFO","msg":"using version","core version":"0.18.5"}
+{"time":"2025-01-08T21:21:15.797124548+08:00","level":"INFO","msg":"created symlink","path":"/hdda/models/my_own_models/architectural_and_learning_on_loss_landscape/outputs/2025-01-08/21-21-11/wandb/run-20250108_212115-9wdbihuz/logs/debug-core.log"}
+{"time":"2025-01-08T21:21:15.905816997+08:00","level":"INFO","msg":"created new stream","id":"9wdbihuz"}
+{"time":"2025-01-08T21:21:15.905881919+08:00","level":"INFO","msg":"stream: started","id":"9wdbihuz"}
+{"time":"2025-01-08T21:21:15.905941622+08:00","level":"INFO","msg":"sender: started","stream_id":"9wdbihuz"}
+{"time":"2025-01-08T21:21:15.905893571+08:00","level":"INFO","msg":"writer: Do: started","stream_id":{"value":"9wdbihuz"}}
+{"time":"2025-01-08T21:21:15.905932064+08:00","level":"INFO","msg":"handler: started","stream_id":{"value":"9wdbihuz"}}
+{"time":"2025-01-08T21:21:16.473183991+08:00","level":"INFO","msg":"Starting system monitor"}

@@ -1,0 +1,32 @@
+experiments:
+  use_wandb: true
+  runs: 1
+  seed: 42
+  device: cuda
+  epochs: 10
+  data:
+    dataset: mnist
+    data_path: null
+    num_classes: 10
+  net:
+    type: ConvNet
+    netparams:
+      num_classes: ${experiments.data.num_classes}
+  learner:
+    type: backprop
+    device: ${experiments.device}
+    opt: adam
+    loss: nll
+    step_size: 0.01
+    beta_1: 0.95
+    beta_2: 0.999
+    weight_decay: 0.01
+    to_perturb: false
+    perturb_scale: 0.05
+    momentum: 0.9
+  evaluation:
+    eval_freq_epoch: 1
+    eval_metrics:
+    - accuracy
+    - loss
+    save_dir: /results/results_raw

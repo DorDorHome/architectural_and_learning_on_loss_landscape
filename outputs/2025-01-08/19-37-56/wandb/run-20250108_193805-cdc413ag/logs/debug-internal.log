@@ -1,0 +1,8 @@
+{"time":"2025-01-08T19:38:05.212586366+08:00","level":"INFO","msg":"using version","core version":"0.18.5"}
+{"time":"2025-01-08T19:38:05.212613647+08:00","level":"INFO","msg":"created symlink","path":"/hdda/models/my_own_models/architectural_and_learning_on_loss_landscape/outputs/2025-01-08/19-37-56/wandb/run-20250108_193805-cdc413ag/logs/debug-core.log"}
+{"time":"2025-01-08T19:38:05.32139584+08:00","level":"INFO","msg":"created new stream","id":"cdc413ag"}
+{"time":"2025-01-08T19:38:05.321436708+08:00","level":"INFO","msg":"stream: started","id":"cdc413ag"}
+{"time":"2025-01-08T19:38:05.32147493+08:00","level":"INFO","msg":"writer: Do: started","stream_id":{"value":"cdc413ag"}}
+{"time":"2025-01-08T19:38:05.321578015+08:00","level":"INFO","msg":"sender: started","stream_id":"cdc413ag"}
+{"time":"2025-01-08T19:38:05.32151733+08:00","level":"INFO","msg":"handler: started","stream_id":{"value":"cdc413ag"}}
+{"time":"2025-01-08T19:38:05.672422838+08:00","level":"INFO","msg":"Starting system monitor"}

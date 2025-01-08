@@ -6,12 +6,16 @@ from typing import Any
 import sys
 import pathlib
 PROJECT_ROOT = pathlib.Path(__file__).resolve().parent.parent.parent
+CONFIG_PATH = str(PROJECT_ROOT / "experiments/basic_training/cfg")
 sys.path.append(str(PROJECT_ROOT))
 
 from src.models.conv_net import ConvNet
-#from VGG16_custom import vgg_with_internal_performance_track_custom_classifier
+from src.models.VGG16_custom import vgg_with_internal_performance_track_custom_classifier as VGG_custom
 
 from configs.configurations import NetConfig, NetParams  # Assuming NetParams is defined here
+
+import hydra 
+from omegaconf import DictConfig, OmegaConf
 
 def model_factory(config: NetConfig) -> Any:
     """
@@ -35,6 +39,12 @@ def model_factory(config: NetConfig) -> Any:
             raise ValueError("config.params cannot be None for ConvNet")
         return ConvNet(config.netparams)
     
+    if model_type == 'vgg_custom':
+        if config.netparams is None:
+            raise ValueError("config.params cannot be None for VGG16_custom")
+        return VGG_custom(config.netparams)
+        
+    
     else:
         # If the model type is not supported, raise a ValueError
         raise ValueError(f"Unsupported model type: {model_type}")
@@ -44,4 +54,21 @@ def model_factory(config: NetConfig) -> Any:
     #     if config.params is None:
     #         raise ValueError("config.params cannot be None for VGG16_custom")
     #     return vgg_with_internal_performance_track_custom_classifier(config.params)
+    
+@hydra.main(config_path=CONFIG_PATH, config_name="basic_config")
+def main(cfg):
+    print(OmegaConf.to_yaml(cfg))
+    
+    # get the network configuration:
+    net_config = cfg.net
+    
+    # use the factory function to create the model instance
+    
+    model = model_factory(net_config)
+    print('Model created successfully')
+    print(model)
+
+if __name__ == "__main__":
+    
+    main()
     

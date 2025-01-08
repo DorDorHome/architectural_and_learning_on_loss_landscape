@@ -4,7 +4,8 @@
 # 2. methods to serialize and deserialize the model
 # 3. an option to change the final fully connected layer based on the number of classes
 
-from types import NoneType
+
+# from types import NoneType
 import torch
 import torch.nn as nn
 # import torch.nn.functional as F
@@ -38,11 +39,10 @@ class vgg_with_internal_performance_track_custom_classifier(nn.Module):
     model_name = "VGG_with_Custom_Classifier"  # Class attribute
     def __init__(self, config: NetParams):
         
-    
         # get the configuration parameters for initializing the model
         pretrained = getattr(config, 'pretrained', False)
         num_classes = getattr(config, 'num_classes', None)
-        initialization = getattr(config, 'initialization', "kaim")
+        initialization = getattr(config, 'initialization', "kaiming")
         loss_window_size = getattr(config, 'loss_window_size', 10)  
         track_performance_internally = getattr(config, 'track_performance_internally', False)
         super(vgg_with_internal_performance_track_custom_classifier, self).__init__()
@@ -87,14 +87,14 @@ class vgg_with_internal_performance_track_custom_classifier(nn.Module):
 
 
     def forward(self, x):
-        self.model(x)
+        return self.model(x)
         
         
     def predict(self, x):
         """
         A method to return both the final output and the intermediate features
         """
-        pass #TO-DO, to be implemented
+        return self.model(x), None
 
 
     def serialize(self):

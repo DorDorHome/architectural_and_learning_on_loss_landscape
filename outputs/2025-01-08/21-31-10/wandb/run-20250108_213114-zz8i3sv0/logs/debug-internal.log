@@ -1,0 +1,16 @@
+{"time":"2025-01-08T21:31:14.351943108+08:00","level":"INFO","msg":"using version","core version":"0.18.5"}
+{"time":"2025-01-08T21:31:14.351954409+08:00","level":"INFO","msg":"created symlink","path":"/hdda/models/my_own_models/architectural_and_learning_on_loss_landscape/outputs/2025-01-08/21-31-10/wandb/run-20250108_213114-zz8i3sv0/logs/debug-core.log"}
+{"time":"2025-01-08T21:31:14.459455339+08:00","level":"INFO","msg":"created new stream","id":"zz8i3sv0"}
+{"time":"2025-01-08T21:31:14.459494282+08:00","level":"INFO","msg":"stream: started","id":"zz8i3sv0"}
+{"time":"2025-01-08T21:31:14.459559546+08:00","level":"INFO","msg":"sender: started","stream_id":"zz8i3sv0"}
+{"time":"2025-01-08T21:31:14.459529379+08:00","level":"INFO","msg":"handler: started","stream_id":{"value":"zz8i3sv0"}}
+{"time":"2025-01-08T21:31:14.459522155+08:00","level":"INFO","msg":"writer: Do: started","stream_id":{"value":"zz8i3sv0"}}
+{"time":"2025-01-08T21:31:14.93150676+08:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2025-01-08T21:32:48.57168312+08:00","level":"INFO","msg":"stream: closing","id":"zz8i3sv0"}
+{"time":"2025-01-08T21:32:48.571714279+08:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2025-01-08T21:32:48.572301849+08:00","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2025-01-08T21:32:52.190594157+08:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2025-01-08T21:32:52.685945652+08:00","level":"INFO","msg":"handler: closed","stream_id":{"value":"zz8i3sv0"}}
+{"time":"2025-01-08T21:32:52.685993423+08:00","level":"INFO","msg":"writer: Close: closed","stream_id":{"value":"zz8i3sv0"}}
+{"time":"2025-01-08T21:32:52.686021385+08:00","level":"INFO","msg":"sender: closed","stream_id":"zz8i3sv0"}
+{"time":"2025-01-08T21:32:52.686061541+08:00","level":"INFO","msg":"stream: closed","id":"zz8i3sv0"}

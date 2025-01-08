@@ -1,6 +1,7 @@
 # identical to the conv_net implementation in loss of plasiticity paper, for easy comparison
 # notice the predict method is different from the usual forward method
 
+
 import torch.nn as nn
 
 # original implementation:

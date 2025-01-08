@@ -28,6 +28,8 @@ class Backprop(Learner):
         
     def learn(self, x: torch.Tensor, target: torch.Tensor):
         """implement the basic backpropagation algorithm"""
+        # move data to device:
+        x, target = x.to(self.device), target.to(self.device)
         self.opt.zero_grad()
         output, features = self.net.predict(x)
         loss = self.loss_func(output, target)
@@ -41,7 +43,7 @@ class Backprop(Learner):
             self._perturb()
             
         if self.loss == 'nll':
-            return loss.item(), output.detact()
+            return loss.item(), output.detach()
         
         return loss.detach()#.item()?
     

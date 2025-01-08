@@ -9,6 +9,7 @@ import torch
 @dataclass
 class DataConfig:
     dataset: str= 'mnist'
+    use_torchvision: Optional[Union[None, bool]] = True
     data_path: Optional[Union[None, str]] = None
     num_classes: Optional[Union[None, int]] = 10
     shuffle: Optional[Union[None, bool]] = False
@@ -64,7 +65,7 @@ class EvaluationConfig:
     eval_freq_epoch: int = 1
     eval_metrics:  list = field(default_factory=lambda: ['accuracy', 'loss'])  # Correct
     save_dir: str ='results_raw'
-    save_name: str = 'basic_training'
+    # save_name: str = 'basic_training'
 
 
  
@@ -82,10 +83,12 @@ class EvaluationConfig:
 
 @dataclass
 class ExperimentConfig:
+    use_wandb: bool = False
     runs: int = 1
     seed: Optional[int] = None
     device: str = 'cuda'
     epochs: int = 10
+    batch_size: int = 128
     data: DataConfig = DataConfig()
     net: NetConfig = NetConfig(type='ConvNet')
     learner: Union[BackpropConfig] = BackpropConfig()
