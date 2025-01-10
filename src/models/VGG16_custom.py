@@ -65,7 +65,7 @@ class vgg_with_internal_performance_track_custom_classifier(nn.Module):
             self.model.apply(initialize_weights)
         
         # setting attributes for genealogy:
-        self.parents = None
+        # self.parents = None
 
         
         # internal performance track:

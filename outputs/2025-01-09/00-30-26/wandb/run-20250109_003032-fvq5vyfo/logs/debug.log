@@ -23,3 +23,4 @@ config: {'use_wandb': True, 'runs': 1, 'seed': 42, 'device': 'cuda:1', 'epochs':
 2025-01-09 00:30:32,715 INFO    MainThread:1774289 [wandb_run.py:_redirect():2376] Wrapping output streams.
 2025-01-09 00:30:32,715 INFO    MainThread:1774289 [wandb_run.py:_redirect():2401] Redirects installed.
 2025-01-09 00:30:32,716 INFO    MainThread:1774289 [wandb_init.py:init():911] run started, returning control to user process
+2025-01-09 05:18:32,818 WARNING MsgRouterThr:1774289 [router.py:message_loop():77] message_loop has been closed

@@ -20,7 +20,9 @@ class DataConfig:
 
 @dataclass
 class NetParams:
+    pretrained: Optional[Union[None, bool]] = False
     num_classes: Optional[Union[None, int]] = 10
+    initialization: Optional[Union[None, str]] = 'kaiming'
     in_channels: Optional[Union[None, int]] = 1
     out_channels: Optional[Union[None, int]] = 10
     kernel_size: Optional[Union[None, int]] = 5
@@ -45,7 +47,7 @@ class BaseLearnerConfig:
     beta_2: float = 0.999
     weight_decay: float = 0.0
     momentum: Optional[float] = 0.0
-    loss: str = 'nll'
+    loss: str = 'cross_entropy'
     to_perturb: Optional[bool] = False
     perturb_scale: Optional[float] = 0.1
     # previous_features: Optional[Union[None, torch.Tensor]] = None

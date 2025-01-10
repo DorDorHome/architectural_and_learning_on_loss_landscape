@@ -26,7 +26,7 @@ class Learner(ABC):
 
         :param net: Neural network model.
         :param step_size: Learning rate.
-        :param loss: Loss function identifier ('mse' or 'nll').
+        :param loss: Loss function identifier ('mse' or 'cross_entropy').
         :param opt: Optimizer type ('sgd', 'adam', 'adamW').
         :param beta_1: Beta parameter for Adam optimizers.
         :param beta_2: Beta parameter for Adam optimizers.

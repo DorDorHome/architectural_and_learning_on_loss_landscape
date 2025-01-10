@@ -40,12 +40,10 @@ class Backprop(Learner):
         self.opt.step()
         
         if self.to_perturb:
-            self._perturb()
+            self.perturb()
             
-        if self.loss == 'nll':
-            return loss.item(), output.detach()
-        
-        return loss.detach()#.item()?
+        return loss.item(), output.detach()
+     
     
     def perturb(self):
         with torch.no_grad():

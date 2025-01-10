@@ -14,7 +14,7 @@ sys.path.append(str(PROJECT_ROOT))
 from configs.configurations import ExperimentConfig, cs
 
 from src.models.conv_net import ConvNet
-from src.models.factory import model_factory
+from src.models.model_factory import model_factory
 
 # import the dataclass for model params:
 #from configs.configurations import NetParams

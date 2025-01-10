@@ -27,7 +27,7 @@ class Learner(ABC):
 
         # intialize optimizer 
         self.opt = self._init_optimizer(config)
-        
+        self.loss= config.loss
         # initialize loss function
         self.loss_func = self._init_loss(config.loss)
         
@@ -47,17 +47,16 @@ class Learner(ABC):
         weight_decay = config.weight_decay
         momentum = config.get('momentum', 0.0)
         
-        # name for loss  function
-        self.loss= config.loss
-        # initialize loss function:
-        self.loss_func = self._init_loss(self.loss)
+
+        # initialize loss function was moved to the __init__ method
+        # self.loss_func = self._init_loss(self.loss)
         
         if opt == 'sgd':
             optimizer = optim.SGD(self.net.parameters(),
                                   lr=step_size,
                                   momentum=momentum,
                                   weight_decay=weight_decay)
-        if opt == 'adam':
+        elif opt == 'adam':
             optimizer = optim.Adam(self.net.parameters(),
                                    lr=step_size,
                                    betas=(beta_1, beta_2),
@@ -70,7 +69,7 @@ class Learner(ABC):
     
     def _init_loss(self, loss: str):
         loss_funcs = {
-            'nll': F.cross_entropy,
+            'cross_entropy': F.cross_entropy,
             'mse': F.mse_loss
         }
         
@@ -84,5 +83,5 @@ class Learner(ABC):
         """learn from a batch of data"""
         pass
     
-    def _forward(self, x: torch.Tensor):
+    def _forward(self, x: torch.Tensor):# -> Any | Any:
         return self.net.predict(x)

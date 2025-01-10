@@ -63,7 +63,7 @@ def test_config_loading():
     assert experiment_cfg.net.num_classes == 10
     assert experiment_cfg.learner.type == 'backprop'
     assert experiment_cfg.learner.opt == 'adam'
-    assert experiment_cfg.learner.loss == 'nll'
+    assert experiment_cfg.learner.loss == 'cross_entropy'
     assert experiment_cfg.evaluation.eval_freq_epoch == 1
     assert experiment_cfg.evaluation.eval_metrics == ['accuracy', 'loss']
     assert experiment_cfg.evaluation.save_dir == 'results_raw'
