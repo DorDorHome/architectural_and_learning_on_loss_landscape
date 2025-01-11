@@ -2,8 +2,8 @@
 use_wandb: True
 runs: 1
 seed: 42
-device: 'cuda:1'
-epochs: 100
+device: 'cuda:0'
+epochs: 1000
 batch_size: 256 #128
 #data to use
 data:
@@ -23,9 +23,9 @@ net:
 learner:
   type: 'backprop' # Choices: 'backprop', 'continual_backprop'
   device: ${device}
-  opt:  'adam' # Choices: 'sgd',  'adam'
+  opt:  'sgd' # Choices: 'sgd',  'adam'
   loss: 'cross_entropy' # Choices: 'cross_entropy', 'mse', for classification and regression respectively
-  step_size: 0.001 # for sgd try 0.01, adam try 
+  step_size: 0.01 # for sgd try 0.01, adam try 
   beta_1: 0.95
   beta_2: 0.999
   weight_decay: 0.01
