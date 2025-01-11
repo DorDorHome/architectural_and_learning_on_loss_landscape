@@ -2,16 +2,45 @@
 
 # to-do:
 
-- test_config.py (done!)
+#### replicate "rank diminising in deep neural networks"
+- subtasks:
+- function for partial rank calculation
+- function for numerical rank
+- function for effective rank
+
+#### Refer to "How does batch normalization help optimization", 
+- subtask: mechanism/function for measure change in loss (Lipschitzness of loss function)
+- subtask: mechanism/function for measuring gradient predictiveness ("beta"-smoothness of loss function, or Lipschitzness of gradient of loss function)
+- Then, test it on both VGG and DLN.
+
+#### new architecture:
+##### Full-rank projection network:
+Instead of mapping each layer to a lower dimension, map it to the same dimension, followed by a projection, then add the constant.
+##### decomposed normalized CNN:
+- for each layer, with normalized weights, compute normalized weights, then obtained an normlized weights. Used that for forward pass. (efficiency? Reference layer norm implementation for idea.)
+- finally, multiply a constant factor to each filter with normalized weights.
+- calculate the time of forward/backward pass compared to baseline.
 
 
-write model loading.
+
+
+## handling loss landscape of layer dependency:
+#### main idea: Invent algorithms for having different learning rates for different layers 
+- use and exponentially decaying version, with faster decay at earlier layers, vs faster decay at later layers.
+- updates later layers more frequently
+- higher learning rates for later layers
+
+
+
+
+
+write model loading (done)
 - model factory, outline from chatgpt
 - use VGG and convnet first
 - test model loading.
 
-- write backprop
-- test_backprop.py 
+- write backprop (done!)
+- test_backprop.py (done)
 - generate results_raw from basic_config
 - plot results
 
