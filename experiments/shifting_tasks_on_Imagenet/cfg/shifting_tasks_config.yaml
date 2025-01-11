@@ -1,0 +1,64 @@
+# represent experiments config:
+runs: 1
+run_id: 0
+seed: 42
+device: 'cuda:0'
+epochs: 250 #epoch per tasks
+batch_size: 256 #128
+test: True # for testing the model after training
+
+
+# for logging and tracking the experiments
+use_wandb: False
+log_freq_every_n_task: 1
+wandb:
+  project: 'shifting_tasks_on_Imagenet'
+  entity: 'continual_learning'
+  tags: ['shifting_tasks', 'Imagenet']
+  notes: 'basic training on Imagenet with shifting tasks'
+
+# for plasiticity-type training (implemented for Imagnet )
+project_name: 'shifting_tasks_on_Imagenet'
+task_id: 0 # for setting a unique but reproducible sequence of classes
+train_size_per_class: 600 # number of samples per class in training
+val_size_per_class: 100 # number of samples per class in validation
+num_tasks: 5000 # number of tasks to train on. Each task will be trained on num_classes_per_task
+num_classes_per_task: 2 
+new_heads_for_new_task: True
+
+#data to use
+data:
+  dataset: 'imagenet_for_plasticity' #options: 'MNIST' #'CIFAR10', to implement: 'CIFAR100'. 'ImageNet' not supported yet.
+  use_torchvision: False # if using Imagnet, set to False 
+  data_path: '/hdda/datasets'  #if specified, will override the dataset variable.
+  # for Imagnet, expected path is folder containing the downloaded Imagnet dataset, + '/data/classes/'
+  num_classes: 1000 # should be consistent with the number of classes in the dataset
+
+
+# network architecture:
+net:
+  type: 'ConvNet' # "vgg_custom" #options: 'ConvNet', vgg_custom, "resnet_custom"
+  netparams:
+    pretrained: False
+    num_classes: ${num_classes_per_task}
+    initialization: 'kaiming'
+# learning algorithm:
+learner:
+  type: 'backprop' # Choices: 'backprop', 'continual_backprop'
+  device: ${device}
+  opt:  'sgd' # Choices: 'sgd',  'adam'
+  loss: 'cross_entropy' # Choices: 'cross_entropy', 'mse', for classification and regression respectively
+  step_size: 0.01 # for sgd try 0.01, adam try 
+  beta_1: 0.95
+  beta_2: 0.999
+  weight_decay: 0.01
+  to_perturb: false
+  perturb_scale: 0.05
+  momentum: 0.9
+
+# evaluation, for plotting and saving the results of the
+evaluation:
+  eval_freq_epoch: 1
+  eval_metrics: ['accuracy', 'loss']
+  save_dir: '/results/results_raw'
+  # save_name: 'basic_training'
