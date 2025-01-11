@@ -63,13 +63,13 @@ def transform_factory(dataset_name: str, model_name: str):
                             transforms.Normalize(mean=imagenet_mean, std=imagenet_std)
                             ])
                             
-    elif dataset_name == "MNIST":
-        pass
-        # return transforms.Compose([
-        #     transforms.ToTensor(),
-        #     transforms.Normalize((0.1307,), (0.3081,))  # MNIST-specific normalization
-        # ])
-    
+    elif dataset_name == "MNIST":# this dataset has image size 28 x 28
+        if model_name == "ConvNet":
+            # ConvNet expects normalized inputs
+            return transforms.Compose([
+                transforms.ToTensor(),
+                transforms.Normalize((0.5,), (0.5,))
+            ])
     else:
         raise ValueError(f"Unsupported dataset {dataset_name}")
     

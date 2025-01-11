@@ -5,11 +5,11 @@ seed: 42
 device: 'cuda:0'
 epochs: 250 #epoch per tasks
 batch_size: 256 #128
-test: True # for testing the model after training
+test: False # for testing the model after training
 
 
 # for logging and tracking the experiments
-use_wandb: False
+use_wandb: True
 log_freq_every_n_task: 1
 wandb:
   project: 'shifting_tasks_on_Imagenet'
@@ -23,7 +23,7 @@ task_id: 0 # for setting a unique but reproducible sequence of classes
 train_size_per_class: 600 # number of samples per class in training
 val_size_per_class: 100 # number of samples per class in validation
 num_tasks: 5000 # number of tasks to train on. Each task will be trained on num_classes_per_task
-num_classes_per_task: 2 
+num_classes_per_task: 2
 new_heads_for_new_task: True
 
 #data to use
@@ -58,7 +58,8 @@ learner:
 
 # evaluation, for plotting and saving the results of the
 evaluation:
-  eval_freq_epoch: 1
+  use_test_set: True
+  eval_freq_epoch: 50
   eval_metrics: ['accuracy', 'loss']
   save_dir: '/results/results_raw'
   # save_name: 'basic_training'

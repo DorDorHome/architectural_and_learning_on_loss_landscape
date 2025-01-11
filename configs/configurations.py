@@ -81,7 +81,12 @@ class EvaluationConfig:
 #     accumulate: bool = False
 #     outgoing_random: bool = False
 
-
+@dataclass
+class logConfig:
+    save_dir: str = 'results_raw'
+    save_name: str = 'basic_training'
+    class Config:
+        version_base = "1.1"
 
 @dataclass
 class ExperimentConfig:
@@ -95,6 +100,7 @@ class ExperimentConfig:
     net: NetConfig = NetConfig(type='ConvNet')
     learner: Union[BackpropConfig] = BackpropConfig()
     evaluation: Union[EvaluationConfig, None] = EvaluationConfig()
+    
     
     def __post_init__(self):
         if self.net.num_classes != self.data.num_classes:

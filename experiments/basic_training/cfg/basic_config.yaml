@@ -5,12 +5,19 @@ seed: 42
 device: 'cuda:0'
 epochs: 1000
 batch_size: 256 #128
+
+
+
 #data to use
 data:
-  dataset: "CIFAR10" #options: 'MNIST' #'CIFAR10', to implement: 'CIFAR100'. 'ImageNet' not supported yet.
-  use_torchvision: True
+  dataset: 'Imagenet_plasicity_shifting_tasks' #options: 'MNIST' #'CIFAR10', to implement: 'CIFAR100'. 'ImageNet' not supported yet.
+  use_torchvision: True # if using Imagnet, set to False 
   data_path: '/hdda/datasets'  #if specified, will override the dataset variable.
-  num_classes: 10
+  # for Imagnet, expected path is folder containing the downloaded Imagnet dataset, + '/data/classes/'
+  num_classes: 10 # should be consistent with the number of classes in the dataset
+
+
+
 
 # network architecture:
 net:

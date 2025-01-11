@@ -11,6 +11,8 @@ import random
 from typing import Any
 import sys
 import pathlib
+
+import test
 # sys.path.append("../..")
 # sys.path.append("../../..")
 PROJECT_ROOT = pathlib.Path(__file__).resolve().parent.parent.parent
@@ -119,8 +121,8 @@ def main(cfg :ExperimentConfig):
 
         # randomize internally:
         x_train, y_train, x_test, y_test = dataset_factory_by_classes(classes = classes, randomize = True)
-                    
-                    
+        # put to device:        
+        x_train, y_train, x_test, y_test = x_train.to(cfg.device), y_train.to(cfg.device), x_test.to(cfg.device), y_test.to(cfg.device)
         if cfg.new_heads_for_new_task:
             nn.init.kaiming_normal_(net.layers[-1].weight)
             net.layers[-1].bias.data *= 0
@@ -136,18 +138,21 @@ def main(cfg :ExperimentConfig):
             number_of_correct = 0
             number_of_correct_2 = 0
             total = 0
+
+
             
             for batch_idx in range(0, train_examples_per_epoch, cfg.batch_size):
                 x_batch = x_train[batch_idx: batch_idx+cfg.batch_size]
                 y_batch = y_train[batch_idx: batch_idx+cfg.batch_size]
                 loss, output = learner.learn(x_batch, y_batch)
                 with torch.no_grad():
-                    running_loss+= loss*input.size(0)
+                    running_loss+= loss*x_batch.size(0)
                     batch_running_loss += loss
                     _, predicted = output.max(1)
-                    number_of_correct += predicted.eq(label).sum().cpu().item()
-                    acc_batch = compute_accuracy(output, label)
-                    number_of_correct_2 += acc_batch * label.size(0)
+                    total += y_batch.size(0)
+                    number_of_correct += predicted.eq(y_batch).sum().cpu().item()
+                    acc_batch = compute_accuracy(output, y_batch)
+                    number_of_correct_2 += acc_batch * y_batch.size(0)
                     
                     
             
@@ -155,17 +160,56 @@ def main(cfg :ExperimentConfig):
                 acc = number_of_correct/total
                 acc_2 = number_of_correct_2/total
                 loss = running_loss/total
-                loss_by_batch = batch_running_loss/len(trainloader)
-                print(f"task: {task_idx}, Epoch: {epoch}, Accuracy: {acc}, Accuracy_2: {acc_2}, Loss:,  {loss}, loss by batch: {loss_by_batch}")
-                
-                data = {'epoch': epoch, 'train_accuracy': acc, 'train_accuracy_2': acc_2, 'train_loss': loss, 'train_loss_by_batch': loss_by_batch}
+                loss_by_batch = batch_running_loss/(train_examples_per_epoch/cfg.batch_size)
+
+                data = {'task_idx*epochs_per_task + epoch': task_idx*epochs_per_task + epoch, 'train_accuracy': acc, 'train_accuracy_2': acc_2, 'train_loss': loss, 'train_loss_by_batch': loss_by_batch}
                 # log to wandb:
                 if cfg.use_wandb:
                     wandb.log(data)
+                    
+                # evaluate on test set:
+                if cfg.evaluation.use_test_set:
+                    with torch.no_grad():
+                
+                        number_of_correct_on_test = 0.0
+                        number_of_correct_on_test_by_batch = 0.0
+                        # test_running_loss = 0.0 
+                        # test_running_loss_batch = 0.0
+                        total = x_test.size(0)
+                        for batch_idx in range(0, x_test.size(0), cfg.batch_size):
+                            x_test_batch = x_test[batch_idx: batch_idx+cfg.batch_size]
+                            y_test_batch = y_test[batch_idx: batch_idx+cfg.batch_size]
+                            
+                            test_output, _ = net.predict(x_test_batch)
+                            
+                            # test_running_loss +=
+                            
+                            # test_loss_batch = F.cross_entropy(test_output, y_test_batch)
+                            # test_running_loss_batch += test_loss_batch*x_test_batch.size(0)
+                            # one way to keep track of number of correct predictions:
+                            _, predicted = test_output.max(1)
+                            number_of_correct_on_test += predicted.eq(y_test_batch).sum().cpu().item()
+                            # another way to keep track of number of correct predictions:
+                            acc_batch_on_test = compute_accuracy(test_output, y_test_batch)
+                            number_of_correct_on_test_by_batch += acc_batch_on_test * y_test_batch.size(0)
 
-            
+                        acc_on_test = number_of_correct_on_test/total
+                        acc_on_test_2 = number_of_correct_on_test_by_batch/total
+                    
+                        data_on_test = {'task_idx*epochs_per_task + epoch': task_idx*epochs_per_task + epoch, 'test_accuracy': acc_on_test, 'test_accuracy_2': acc_on_test_2}
+                    print(f"task: {task_idx}, Epoch: {epoch}, Accuracy: {acc}, Accuracy_2: {acc_2}, Loss:,  {loss}, loss by batch: {loss_by_batch}")
+                    print(f"Test Accuracy: {acc_on_test}, Test Accuracy_2: {acc_on_test_2}")
+                    if cfg.use_wandb:
+                        wandb.log(data_on_test)
+                        
         if task_idx % cfg.log_freq_every_n_task == 0:
-            data_on_task = {'task': task_idx, 'train_accuracy': acc, 'train_accuracy_2': acc_2, 'train_loss': loss, 'train_loss_by_batch': loss_by_batch}
+            data_on_task = {'task': task_idx,\
+                            'task_train_accuracy_after_all_epochs': acc,\
+                            'task_train_accuracy_2_after_all_epochs': acc_2,
+                            'task_train_loss_after_all_epochs': loss,
+                            'task_train_loss_by_batch_after_all_epochs': loss_by_batch,
+                            'task_test_accuracy_after_all_epochs': acc_on_test,
+                            'task_test_accuracy_2_after_all_epochs': acc_on_test_2,}
             
             if cfg.use_wandb:
                 wandb.log(data_on_task)
