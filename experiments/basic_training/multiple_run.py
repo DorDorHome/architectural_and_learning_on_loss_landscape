@@ -45,6 +45,11 @@ def main(cfg):
             dir_for_experiment = os.path.join(PROJECT_ROOT, 'experiments', 'basic_training', f'experiment_cfg_{exp_id}')
             os.makedirs(dir_for_experiment, exist_ok=True)
         
+            # create a file to save the in dir_for_experiment, containing the config
+        os.makedirs(dir_for_experiment, exist_ok=True)
+        with open(os.path.join(dir_for_experiment, 'config.json'), 'w') as f:
+            json.dump(OmegaConf.to_container(cfg, resolve=True), f, indent=4)
+
     for run_id in range(cfg.runs):
         print(f"Run {run_id}")
         # set config for each run, with unique run_id
