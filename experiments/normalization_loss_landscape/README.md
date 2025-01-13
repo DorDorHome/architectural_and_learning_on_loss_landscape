@@ -2,4 +2,9 @@
 
 This repo contains the implementation of experiments on how different normalization techniques affect the loss landscape of neural network training. 
 
+## idea:
+= first,
+
+
+
 # first, load the relevant data:
