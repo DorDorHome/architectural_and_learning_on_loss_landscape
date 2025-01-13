@@ -1,6 +1,12 @@
 # architectural_and_learning_on_loss_landscape
 
 # to-do:
+### create flexible way to manage data logging for raw data
+### manage experiments with many runs, one after another, save to different folders under different names
+### create flexible way to plot from raw data
+### 
+
+
 
 #### replicate "rank diminising in deep neural networks"
 - subtasks:

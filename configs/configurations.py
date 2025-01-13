@@ -66,7 +66,7 @@ class BackpropConfig(BaseLearnerConfig):
 class EvaluationConfig:
     eval_freq_epoch: int = 1
     eval_metrics:  list = field(default_factory=lambda: ['accuracy', 'loss'])  # Correct
-    save_dir: str ='results_raw'
+    type: Optional[Union[None, str]] = None
     # save_name: str = 'basic_training'
 
 

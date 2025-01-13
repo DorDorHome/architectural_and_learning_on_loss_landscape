@@ -1,7 +1,8 @@
 
 """
 
-The most basic expriment to visualize the loss landscape.
+The most basic experiment, to replicate a simple training loop.
+Only use this is runs is one.
 
 """
 
@@ -17,6 +18,7 @@ print(PROJECT_ROOT)
 sys.path.append(str(PROJECT_ROOT))
 from configs.configurations import ExperimentConfig
 # import json
+import os
 # import pickle
 # import argparse
 # import numpy as np
@@ -58,7 +60,14 @@ def main(cfg :ExperimentConfig):
     
     net = model_factory(cfg.net)
 
+    #verifty cfg.runs ==1:
+    if cfg.runs != 1:
+        raise ValueError("This script is only for single runs. Please set runs to 1 or use another script.")
 
+    # if the run_id attribute is not set, set it to 0
+    if cfg.run_id is None:
+        cfg.run_id = 0
+        
     # setup learner:
     # optimizer is setup in the learner
     # loss function is setup in the learner
@@ -93,8 +102,33 @@ def main(cfg :ExperimentConfig):
         cfg_dict = OmegaConf.to_container(cfg, resolve=True)
         wandb.init(project='basic_training', config= cfg_dict )
 
-    
-    
+    if cfg.use_json:
+        from src.utils.data_logging import save_data_json
+        import json
+        # set up the folder for the json file:
+        # find a exp_id, integer, that is not used in the experiments folder:
+        exp_id = 0
+        dir_for_experiment = os.path.join(PROJECT_ROOT, 'experiments',
+                                          'basic_training', f'experiment_cfg_{exp_id}')
+        
+        run_dir = os.path.join(dir_for_experiment, 'run', f'run_{cfg.run_id}')
+        
+        while os.path.exists(dir_for_experiment):
+            exp_id += 1
+            dir_for_experiment = os.path.join(PROJECT_ROOT, 'experiments', 'basic_training', f'experiment_cfg_{exp_id}')
+            os.makedirs(dir_for_experiment, exist_ok=True)
+        
+        
+        # create a file to save the in dir_for_experiment, containing the config
+        os.makedirs(dir_for_experiment, exist_ok=True)
+        with open(os.path.join(dir_for_experiment, 'config.json'), 'w') as f:
+            json.dump(OmegaConf.to_container(cfg, resolve=True), f, indent=4)
+
+
+
+
+        # create a folder for the run:
+        os.makedirs(run_dir, exist_ok=True)
     
     if "accuracy" in cfg.evaluation.eval_metrics:
         accuracy = nll_accuracy
@@ -149,6 +183,9 @@ def main(cfg :ExperimentConfig):
             # log to wandb:
             if cfg.use_wandb:
                 wandb.log(data)
+            if cfg.use_json:
+                save_data_json(data, run_dir, filename=f'run_{cfg.run_id}.json')
+
                 
 
         
