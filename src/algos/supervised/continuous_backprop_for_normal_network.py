@@ -24,4 +24,5 @@ class ContinousBackprop_with_hooks(Learner):
     The network is assumed to have forward hooks implemented
     """
     
-    def __init__(self, net:nn.Module, )
+    def __init__(self, net:nn.Module, config: DictConfig ):
+        super().__init__()

@@ -17,10 +17,19 @@
 ##### Full-rank projection network:
 Instead of mapping each layer to a lower dimension, map it to the same dimension, followed by a projection, then add the constant.
 ##### decomposed normalized CNN:
-- for each layer, with normalized weights, compute normalized weights, then obtained an normlized weights. Used that for forward pass. (efficiency? Reference layer norm implementation for idea.)
+- for each layer, with normalized weights, compute normalized weights, then obtained an normlized weights. Used that for forward pass. 
+(efficiency? Reference layer norm implementation for idea.)
+--- update normalized_weights_FC with better track of variance of input
+--- how should input variance be related to the best weight norm for best loss landscape? 
 - finally, multiply a constant factor to each filter with normalized weights.
+-- separate behavior of .train() vs .
 - calculate the time of forward/backward pass compared to baseline.
+#### parametric non-linear relu:
+- use parametric relu
+- use MaxOut as activation.
 
+### SVD decomposition parametrisation layer:
+Use SVD decomposition, with a non-linear map sandwiched between.
 
 
 
