@@ -101,7 +101,7 @@ def Imagnet_dataset_generator(path_to_class_directory:str, transform = None):
     return _dataset_by_classes
 
 
-def dataset_factory(config: DataConfig, transform) -> Any:
+def dataset_factory(config: DataConfig, transform, with_testset= False) -> Any:
     """
     Factory function to create dataset instances based on the configuration and model.
 
@@ -122,12 +122,16 @@ def dataset_factory(config: DataConfig, transform) -> Any:
         try: 
             dataset_class = getattr(torchvision.datasets, config.dataset)
             trainset = dataset_class(root=dataset_path, train=True, download=True, transform=transform)
+            if with_testset:
+                testset = dataset_class(root=dataset_path, train=False, download=True, transform=transform)
             # if the attribute .classes exists for the trainset, make sure it agress with config.num_classes:
             try:
                 if len(trainset.classes) != config.num_classes:
-                    raise ValueError(f"Number of classes in the dataset ({len(trainset.classes)}) does not match the number of classes specified in the configuration ({config.num_classes}).")
+                    raise ValueError(f"Number of classes in the train dataset ({len(trainset.classes)}) does not match the number of classes specified in the configuration ({config.num_classes}).")
+                if len(test.classes) != config.num_classes:
+                    raise ValueError(f"Number of classes in the test dataset ({len(testset.classes)}) does not match the number of classes specified in the configuration ({config.num_classes}).")
             except AttributeError:
-                pass
+                raise AttributeError(f"Attribute .classes not found in the dataset. Make sure the dataset is loaded correctly.")
             
             
         except AttributeError:
@@ -163,8 +167,10 @@ def dataset_factory(config: DataConfig, transform) -> Any:
         else:
             raise NotImplementedError("custom dataset not implemented")
 
-    
-    return trainset
+    if with_testset:
+        return trainset, testset
+    else:
+        return trainset
         
 if __name__=="__main__":
     # test the dataset_factory function

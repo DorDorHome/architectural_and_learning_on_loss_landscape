@@ -1,5 +1,6 @@
 import torch.nn as nn
-
+import torch
+from configs.configurations import LinearNetParams
 
 class Layer(nn.Module):
     def __init__(self, in_shape, out_shape, act_type='relu'):
@@ -35,27 +36,35 @@ class Layer(nn.Module):
 
 
 class DeepFFNN(nn.Module):
-    def __init__(self, input_size, num_features=2000, num_outputs=1, num_hidden_layers=2, act_type='relu'):
+    def __init__(self, 
+                 config: LinearNetParams):
+                 
+                #  input_size,
+                #  num_features=2000,
+                #  num_outputs=1,
+                #  num_hidden_layers=2,
+                #  act_type='relu'):
+    
         super(DeepFFNN, self).__init__()
-        self.num_inputs = input_size
-        self.num_features = num_features
-        self.num_outputs = num_outputs
-        self.num_hidden_layers = num_hidden_layers
-        self.act_type = act_type
+        self.num_inputs = config.input_size
+        self.num_features = config.num_features
+        self.num_outputs = config.num_outputs
+        self.num_hidden_layers = config.num_hidden_layers
+        self.act_type = config.act_type
         self.layers_to_log = [-(i * 2 + 1) for i in range(num_hidden_layers + 1)]
 
         # define the architecture
         self.layers = nn.ModuleList()
 
-        self.in_layer = Layer(in_shape=input_size, out_shape=num_features, act_type=self.act_type)
+        self.in_layer = Layer(in_shape=self.input_size, out_shape=self.num_features, act_type=self.act_type)
         self.layers.extend(self.in_layer.layers)
 
         self.hidden_layers = []
         for i in range(self.num_hidden_layers - 1):
-            self.hidden_layers.append(Layer(in_shape=num_features, out_shape=num_features, act_type=self.act_type))
+            self.hidden_layers.append(Layer(in_shape=self.num_features, out_shape=self.num_features, act_type=self.act_type))
             self.layers.extend(self.hidden_layers[i].layers)
 
-        self.out_layer = Layer(in_shape=num_features, out_shape=num_outputs, act_type='linear')
+        self.out_layer = Layer(in_shape=self.num_features, out_shape=self.num_outputs, act_type='linear')
         self.layers.extend(self.out_layer.layers)
 
     def predict(self, x):

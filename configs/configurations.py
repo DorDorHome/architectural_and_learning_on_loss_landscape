@@ -29,11 +29,21 @@ class NetParams:
     class Config:
         version_base = "1.1"
 
+@dataclass
+class LinearNetParams:
+    input_size: Optional[Union[None, int]] = 784 #784 for MINST  
+    num_features = 2000
+    num_outputs = 10
+    num_hidden_layers: Optional[Union[None, int]] = 2
+    act_type: Optional[Union[None, str]] = 'relu'
+    class Config:
+        version_base = "1.1"
+
 #dataclass for network configurations
 @dataclass
 class NetConfig:
     type: str
-    params: Optional[Union[None, NetParams]] = None
+    params: Optional[Union[None, NetParams,LinearNetParams ]] = None
     class Config:
         version_base = "1.1"
 

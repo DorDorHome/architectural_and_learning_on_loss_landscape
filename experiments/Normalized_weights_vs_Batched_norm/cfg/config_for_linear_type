@@ -2,8 +2,8 @@
 runs: 1
 run_id: None
 seed: 42
-device: 'cuda:1'
-epochs: 1000
+device: 'cuda:0'
+epochs: 500
 batch_size: 256 #128
 
 # for logging and tracking the experiments
@@ -11,7 +11,7 @@ use_wandb: True
 use_json: False
 log_freq_every_n_task: 1
 wandb:
-  project: 'basic_training'
+  project: 'Normalized_weights_vs_Batched_norm_FC'
   entity: ''
   # tags: ['shifting_tasks', 'Imagenet']
   # notes: 'basic training on Imagenet with shifting tasks'
@@ -31,10 +31,12 @@ data:
 
 # network architecture:
 net:
-  type: "resnet_custom" # "vgg_custom" #options: 'ConvNet', "vgg_custom" , "resnet_custom" 
+  type: "deep_ffnn" # "vgg_custom" #options: 'ConvNet', "vgg_custom" , "resnet_custom" 
+  network_class: "fc" # 'fc' for fully connected, 'conv' for convolutional
   netparams:
-    pretrained: False
-    num_classes: ${data.num_classes} 
+    #pretrained: False
+    input_size: 784 # need to match the dataset used. # 3072 # 224*224*3 for Imagenet, 784 for MNIST, 3072 for CIFAR10
+    num_outputs: ${data.num_classes} 
     initialization: 'kaiming'
     
 # learning algorithm:
@@ -52,7 +54,7 @@ learner:
   # needed for continual backprop and cbp:
   device: ${device}
   opt:  'sgd' # Choices: 'sgd',  'adam'
-  loss: 'cross_entropy' # Choices: 'cross_entropy', 'mse', for classification and regression respectively
+  loss: 'cross_entropy' # make sure output is logits, not softmax # Choices: 'cross_entropy', 'mse', for classification and regression respectively
   step_size: 0.01 # for sgd try 0.01, adam try 
   beta_1: 0.95
   beta_2: 0.999
@@ -63,7 +65,6 @@ learner:
 
 # evaluation, for plotting and saving the results of the
 evaluation:
-  use_testset: False
   eval_freq_epoch: 1
   eval_metrics: ['accuracy', 'loss']
   # save_dir: '/results/results_raw' # If not provided, will be created inside the experiment folder,assume root directory is the root of the experiments

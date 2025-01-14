@@ -50,6 +50,11 @@ def model_factory(config: NetConfig) -> Any:
         if config.netparams is None:
             raise ValueError("config.params cannot be None for resnet_custom")
         return ResNet_custom(config.netparams)
+    if model_type == "deep_ffnn":
+        from src.models.deep_ffnn import DeepFFNN:
+        if config.netparams is None:
+            raise ValueError("config.params cannot be None for deep_ffnn")
+        return DeepFFNN(config.netparams)
     
     else:
         # If the model type is not supported, raise a ValueError
