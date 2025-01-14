@@ -4,3 +4,6 @@ src/algos/supervised/__pycache__/
 outputs
 outputs/*
 configs/__pycache__/
+
+__pycache__/
+*.pyc
