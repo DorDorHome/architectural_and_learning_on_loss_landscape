@@ -160,7 +160,6 @@ def dataset_factory(config: DataConfig, transform) -> Any:
             # return a factory of Imagenet datasets that, based on 
             return imagenet_dataset_factory_by_classes
             
-            
         else:
             raise NotImplementedError("custom dataset not implemented")
 

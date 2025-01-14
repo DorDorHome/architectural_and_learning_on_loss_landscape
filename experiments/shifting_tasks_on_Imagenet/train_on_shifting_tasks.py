@@ -71,12 +71,18 @@ def main(cfg :ExperimentConfig):
     assert cfg.net.netparams.num_classes == cfg.num_classes_per_task
     
     net = model_factory(cfg.net)
-
+    # set device for net
+    net.to(cfg.device)
+    
     # setup learner:
     # optimizer is setup in the learner
     # loss function is setup in the learner
     if cfg.learner.type == 'backprop':
         learner = Backprop(net, cfg.learner)
+    if cfg.learner.type == 'cbp' and cfg.net.type == 'ConvNet':
+        from src.algos.supervised.continuous_backprop_with_GnT import ContinuousBackprop_for_ConvNet
+        learner = ContinuousBackprop_for_ConvNet(net, cfg.learner)
+    
         
     class_order_path = os.path.join(cfg.data.data_path, cfg.data.dataset, 'data','class_order')
     # load the class order:

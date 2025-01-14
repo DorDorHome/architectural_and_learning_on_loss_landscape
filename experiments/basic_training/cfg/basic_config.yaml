@@ -1,18 +1,26 @@
 # represent experiments config:
-use_wandb: False
-use_json: False
-runs: 30
+runs: 1
 run_id: None
 seed: 42
 device: 'cuda:1'
 epochs: 1000
 batch_size: 256 #128
 
+# for logging and tracking the experiments
+use_wandb: True
+use_json: False
+log_freq_every_n_task: 1
+wandb:
+  project: 'basic_training'
+  entity: ''
+  # tags: ['shifting_tasks', 'Imagenet']
+  # notes: 'basic training on Imagenet with shifting tasks'
+
 
 
 #data to use
 data:
-  dataset: 'CIFAR10' #options: 'MNIST' #'CIFAR10', to implement: 'CIFAR100'. 'ImageNet' not supported yet.
+  dataset: 'CIFAR10' #'ImageNet' #options: 'MNIST' #'CIFAR10', to implement: 'CIFAR100'. 'ImageNet' not supported yet.
   use_torchvision: True # if using Imagnet, set to False 
   data_path: '/hdda/datasets'  #if specified, will override the dataset variable.
   # for Imagnet, expected path is folder containing the downloaded Imagnet dataset, + '/data/classes/'
@@ -23,14 +31,25 @@ data:
 
 # network architecture:
 net:
-  type: "resnet_custom" # "vgg_custom" #options: 'ConvNet', vgg_custom
+  type: "resnet_custom" # "vgg_custom" #options: 'ConvNet', "vgg_custom" , "resnet_custom" 
   netparams:
     pretrained: False
     num_classes: ${data.num_classes} 
     initialization: 'kaiming'
+    
 # learning algorithm:
 learner:
-  type: 'backprop' # Choices: 'backprop', 'continual_backprop'
+  type: 'backprop'  # Choices: 'backprop', 'cbp',# 'continual_backprop'
+  # needed only for cbp:
+  # neurons_replacement_rate: 0.001
+  # decay_rate_utility_track: 0.9
+  # maturity_threshold: 100
+  # util_type: 'contribution'
+  # init: 'kaiming'
+  # accumulate: False
+  # outgoing_random: False
+
+  # needed for continual backprop and cbp:
   device: ${device}
   opt:  'sgd' # Choices: 'sgd',  'adam'
   loss: 'cross_entropy' # Choices: 'cross_entropy', 'mse', for classification and regression respectively

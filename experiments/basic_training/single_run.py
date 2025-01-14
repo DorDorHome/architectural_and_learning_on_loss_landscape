@@ -73,9 +73,13 @@ def main(cfg :ExperimentConfig):
     # loss function is setup in the learner
     if cfg.learner.type == 'backprop':
         learner = Backprop(net, cfg.learner)
-        
+    if cfg.learner.type == 'cbp' and cfg.net.type == 'conv_net':
+        from src.algos.supervised.continuous_backprop_with_GnT import ContinualBackprop_for_ConvNet
+        learner = ContinualBackprop_for_ConvNet(net, cfg.learner)
+    
     # setup data:
     # load the transfrom based on the dataset and model:
+    # combination of dataset and model determines the transform
     transform = transform_factory(cfg.data.dataset, cfg.net.type)
 
     #trainset with the transform:
@@ -100,7 +104,7 @@ def main(cfg :ExperimentConfig):
         import wandb
         print('finished importing wandb')
         cfg_dict = OmegaConf.to_container(cfg, resolve=True)
-        wandb.init(project='basic_training', config= cfg_dict )
+        wandb.init(project=cfg.wandb.project, config= cfg_dict )
 
     if cfg.use_json:
         from src.utils.data_logging import save_data_json

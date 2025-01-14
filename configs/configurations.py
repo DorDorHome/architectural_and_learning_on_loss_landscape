@@ -56,6 +56,19 @@ class BaseLearnerConfig:
         version_base = "1.1"
 
 @dataclass
+class ContinuousBackpropConfig(BaseLearnerConfig):
+    type: str = 'cbp'
+    neurons_replacement_rate: float = 0.001
+    decay_rate_utility_track: float = 0.9
+    maturity_threshold: int = 100
+    util_type: str = 'contribution'
+    init: str = 'kaiming'
+    accumulate: bool = False
+    outgoing_random: bool = False
+    class Config:
+        version_base = "1.1"
+
+@dataclass
 class BackpropConfig(BaseLearnerConfig):
     type: str = 'backprop'
     to_perturb: bool = False
