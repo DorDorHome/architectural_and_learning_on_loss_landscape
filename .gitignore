@@ -7,3 +7,4 @@
 
 __pycache__/
 *.pyc
+/experiments/shifting_tasks_on_Imagenet/outputs/

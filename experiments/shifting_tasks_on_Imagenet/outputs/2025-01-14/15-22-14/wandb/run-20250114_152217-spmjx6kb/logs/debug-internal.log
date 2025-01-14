@@ -1,8 +1,0 @@
-{"time":"2025-01-14T15:22:17.081916629+08:00","level":"INFO","msg":"using version","core version":"0.18.5"}
-{"time":"2025-01-14T15:22:17.081931818+08:00","level":"INFO","msg":"created symlink","path":"/hdda/models/my_own_models/architectural_and_learning_on_loss_landscape/experiments/shifting_tasks_on_Imagenet/outputs/2025-01-14/15-22-14/wandb/run-20250114_152217-spmjx6kb/logs/debug-core.log"}
-{"time":"2025-01-14T15:22:17.187436011+08:00","level":"INFO","msg":"created new stream","id":"spmjx6kb"}
-{"time":"2025-01-14T15:22:17.187463723+08:00","level":"INFO","msg":"stream: started","id":"spmjx6kb"}
-{"time":"2025-01-14T15:22:17.187512325+08:00","level":"INFO","msg":"sender: started","stream_id":"spmjx6kb"}
-{"time":"2025-01-14T15:22:17.187530629+08:00","level":"INFO","msg":"handler: started","stream_id":{"value":"spmjx6kb"}}
-{"time":"2025-01-14T15:22:17.187498198+08:00","level":"INFO","msg":"writer: Do: started","stream_id":{"value":"spmjx6kb"}}
-{"time":"2025-01-14T15:22:17.501488002+08:00","level":"INFO","msg":"Starting system monitor"}
