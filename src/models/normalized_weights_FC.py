@@ -27,7 +27,7 @@ class NormalizedWeightsLinear(nn.Module):
         else:
             self.bias = None
         
-        self.weight_scale = nn.Parameter(1)
+        self.weight_scale = nn.Parameter(2**0.5)
         
         self.activation = activation
         self.test = test
@@ -37,7 +37,7 @@ class NormalizedWeightsLinear(nn.Module):
         #update weights of each layer 
         # only in training mode:
         if self.training:
-            self.weight = self.weight*torch.rsqrt(torch.mean(self.weight**2, dim=0, keepdim = True)+ 1e-8)
+            self.weight = self.weight*torch.rsqrt(torch.mean(self.weight**2, dim=1, keepdim = True)+ 1e-8)
         if self.test:
             #verify the norm of each layer is one:
             raise NotImplementedError
@@ -45,7 +45,7 @@ class NormalizedWeightsLinear(nn.Module):
         # save memory:
         # self.scaled_weight = self.weight*self.weight_scale
         
-        out = F.linear(input, self.weight*self.scale, bias = self.bias)
+        out = F.linear(input, self.weight*self.weight_scale, bias = self.bias)
         
         if self.activation =='relu':
             raise NotImplementedError
@@ -90,7 +90,7 @@ class BatchNormedWeightsLinear(nn.Module):
             raise NotImplementedError
         # update the input_variance:
         if self.training:
-            self.input_variance = (1-self.alpha)*self.input_variance + self.alpha*torch.norm(input, dim =1 )
+            self.input_variance = (1-self.alpha)*self.input_variance + self.alpha*torch.norm(input, dim =0 )
             
             # update weight with input_variance and weight_correction_scale
             self.weight =(self.weight*self.weight_correction_scale)/self.input_variance
