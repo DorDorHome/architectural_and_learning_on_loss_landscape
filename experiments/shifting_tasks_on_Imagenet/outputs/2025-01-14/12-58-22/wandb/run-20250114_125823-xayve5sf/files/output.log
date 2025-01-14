@@ -1,0 +1,8 @@
+  0%|                                                         | 0/5000 [00:01<?, ?it/s]
+Error executing job with overrides: []
+Traceback (most recent call last):
+  File "/hdda/models/my_own_models/architectural_and_learning_on_loss_landscape/experiments/shifting_tasks_on_Imagenet/train_on_shifting_tasks.py", line 147, in main
+    loss, output = learner.learn(x_batch, y_batch)
+UnboundLocalError: local variable 'learner' referenced before assignment
+
+Set the environment variable HYDRA_FULL_ERROR=1 for a complete stack trace.

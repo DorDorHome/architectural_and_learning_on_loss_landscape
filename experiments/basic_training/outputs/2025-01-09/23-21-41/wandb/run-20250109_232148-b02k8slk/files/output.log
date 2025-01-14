@@ -1,0 +1,201 @@
+Epoch: 0, progress on batches: 100%|█| 391/391 [02:58<00:00,  2
+Epoch: 1, progress on batches: 100%|█| 391/391 [02:56<00:00,  2
+Epoch: 0, Accuracy: 0.29242, Accuracy_2: 0.29242, Loss:,  1.9266417669296265, loss by batch: 1.926303845232405
+Epoch: 2, progress on batches: 100%|█| 391/391 [02:57<00:00,  2
+Epoch: 1, Accuracy: 0.4456, Accuracy_2: 0.4456, Loss:,  1.5191816233444213, loss by batch: 1.5190388708163405
+Epoch: 3, progress on batches: 100%|█| 391/391 [02:57<00:00,  2
+Epoch: 2, Accuracy: 0.51994, Accuracy_2: 0.51994, Loss:,  1.3360443609619141, loss by batch: 1.3359297795978653
+Epoch: 4, progress on batches: 100%|█| 391/391 [02:57<00:00,  2
+Epoch: 3, Accuracy: 0.57754, Accuracy_2: 0.57754, Loss:,  1.1972093999481201, loss by batch: 1.1971332510109143
+Epoch: 5, progress on batches: 100%|█| 391/391 [02:57<00:00,  2
+Epoch: 4, Accuracy: 0.63816, Accuracy_2: 0.63816, Loss:,  1.0457121893310546, loss by batch: 1.045833942225522
+Epoch: 6, progress on batches: 100%|█| 391/391 [02:57<00:00,  2
+Epoch: 5, Accuracy: 0.68264, Accuracy_2: 0.68264, Loss:,  0.9153014158248901, loss by batch: 0.9152364938155465
+Epoch: 7, progress on batches: 100%|█| 391/391 [02:58<00:00,  2
+Epoch: 6, Accuracy: 0.71736, Accuracy_2: 0.71736, Loss:,  0.8211325094223022, loss by batch: 0.8210714790217407
+Epoch: 8, progress on batches: 100%|█| 391/391 [02:58<00:00,  2
+Epoch: 7, Accuracy: 0.74446, Accuracy_2: 0.74446, Loss:,  0.7434447294235229, loss by batch: 0.7432388533716616
+Epoch: 9, progress on batches: 100%|█| 391/391 [02:58<00:00,  2
+Epoch: 8, Accuracy: 0.75996, Accuracy_2: 0.75996, Loss:,  0.7062027295303345, loss by batch: 0.706128591390522
+Epoch: 10, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 9, Accuracy: 0.77246, Accuracy_2: 0.77246, Loss:,  0.6688039096260071, loss by batch: 0.6687166432437994
+Epoch: 11, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 10, Accuracy: 0.79194, Accuracy_2: 0.79194, Loss:,  0.609898758239746, loss by batch: 0.6099914698801991
+Epoch: 12, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 11, Accuracy: 0.81018, Accuracy_2: 0.81018, Loss:,  0.5603037296485901, loss by batch: 0.5605208161846756
+Epoch: 13, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 12, Accuracy: 0.82452, Accuracy_2: 0.82452, Loss:,  0.5177020913124084, loss by batch: 0.5177992044964714
+Epoch: 14, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 13, Accuracy: 0.83076, Accuracy_2: 0.83076, Loss:,  0.5031713759231567, loss by batch: 0.5031868720908299
+Epoch: 15, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 14, Accuracy: 0.8419, Accuracy_2: 0.8419, Loss:,  0.46921446910858156, loss by batch: 0.4694343972998812
+Epoch: 16, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 15, Accuracy: 0.8466, Accuracy_2: 0.8466, Loss:,  0.4500482109642029, loss by batch: 0.4500674463217825
+Epoch: 17, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 16, Accuracy: 0.84954, Accuracy_2: 0.84954, Loss:,  0.44823276639938353, loss by batch: 0.448275336638436
+Epoch: 18, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 17, Accuracy: 0.85512, Accuracy_2: 0.85512, Loss:,  0.4359899910545349, loss by batch: 0.4360150600333348
+Epoch: 19, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 18, Accuracy: 0.85826, Accuracy_2: 0.85826, Loss:,  0.42034595153808596, loss by batch: 0.42052217971181016
+Epoch: 20, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 19, Accuracy: 0.8659, Accuracy_2: 0.8659, Loss:,  0.4043546089363098, loss by batch: 0.4045431316661103
+Epoch: 21, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 20, Accuracy: 0.86576, Accuracy_2: 0.86576, Loss:,  0.4011235161781311, loss by batch: 0.4012273716957063
+Epoch: 22, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 21, Accuracy: 0.8646, Accuracy_2: 0.8646, Loss:,  0.40708895101547243, loss by batch: 0.4071379918652727
+Epoch: 23, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 22, Accuracy: 0.86654, Accuracy_2: 0.86654, Loss:,  0.4005348244953156, loss by batch: 0.40057250983117487
+Epoch: 24, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 23, Accuracy: 0.87328, Accuracy_2: 0.87328, Loss:,  0.3786021709728241, loss by batch: 0.3786412301042196
+Epoch: 25, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 24, Accuracy: 0.86936, Accuracy_2: 0.86936, Loss:,  0.39317783190727235, loss by batch: 0.3932527405450411
+Epoch: 26, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 25, Accuracy: 0.8756, Accuracy_2: 0.8756, Loss:,  0.37436675864219665, loss by batch: 0.3743741815657262
+Epoch: 27, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 26, Accuracy: 0.8745, Accuracy_2: 0.8745, Loss:,  0.3748133073425293, loss by batch: 0.37499670653849304
+Epoch: 28, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 27, Accuracy: 0.87464, Accuracy_2: 0.87464, Loss:,  0.3757387889575958, loss by batch: 0.37585028811641363
+Epoch: 29, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 28, Accuracy: 0.87348, Accuracy_2: 0.87348, Loss:,  0.38490536657333374, loss by batch: 0.38502826494024234
+Epoch: 30, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 29, Accuracy: 0.8792, Accuracy_2: 0.8792, Loss:,  0.3657341439533234, loss by batch: 0.3657115322092305
+Epoch: 31, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 30, Accuracy: 0.87512, Accuracy_2: 0.87512, Loss:,  0.3716545474433899, loss by batch: 0.37184902316773943
+Epoch: 32, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 31, Accuracy: 0.88044, Accuracy_2: 0.88044, Loss:,  0.36082818365097047, loss by batch: 0.36092744617129835
+Epoch: 33, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 32, Accuracy: 0.87668, Accuracy_2: 0.87668, Loss:,  0.3765920673561096, loss by batch: 0.3765998150381591
+Epoch: 34, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 33, Accuracy: 0.88044, Accuracy_2: 0.88044, Loss:,  0.36668838169574736, loss by batch: 0.3665590975671778
+Epoch: 35, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 34, Accuracy: 0.88036, Accuracy_2: 0.88036, Loss:,  0.36270578161239625, loss by batch: 0.36291849254952063
+Epoch: 36, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 35, Accuracy: 0.88196, Accuracy_2: 0.88196, Loss:,  0.36292658967018127, loss by batch: 0.3629001414836825
+Epoch: 37, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 36, Accuracy: 0.8802, Accuracy_2: 0.8802, Loss:,  0.36505430545806883, loss by batch: 0.3652261962442447
+Epoch: 38, progress on batches: 100%|█| 391/391 [02:59<00:00,  
+Epoch: 37, Accuracy: 0.88186, Accuracy_2: 0.88186, Loss:,  0.3572613344192505, loss by batch: 0.35741615329709503
+Epoch: 39, progress on batches: 100%|█| 391/391 [02:59<00:00,  
+Epoch: 38, Accuracy: 0.8832, Accuracy_2: 0.8832, Loss:,  0.3556551338672638, loss by batch: 0.3555546197706781
+Epoch: 40, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 39, Accuracy: 0.88302, Accuracy_2: 0.88302, Loss:,  0.3573327665424347, loss by batch: 0.357364428584533
+Epoch: 41, progress on batches: 100%|█| 391/391 [02:59<00:00,  
+Epoch: 40, Accuracy: 0.88246, Accuracy_2: 0.88246, Loss:,  0.3599963278388977, loss by batch: 0.3601919177471829
+Epoch: 42, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 41, Accuracy: 0.88638, Accuracy_2: 0.88638, Loss:,  0.3452814332008362, loss by batch: 0.3454858478720841
+Epoch: 43, progress on batches: 100%|█| 391/391 [02:59<00:00,  
+Epoch: 42, Accuracy: 0.87868, Accuracy_2: 0.87868, Loss:,  0.37021092081069945, loss by batch: 0.37027880130216595
+Epoch: 44, progress on batches: 100%|█| 391/391 [02:59<00:00,  
+Epoch: 43, Accuracy: 0.88546, Accuracy_2: 0.88546, Loss:,  0.34969214289665224, loss by batch: 0.3497715361625947
+Epoch: 45, progress on batches: 100%|█| 391/391 [02:59<00:00,  
+Epoch: 44, Accuracy: 0.89028, Accuracy_2: 0.89028, Loss:,  0.33844267116546634, loss by batch: 0.3386292945012412
+Epoch: 46, progress on batches: 100%|█| 391/391 [02:59<00:00,  
+Epoch: 45, Accuracy: 0.88108, Accuracy_2: 0.88108, Loss:,  0.36121813730239866, loss by batch: 0.3613372527806045
+Epoch: 47, progress on batches: 100%|█| 391/391 [02:59<00:00,  
+Epoch: 46, Accuracy: 0.88738, Accuracy_2: 0.88738, Loss:,  0.34677516528129576, loss by batch: 0.34684375715453913
+Epoch: 48, progress on batches: 100%|█| 391/391 [02:59<00:00,  
+Epoch: 47, Accuracy: 0.88636, Accuracy_2: 0.88636, Loss:,  0.34575577980995176, loss by batch: 0.3456790139874839
+Epoch: 49, progress on batches: 100%|█| 391/391 [02:59<00:00,  
+Epoch: 48, Accuracy: 0.88554, Accuracy_2: 0.88554, Loss:,  0.35036225339889526, loss by batch: 0.35040844443356595
+Epoch: 50, progress on batches: 100%|█| 391/391 [02:59<00:00,  
+Epoch: 49, Accuracy: 0.88474, Accuracy_2: 0.88474, Loss:,  0.35244801385879515, loss by batch: 0.35249392030870214
+Epoch: 51, progress on batches: 100%|█| 391/391 [02:59<00:00,  
+Epoch: 50, Accuracy: 0.88562, Accuracy_2: 0.88562, Loss:,  0.34796525612831114, loss by batch: 0.34790795970984434
+Epoch: 52, progress on batches: 100%|█| 391/391 [02:59<00:00,  
+Epoch: 51, Accuracy: 0.8842, Accuracy_2: 0.8842, Loss:,  0.348547935256958, loss by batch: 0.3488517640268101
+Epoch: 53, progress on batches: 100%|█| 391/391 [02:59<00:00,  
+Epoch: 52, Accuracy: 0.88456, Accuracy_2: 0.88456, Loss:,  0.34881819551467896, loss by batch: 0.3490532968965028
+Epoch: 54, progress on batches: 100%|█| 391/391 [02:59<00:00,  
+Epoch: 53, Accuracy: 0.8915, Accuracy_2: 0.8915, Loss:,  0.33718334963798524, loss by batch: 0.3372044365691102
+Epoch: 55, progress on batches: 100%|█| 391/391 [02:59<00:00,  
+Epoch: 54, Accuracy: 0.88768, Accuracy_2: 0.88768, Loss:,  0.3424645766830444, loss by batch: 0.3425313551598193
+Epoch: 56, progress on batches: 100%|█| 391/391 [02:59<00:00,  
+Epoch: 55, Accuracy: 0.8865, Accuracy_2: 0.8865, Loss:,  0.34412804918289186, loss by batch: 0.3442323963393641
+Epoch: 57, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 56, Accuracy: 0.88442, Accuracy_2: 0.88442, Loss:,  0.3477722023010254, loss by batch: 0.34803723179928175
+Epoch: 58, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 57, Accuracy: 0.89268, Accuracy_2: 0.89268, Loss:,  0.3316723712348938, loss by batch: 0.33180478095169874
+Epoch: 59, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 58, Accuracy: 0.88948, Accuracy_2: 0.88948, Loss:,  0.3386396802902222, loss by batch: 0.33883904250305324
+Epoch: 60, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 59, Accuracy: 0.88304, Accuracy_2: 0.88304, Loss:,  0.35578386338233947, loss by batch: 0.3558664756357822
+Epoch: 61, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 60, Accuracy: 0.88824, Accuracy_2: 0.88824, Loss:,  0.34204380095481873, loss by batch: 0.3420552354868111
+Epoch: 62, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 61, Accuracy: 0.8888, Accuracy_2: 0.8888, Loss:,  0.33764184268951414, loss by batch: 0.3377735998548205
+Epoch: 63, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 62, Accuracy: 0.88326, Accuracy_2: 0.88326, Loss:,  0.349891631937027, loss by batch: 0.34989774116622213
+Epoch: 64, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 63, Accuracy: 0.88804, Accuracy_2: 0.88804, Loss:,  0.34370513576507566, loss by batch: 0.34364228190668406
+Epoch: 65, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 64, Accuracy: 0.8847, Accuracy_2: 0.8847, Loss:,  0.348968007106781, loss by batch: 0.3489786910888789
+Epoch: 66, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 65, Accuracy: 0.88796, Accuracy_2: 0.88796, Loss:,  0.34088686463356016, loss by batch: 0.3410125189768079
+Epoch: 67, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 66, Accuracy: 0.89174, Accuracy_2: 0.89174, Loss:,  0.3322330072402954, loss by batch: 0.3323572327947373
+Epoch: 68, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 67, Accuracy: 0.88876, Accuracy_2: 0.88876, Loss:,  0.34180918478012084, loss by batch: 0.34197389256313937
+Epoch: 69, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 68, Accuracy: 0.8886, Accuracy_2: 0.8886, Loss:,  0.3390278749656677, loss by batch: 0.3390210834153168
+Epoch: 70, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 69, Accuracy: 0.8933, Accuracy_2: 0.8933, Loss:,  0.3286280396747589, loss by batch: 0.3286167914262208
+Epoch: 71, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 70, Accuracy: 0.88814, Accuracy_2: 0.88814, Loss:,  0.3423918428325653, loss by batch: 0.34242611168824194
+Epoch: 72, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 71, Accuracy: 0.89012, Accuracy_2: 0.89012, Loss:,  0.33849061617851256, loss by batch: 0.3385731950783364
+Epoch: 73, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 72, Accuracy: 0.88732, Accuracy_2: 0.88732, Loss:,  0.34579438665390017, loss by batch: 0.3459269884983292
+Epoch: 74, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 73, Accuracy: 0.89026, Accuracy_2: 0.89026, Loss:,  0.33533672243118284, loss by batch: 0.3353174311273238
+Epoch: 75, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 74, Accuracy: 0.88854, Accuracy_2: 0.88854, Loss:,  0.33556879053115846, loss by batch: 0.3357813961784858
+Epoch: 76, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 75, Accuracy: 0.8913, Accuracy_2: 0.8913, Loss:,  0.3331832838630676, loss by batch: 0.3332510413721089
+Epoch: 77, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 76, Accuracy: 0.8871, Accuracy_2: 0.8871, Loss:,  0.3481544808673859, loss by batch: 0.3481530346109739
+Epoch: 78, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 77, Accuracy: 0.88866, Accuracy_2: 0.88866, Loss:,  0.34206430324554443, loss by batch: 0.34220290052540164
+Epoch: 79, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 78, Accuracy: 0.88942, Accuracy_2: 0.88942, Loss:,  0.33750301609039307, loss by batch: 0.3376282977745356
+Epoch: 80, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 79, Accuracy: 0.88932, Accuracy_2: 0.88932, Loss:,  0.33698553040504453, loss by batch: 0.336963647047577
+Epoch: 81, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 80, Accuracy: 0.88872, Accuracy_2: 0.88872, Loss:,  0.33695866428375243, loss by batch: 0.3370230853024041
+Epoch: 82, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 81, Accuracy: 0.89138, Accuracy_2: 0.89138, Loss:,  0.33103833909988406, loss by batch: 0.33121426167238094
+Epoch: 83, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 82, Accuracy: 0.889, Accuracy_2: 0.889, Loss:,  0.34074187822341917, loss by batch: 0.34086030386293026
+Epoch: 84, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 83, Accuracy: 0.8876, Accuracy_2: 0.8876, Loss:,  0.341502964515686, loss by batch: 0.3415116495679102
+Epoch: 85, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 84, Accuracy: 0.88882, Accuracy_2: 0.88882, Loss:,  0.3390601776790619, loss by batch: 0.33916804842326953
+Epoch: 86, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 85, Accuracy: 0.8946, Accuracy_2: 0.8946, Loss:,  0.3261154173469544, loss by batch: 0.32610857646788477
+Epoch: 87, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 86, Accuracy: 0.89114, Accuracy_2: 0.89114, Loss:,  0.3329344853305817, loss by batch: 0.3330503439964236
+Epoch: 88, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 87, Accuracy: 0.89266, Accuracy_2: 0.89266, Loss:,  0.33231602434158325, loss by batch: 0.332424614778565
+Epoch: 89, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 88, Accuracy: 0.89144, Accuracy_2: 0.89144, Loss:,  0.3319695494556427, loss by batch: 0.33203992609630156
+Epoch: 90, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 89, Accuracy: 0.88912, Accuracy_2: 0.88912, Loss:,  0.3396606495857239, loss by batch: 0.3398988228243635
+Epoch: 91, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 90, Accuracy: 0.89388, Accuracy_2: 0.89388, Loss:,  0.32636687769889833, loss by batch: 0.3264850145944244
+Epoch: 92, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 91, Accuracy: 0.89086, Accuracy_2: 0.89086, Loss:,  0.3337748546314239, loss by batch: 0.33384611756752824
+Epoch: 93, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 92, Accuracy: 0.89114, Accuracy_2: 0.89114, Loss:,  0.33071690383911134, loss by batch: 0.33082038451872214
+Epoch: 94, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 93, Accuracy: 0.89194, Accuracy_2: 0.89194, Loss:,  0.33046232191085817, loss by batch: 0.33087869182876917
+Epoch: 95, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 94, Accuracy: 0.8906, Accuracy_2: 0.8906, Loss:,  0.33515725702285765, loss by batch: 0.3353350973876236
+Epoch: 96, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 95, Accuracy: 0.8875, Accuracy_2: 0.8875, Loss:,  0.3441315480136871, loss by batch: 0.3441923749454491
+Epoch: 97, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 96, Accuracy: 0.89288, Accuracy_2: 0.89288, Loss:,  0.32901569231033323, loss by batch: 0.32887944476226405
+Epoch: 98, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 97, Accuracy: 0.89312, Accuracy_2: 0.89312, Loss:,  0.3248710190582275, loss by batch: 0.3249047079773815
+Epoch: 99, progress on batches: 100%|█| 391/391 [02:58<00:00,  
+Epoch: 98, Accuracy: 0.88998, Accuracy_2: 0.88998, Loss:,  0.3338324356651306, loss by batch: 0.33392666815720556
+Epoch: 100%|██████████████| 100/100 [4:57:42<00:00, 178.63s/it]
+Epoch: 99, Accuracy: 0.89332, Accuracy_2: 0.89332, Loss:,  0.3290915786552429, loss by batch: 0.329177535593967

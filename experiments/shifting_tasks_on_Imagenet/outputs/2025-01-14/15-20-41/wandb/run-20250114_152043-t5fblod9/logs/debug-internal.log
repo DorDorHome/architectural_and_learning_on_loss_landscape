@@ -1,0 +1,8 @@
+{"time":"2025-01-14T15:20:43.914322253+08:00","level":"INFO","msg":"using version","core version":"0.18.5"}
+{"time":"2025-01-14T15:20:43.914339155+08:00","level":"INFO","msg":"created symlink","path":"/hdda/models/my_own_models/architectural_and_learning_on_loss_landscape/experiments/shifting_tasks_on_Imagenet/outputs/2025-01-14/15-20-41/wandb/run-20250114_152043-t5fblod9/logs/debug-core.log"}
+{"time":"2025-01-14T15:20:44.021213468+08:00","level":"INFO","msg":"created new stream","id":"t5fblod9"}
+{"time":"2025-01-14T15:20:44.021242192+08:00","level":"INFO","msg":"stream: started","id":"t5fblod9"}
+{"time":"2025-01-14T15:20:44.021274854+08:00","level":"INFO","msg":"writer: Do: started","stream_id":{"value":"t5fblod9"}}
+{"time":"2025-01-14T15:20:44.021360606+08:00","level":"INFO","msg":"sender: started","stream_id":"t5fblod9"}
+{"time":"2025-01-14T15:20:44.021384251+08:00","level":"INFO","msg":"handler: started","stream_id":{"value":"t5fblod9"}}
+{"time":"2025-01-14T15:20:44.358076288+08:00","level":"INFO","msg":"Starting system monitor"}

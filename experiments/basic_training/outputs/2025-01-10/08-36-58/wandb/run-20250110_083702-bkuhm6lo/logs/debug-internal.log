@@ -1,0 +1,16 @@
+{"time":"2025-01-10T08:37:02.134335827+08:00","level":"INFO","msg":"using version","core version":"0.18.5"}
+{"time":"2025-01-10T08:37:02.134353771+08:00","level":"INFO","msg":"created symlink","path":"/hdda/models/my_own_models/architectural_and_learning_on_loss_landscape/experiments/basic_training/outputs/2025-01-10/08-36-58/wandb/run-20250110_083702-bkuhm6lo/logs/debug-core.log"}
+{"time":"2025-01-10T08:37:02.242667449+08:00","level":"INFO","msg":"created new stream","id":"bkuhm6lo"}
+{"time":"2025-01-10T08:37:02.242704268+08:00","level":"INFO","msg":"stream: started","id":"bkuhm6lo"}
+{"time":"2025-01-10T08:37:02.242773128+08:00","level":"INFO","msg":"sender: started","stream_id":"bkuhm6lo"}
+{"time":"2025-01-10T08:37:02.242751748+08:00","level":"INFO","msg":"writer: Do: started","stream_id":{"value":"bkuhm6lo"}}
+{"time":"2025-01-10T08:37:02.242853329+08:00","level":"INFO","msg":"handler: started","stream_id":{"value":"bkuhm6lo"}}
+{"time":"2025-01-10T08:37:02.558458443+08:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2025-01-10T08:37:10.014664761+08:00","level":"INFO","msg":"stream: closing","id":"bkuhm6lo"}
+{"time":"2025-01-10T08:37:10.014695128+08:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2025-01-10T08:37:10.015264513+08:00","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2025-01-10T08:37:11.446072894+08:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2025-01-10T08:37:11.685593476+08:00","level":"INFO","msg":"handler: closed","stream_id":{"value":"bkuhm6lo"}}
+{"time":"2025-01-10T08:37:11.685645635+08:00","level":"INFO","msg":"writer: Close: closed","stream_id":{"value":"bkuhm6lo"}}
+{"time":"2025-01-10T08:37:11.685677094+08:00","level":"INFO","msg":"sender: closed","stream_id":"bkuhm6lo"}
+{"time":"2025-01-10T08:37:11.685704836+08:00","level":"INFO","msg":"stream: closed","id":"bkuhm6lo"}

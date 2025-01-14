@@ -1,0 +1,16 @@
+{"time":"2025-01-09T23:17:17.753748867+08:00","level":"INFO","msg":"using version","core version":"0.18.5"}
+{"time":"2025-01-09T23:17:17.753768204+08:00","level":"INFO","msg":"created symlink","path":"/hdda/models/my_own_models/architectural_and_learning_on_loss_landscape/experiments/basic_training/outputs/2025-01-09/23-17-11/wandb/run-20250109_231717-2j6v177s/logs/debug-core.log"}
+{"time":"2025-01-09T23:17:17.860570556+08:00","level":"INFO","msg":"created new stream","id":"2j6v177s"}
+{"time":"2025-01-09T23:17:17.860595182+08:00","level":"INFO","msg":"stream: started","id":"2j6v177s"}
+{"time":"2025-01-09T23:17:17.860647772+08:00","level":"INFO","msg":"sender: started","stream_id":"2j6v177s"}
+{"time":"2025-01-09T23:17:17.860630699+08:00","level":"INFO","msg":"writer: Do: started","stream_id":{"value":"2j6v177s"}}
+{"time":"2025-01-09T23:17:17.860668771+08:00","level":"INFO","msg":"handler: started","stream_id":{"value":"2j6v177s"}}
+{"time":"2025-01-09T23:17:18.180248002+08:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2025-01-09T23:17:21.94698353+08:00","level":"INFO","msg":"stream: closing","id":"2j6v177s"}
+{"time":"2025-01-09T23:17:21.947020069+08:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2025-01-09T23:17:21.947718729+08:00","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2025-01-09T23:17:23.203461085+08:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2025-01-09T23:17:23.449317648+08:00","level":"INFO","msg":"handler: closed","stream_id":{"value":"2j6v177s"}}
+{"time":"2025-01-09T23:17:23.449369426+08:00","level":"INFO","msg":"writer: Close: closed","stream_id":{"value":"2j6v177s"}}
+{"time":"2025-01-09T23:17:23.449397449+08:00","level":"INFO","msg":"sender: closed","stream_id":"2j6v177s"}
+{"time":"2025-01-09T23:17:23.449426704+08:00","level":"INFO","msg":"stream: closed","id":"2j6v177s"}

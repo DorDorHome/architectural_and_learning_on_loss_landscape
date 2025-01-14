@@ -1,0 +1,217 @@
+Epoch: 0, progress on batches: 100%|█| 782/782 [03:0
+Epoch: 1, progress on batches: 100%|██████████████████████████████████| 782/782 [03:01<00:00,  4.30it/s]
+Epoch: 0, Accuracy: 0.09846, Loss: 71936543.98640746, loss by batch: 71867551.1395226
+Epoch: 2, progress on batches: 100%|██████████████████████████████████| 782/782 [03:01<00:00,  4.30it/s]
+Epoch: 1, Accuracy: 0.09704, Loss: 2.446134110031128, loss by batch: 2.4460028416055546
+Epoch: 3, progress on batches: 100%|██████████████████████████████████| 782/782 [03:01<00:00,  4.30it/s]
+Epoch: 2, Accuracy: 0.09782, Loss: 2.407899909210205, loss by batch: 2.4078159082271253
+Epoch: 4, progress on batches: 100%|██████████████████████████████████| 782/782 [03:01<00:00,  4.31it/s]
+Epoch: 3, Accuracy: 0.0985, Loss: 18792.66032558258, loss by batch: 18774.6388884859
+Epoch: 5, progress on batches: 100%|██████████████████████████████████| 782/782 [03:01<00:00,  4.32it/s]
+Epoch: 4, Accuracy: 0.0993, Loss: 2.3726857958221435, loss by batch: 2.3726140400942635
+Epoch: 6, progress on batches: 100%|██████████████████████████████████| 782/782 [03:01<00:00,  4.31it/s]
+Epoch: 5, Accuracy: 0.10004, Loss: 529645.0906688541, loss by batch: 529137.1468570613
+Epoch: 7, progress on batches: 100%|██████████████████████████████████| 782/782 [03:01<00:00,  4.31it/s]
+Epoch: 6, Accuracy: 0.09776, Loss: 17.72996116912842, loss by batch: 17.715171630730104
+Epoch: 8, progress on batches: 100%|██████████████████████████████████| 782/782 [03:01<00:00,  4.31it/s]
+Epoch: 7, Accuracy: 0.09792, Loss: 11.096811086502075, loss by batch: 11.088369977138841
+Epoch: 9, progress on batches: 100%|██████████████████████████████████| 782/782 [03:01<00:00,  4.31it/s]
+Epoch: 8, Accuracy: 0.1006, Loss: 528203614.9156813, loss by batch: 527697025.77317166
+Epoch: 10, progress on batches: 100%|█████████████████████████████████| 782/782 [03:01<00:00,  4.30it/s]
+Epoch: 9, Accuracy: 0.09994, Loss: 1861659.5645749776, loss by batch: 1859874.0876717225
+Epoch: 11, progress on batches: 100%|█████████████████████████████████| 782/782 [03:01<00:00,  4.31it/s]
+Epoch: 10, Accuracy: 0.10038, Loss: 578997150.8013483, loss by batch: 578441846.6307967
+Epoch: 12, progress on batches: 100%|█████████████████████████████████| 782/782 [03:01<00:00,  4.31it/s]
+Epoch: 11, Accuracy: 0.09922, Loss: 948.059514699707, loss by batch: 947.1613311170007
+Epoch: 13, progress on batches: 100%|█████████████████████████████████| 782/782 [03:01<00:00,  4.31it/s]
+Epoch: 12, Accuracy: 0.09934, Loss: 5833694499619.712, loss by batch: 5828099524076.6
+Epoch: 14, progress on batches: 100%|█████████████████████████████████| 782/782 [03:01<00:00,  4.32it/s]
+Epoch: 13, Accuracy: 0.09842, Loss: 49023627233589.914, loss by batch: 48976609688289.16
+Epoch: 15, progress on batches: 100%|█████████████████████████████████| 782/782 [03:01<00:00,  4.32it/s]
+Epoch: 14, Accuracy: 0.09956, Loss: 149408691.83144054, loss by batch: 149265397.05248642
+Epoch: 16, progress on batches: 100%|█████████████████████████████████| 782/782 [03:01<00:00,  4.32it/s]
+Epoch: 15, Accuracy: 0.0985, Loss: 386324.4796679959, loss by batch: 385953.9660505855
+Epoch: 17, progress on batches: 100%|█████████████████████████████████| 782/782 [03:01<00:00,  4.32it/s]
+Epoch: 16, Accuracy: 0.09876, Loss: 1198.4934636535645, loss by batch: 1197.3480005316112
+Epoch: 18, progress on batches: 100%|█████████████████████████████████| 782/782 [03:01<00:00,  4.32it/s]
+Epoch: 17, Accuracy: 0.09912, Loss: 1706.5124285999298, loss by batch: 1704.877942894121
+Epoch: 19, progress on batches: 100%|█████████████████████████████████| 782/782 [03:01<00:00,  4.32it/s]
+Epoch: 18, Accuracy: 0.09846, Loss: 6257640116.522159, loss by batch: 6251638543.522591
+Epoch: 20, progress on batches: 100%|█████████████████████████████████| 782/782 [03:00<00:00,  4.32it/s]
+Epoch: 19, Accuracy: 0.09856, Loss: 1543.4781597442627, loss by batch: 1546.9530813486679
+Epoch: 21, progress on batches: 100%|█████████████████████████████████| 782/782 [03:01<00:00,  4.32it/s]
+Epoch: 20, Accuracy: 0.09994, Loss: 190.90477670623778, loss by batch: 190.72387689031908
+Epoch: 22, progress on batches: 100%|█████████████████████████████████| 782/782 [03:01<00:00,  4.32it/s]
+Epoch: 21, Accuracy: 0.10084, Loss: 250380005.40471634, loss by batch: 250139871.13065365
+Epoch: 23, progress on batches: 100%|█████████████████████████████████| 782/782 [03:01<00:00,  4.32it/s]
+Epoch: 22, Accuracy: 0.09972, Loss: 113.03482565925599, loss by batch: 112.92861182945768
+Epoch: 24, progress on batches: 100%|█████████████████████████████████| 782/782 [03:01<00:00,  4.32it/s]
+Epoch: 23, Accuracy: 0.0982, Loss: 2.4296876530456544, loss by batch: 2.429572434986339
+Epoch: 25, progress on batches: 100%|█████████████████████████████████| 782/782 [03:01<00:00,  4.31it/s]
+Epoch: 24, Accuracy: 0.0969, Loss: 2.3559750453186035, loss by batch: 2.3559315259499316
+Epoch: 26, progress on batches: 100%|█████████████████████████████████| 782/782 [03:01<00:00,  4.31it/s]
+Epoch: 25, Accuracy: 0.09918, Loss: 2.5969242961120607, loss by batch: 2.5966271530941625
+Epoch: 27, progress on batches: 100%|█████████████████████████████████| 782/782 [03:01<00:00,  4.31it/s]
+Epoch: 26, Accuracy: 0.09944, Loss: 2.4156256215667726, loss by batch: 2.4154688220499727
+Epoch: 28, progress on batches: 100%|█████████████████████████████████| 782/782 [03:01<00:00,  4.31it/s]
+Epoch: 27, Accuracy: 0.10094, Loss: 2.351436430969238, loss by batch: 2.351380346681151
+Epoch: 29, progress on batches: 100%|█████████████████████████████████| 782/782 [03:01<00:00,  4.30it/s]
+Epoch: 28, Accuracy: 0.10002, Loss: 4.537785525360108, loss by batch: 4.535896582981509
+Epoch: 30, progress on batches: 100%|█████████████████████████████████| 782/782 [03:01<00:00,  4.30it/s]
+Epoch: 29, Accuracy: 0.10068, Loss: 2.522459403076172, loss by batch: 2.522264123267835
+Epoch: 31, progress on batches: 100%|█| 782/782 [03:01<00:00█████████▉| 781/782 [03:01<00:00,  4.31it/s]
+Epoch: 30, Accuracy: 0.09892, Loss: 2.596953795852661, loss by batch: 2.596694230118676
+Epoch: 32, progress on batches: 100%|█| 782/782 [03:01<00:00
+Epoch: 31, Accuracy: 0.10116, Loss: 2.5625065591430665, loss by batch: 2.562239190806513
+Epoch: 33, progress on batches: 100%|█| 782/782 [03:01<00:00
+Epoch: 32, Accuracy: 0.09812, Loss: 2.3956083585357666, loss by batch: 2.3955231222045392
+Epoch: 34, progress on batches: 100%|█| 782/782 [03:01<00:00
+Epoch: 33, Accuracy: 0.09938, Loss: 20.625014093475343, loss by batch: 20.6073409462219
+Epoch: 35, progress on batches: 100%|█| 782/782 [03:01<00:00
+Epoch: 34, Accuracy: 0.10104, Loss: 15137371515970.281, loss by batch: 15122853579857.654
+Epoch: 36, progress on batches: 100%|█| 782/782 [03:01<00:00
+Epoch: 35, Accuracy: 0.102, Loss: 6155123892026.827, loss by batch: 6149220640212.225
+Epoch: 37, progress on batches: 100%|█| 782/782 [03:01<00:00
+Epoch: 36, Accuracy: 0.09868, Loss: 411.5990066661072, loss by batch: 411.2064614771577
+Epoch: 38, progress on batches: 100%|█| 782/782 [03:01<00:00
+Epoch: 37, Accuracy: 0.09902, Loss: 200.28577499900817, loss by batch: 200.09589797182156
+Epoch: 39, progress on batches: 100%|█| 782/782 [03:01<00:00
+Epoch: 38, Accuracy: 0.09888, Loss: 111.11315881347656, loss by batch: 111.00878392674429
+Epoch: 40, progress on batches: 100%|█| 782/782 [03:01<00:00
+Epoch: 39, Accuracy: 0.10078, Loss: 318141928255.09607, loss by batch: 317836804922.3728
+Epoch: 41, progress on batches: 100%|█| 782/782 [03:01<00:00
+Epoch: 40, Accuracy: 0.10046, Loss: 126.76982870758057, loss by batch: 126.83640473364564
+Epoch: 42, progress on batches: 100%|█| 782/782 [03:01<00:00
+Epoch: 41, Accuracy: 0.099, Loss: 359222128925.2657, loss by batch: 358877606423.10175
+Epoch: 43, progress on batches: 100%|██████| 782/782 [03:02<00:00,  4.29it/s]
+Epoch: 42, Accuracy: 0.09824, Loss: 2579212828235.512, loss by batch: 2576739158643.217
+Epoch: 44, progress on batches: 100%|██████| 782/782 [03:02<00:00,  4.29it/s]
+Epoch: 43, Accuracy: 0.09924, Loss: 558039003629.1439, loss by batch: 557503799981.1642
+Epoch: 45, progress on batches: 100%|██████| 782/782 [03:01<00:00,  4.30it/s]
+Epoch: 44, Accuracy: 0.09872, Loss: 1546.3123488786316, loss by batch: 1544.831529637432
+Epoch: 46, progress on batches: 100%|██████| 782/782 [03:01<00:00,  4.30it/s]
+Epoch: 45, Accuracy: 0.0995, Loss: 126.63980317108154, loss by batch: 126.52055898956631
+Epoch: 47, progress on batches: 100%|██████| 782/782 [03:01<00:00,  4.30it/s]
+Epoch: 46, Accuracy: 0.1002, Loss: 62351317048433.18, loss by batch: 62291517191928.93
+Epoch: 48, progress on batches: 100%|██████| 782/782 [03:01<00:00,  4.30it/s]
+Epoch: 47, Accuracy: 0.09992, Loss: 2576921020147292.0, loss by batch: 2574449548581041.0
+Epoch: 49, progress on batches: 100%|██████| 782/782 [03:01<00:00,  4.30it/s]
+Epoch: 48, Accuracy: 0.09928, Loss: 10454.005211987382, loss by batch: 10443.981217684342
+Epoch: 50, progress on batches: 100%|██████| 782/782 [03:02<00:00,  4.30it/s]
+Epoch: 49, Accuracy: 0.09926, Loss: 2516.4780601622774, loss by batch: 2514.0667610229434
+Epoch: 51, progress on batches: 100%|██████| 782/782 [03:01<00:00,  4.30it/s]
+Epoch: 50, Accuracy: 0.09908, Loss: 619026424503.0779, loss by batch: 618432729083.1603
+Epoch: 52, progress on batches: 100%|██████| 782/782 [03:02<00:00,  4.29it/s]
+Epoch: 51, Accuracy: 0.0987, Loss: 2623207311272970.0, loss by batch: 2620691447483386.0
+Epoch: 53, progress on batches: 100%|██████| 782/782 [03:02<00:00,  4.29it/s]
+Epoch: 52, Accuracy: 0.0986, Loss: 4420.940199559173, loss by batch: 4416.702369819517
+Epoch: 54, progress on batches: 100%|██████| 782/782 [03:01<00:00,  4.30it/s]
+Epoch: 53, Accuracy: 0.1009, Loss: 1578.2008820359802, loss by batch: 1576.6894628678442
+Epoch: 55, progress on batches: 100%|██████| 782/782 [03:02<00:00,  4.30it/s]
+Epoch: 54, Accuracy: 0.0985, Loss: 2179.313084970398, loss by batch: 2177.2251402850043
+Epoch: 56, progress on batches: 100%|██████| 782/782 [03:05<00:00,  4.21it/s]
+Epoch: 55, Accuracy: 0.09838, Loss: 971270968686050.5, loss by batch: 970339442820942.4
+Epoch: 57, progress on batches: 100%|███████████████| 782/782 [04:27<00:00,  2.92it/s]
+Epoch: 56, Accuracy: 0.10006, Loss: 1949.6931694946288, loss by batch: 1949.6072878264406
+Epoch: 58, progress on batches: 100%|███████████████| 782/782 [03:53<00:00,  3.34it/s]
+Epoch: 57, Accuracy: 0.10154, Loss: 360.25946707740786, loss by batch: 359.9161555639008
+Epoch: 59, progress on batches: 100%|███████████████| 782/782 [03:02<00:00,  4.29it/s]
+Epoch: 58, Accuracy: 0.0982, Loss: 14.814750896682739, loss by batch: 14.80274908560926
+Epoch: 60, progress on batches: 100%|███████████████| 782/782 [03:02<00:00,  4.29it/s]
+Epoch: 59, Accuracy: 0.0995, Loss: 563.6053055125427, loss by batch: 563.0669630525057
+Epoch: 61, progress on batches: 100%|███████████████| 782/782 [03:02<00:00,  4.28it/s]
+Epoch: 60, Accuracy: 0.09792, Loss: 391.7379952500153, loss by batch: 391.3644952017938
+Epoch: 62, progress on batches: 100%|█| 782/782 [03:02<00:00,  03:02<00:00,  4.29it/s]
+Epoch: 61, Accuracy: 0.09748, Loss: 23452989840168.266, loss by batch: 23430496563467.34
+Epoch: 63, progress on batches: 100%|█| 782/782 [03:02<00:00,  
+Epoch: 62, Accuracy: 0.09766, Loss: 3329033532684060.5, loss by batch: 3325840725587496.5
+Epoch: 64, progress on batches: 100%|█| 782/782 [03:02<00:00,  
+Epoch: 63, Accuracy: 0.1012, Loss: 234.25941374801636, loss by batch: 234.03695325991686
+Epoch: 65, progress on batches: 100%|█| 782/782 [03:02<00:00,  
+Epoch: 64, Accuracy: 0.09956, Loss: 995.8866336280822, loss by batch: 994.9337065466834
+Epoch: 66, progress on batches: 100%|█| 782/782 [03:02<00:00,  
+Epoch: 65, Accuracy: 0.10078, Loss: 125.1585945968628, loss by batch: 125.04076475103189
+Epoch: 67, progress on batches: 100%|█| 782/782 [03:02<00:00,  
+Epoch: 66, Accuracy: 0.0982, Loss: 13688538709.615953, loss by batch: 13675410315.715076
+Epoch: 68, progress on batches: 100%|█| 782/782 [03:02<00:00,  
+Epoch: 67, Accuracy: 0.10036, Loss: 7203774355973.882, loss by batch: 7196865365223.269
+Epoch: 69, progress on batches: 100%|█| 782/782 [03:02<00:00,  
+Epoch: 68, Accuracy: 0.09836, Loss: 91.99077595245362, loss by batch: 91.90475342371275
+Epoch: 70, progress on batches: 100%|█| 782/782 [03:02<00:00,  
+Epoch: 69, Accuracy: 0.09764, Loss: 53.35324505462646, loss by batch: 53.66334660126425
+Epoch: 71, progress on batches: 100%|█| 782/782 [03:02<00:00,  
+Epoch: 70, Accuracy: 0.0996, Loss: 6.447526541951746e+16, loss by batch: 6.441342852813045e+16
+Epoch: 72, progress on batches: 100%|█| 782/782 [03:02<00:00,  
+Epoch: 71, Accuracy: 0.09788, Loss: 360093587530284.5, loss by batch: 359748229230223.44
+Epoch: 73, progress on batches: 100%|█| 782/782 [03:02<00:00,  
+Epoch: 72, Accuracy: 0.09908, Loss: 67338114923693.04, loss by batch: 67273532332653.69
+Epoch: 74, progress on batches: 100%|█| 782/782 [03:02<00:00,  
+Epoch: 73, Accuracy: 0.0988, Loss: 172576988276189.2, loss by batch: 172411473261857.8
+Epoch: 75, progress on batches: 100%|█| 782/782 [03:02<00:00,  
+Epoch: 74, Accuracy: 0.1011, Loss: 1082.7991400156402, loss by batch: 1081.7628720038383
+Epoch: 76, progress on batches: 100%|█| 782/782 [03:02<00:00,  
+Epoch: 75, Accuracy: 0.0981, Loss: 280.10249230529786, loss by batch: 279.8360512070644
+Epoch: 77, progress on batches: 100%|█| 782/782 [03:02<00:00,  
+Epoch: 76, Accuracy: 0.09896, Loss: 521836799827.06714, loss by batch: 521336316962.7851
+Epoch: 78, progress on batches: 100%|█| 782/782 [03:02<00:00,  
+Epoch: 77, Accuracy: 0.09972, Loss: 3834627891054.7373, loss by batch: 3830950178883.734
+Epoch: 79, progress on batches: 100%|█| 782/782 [03:02<00:00,  
+Epoch: 78, Accuracy: 0.09862, Loss: 57330379862.02454, loss by batch: 57275395482.36368
+Epoch: 80, progress on batches: 100%|█| 782/782 [03:02<00:00,  
+Epoch: 79, Accuracy: 0.09996, Loss: 8432517807011.324, loss by batch: 8424430353871.608
+Epoch: 81, progress on batches: 100%|█| 782/782 [03:02<00:00,  
+Epoch: 80, Accuracy: 0.10024, Loss: 112054872534.67216, loss by batch: 111947403027.76768
+Epoch: 82, progress on batches: 100%|█| 782/782 [03:02<00:00,  
+Epoch: 81, Accuracy: 0.09862, Loss: 6607606306.062661, loss by batch: 6601269087.740645
+Epoch: 83, progress on batches: 100%|█| 782/782 [03:02<00:00,  
+Epoch: 82, Accuracy: 0.09946, Loss: 5528034248951.725, loss by batch: 5522732425822.9375
+Epoch: 84, progress on batches: 100%|█| 782/782 [03:02<00:00,  
+Epoch: 83, Accuracy: 0.1002, Loss: 7665713063492.235, loss by batch: 7658361036896.825
+Epoch: 85, progress on batches: 100%|█| 782/782 [03:02<00:00,  
+Epoch: 84, Accuracy: 0.10106, Loss: 9.36488466795016e+16, loss by batch: 9.355903001069133e+16
+Epoch: 86, progress on batches: 100%|█| 782/782 [03:02<00:00,  
+Epoch: 85, Accuracy: 0.09736, Loss: 3.216706770405525e+17, loss by batch: 3.213621693579689e+17
+Epoch: 87, progress on batches: 100%|█| 782/782 [03:02<00:00,  
+Epoch: 86, Accuracy: 0.1003, Loss: 394193531393581.9, loss by batch: 393815468543779.9
+Epoch: 88, progress on batches: 100%|█| 782/782 [03:02<00:00,  
+Epoch: 87, Accuracy: 0.09932, Loss: 137293562270351.89, loss by batch: 137161886858967.28
+Epoch: 89, progress on batches: 100%|█| 782/782 [03:02<00:00,  
+Epoch: 88, Accuracy: 0.09886, Loss: 36454715781536.125, loss by batch: 36419752818830.055
+Epoch: 90, progress on batches: 100%|█| 782/782 [03:02<00:00,  
+Epoch: 89, Accuracy: 0.09944, Loss: 558992416211331.6, loss by batch: 558456298165093.1
+Epoch: 91, progress on batches: 100%|█| 782/782 [03:02<00:00,  
+Epoch: 90, Accuracy: 0.09878, Loss: 1988928053.3856878, loss by batch: 1987020513.694753
+Epoch: 92, progress on batches: 100%|█| 782/782 [03:01<00:00,  
+Epoch: 91, Accuracy: 0.10018, Loss: 4.316374610253479e+16, loss by batch: 4.312234864783287e+16
+Epoch: 93, progress on batches: 100%|█| 782/782 [03:01<00:00,  
+Epoch: 92, Accuracy: 0.1011, Loss: 3.3556371111389184e+19, loss by batch: 3.35250734084335e+19
+Epoch: 94, progress on batches: 100%|█| 782/782 [03:01<00:00,  
+Epoch: 93, Accuracy: 0.1012, Loss: 4.077998715956592e+17, loss by batch: 4.074087591868398e+17
+Epoch: 95, progress on batches: 100%|█| 782/782 [03:01<00:00,  
+Epoch: 94, Accuracy: 0.09856, Loss: 1.2562562561960443e+17, loss by batch: 1.2550514068454726e+17
+Epoch: 96, progress on batches: 100%|█| 782/782 [03:01<00:00,  
+Epoch: 95, Accuracy: 0.09892, Loss: 3.495321891533022e+16, loss by batch: 3.4919696007163344e+16
+Epoch: 97, progress on batches:   3%| | 25/782 [00:06<03:11,  3
+Epoch: 96, Accuracy: 0.09852, Loss: 1.0521960102099826e+16, loss by batch: 1.0511868708140012e+16
+Epoch:  97%|███▉| 97/100 [4:56:37<09:10, 183.48s/it]6<02:55,  4
+Traceback (most recent call last):
+  File "/hdda/models/my_own_models/architectural_and_learning_on_loss_landscape/experiments/basic_training/single_loss_gradient_expr.py", line 142, in <module>
+    # with torch.no_grad():
+  File "/home/sfchan/anaconda3/envs/loss_landscape/lib/python3.9/site-packages/hydra/main.py", line 94, in decorated_main
+    _run_hydra(
+  File "/home/sfchan/anaconda3/envs/loss_landscape/lib/python3.9/site-packages/hydra/_internal/utils.py", line 394, in _run_hydra
+    _run_app(
+  File "/home/sfchan/anaconda3/envs/loss_landscape/lib/python3.9/site-packages/hydra/_internal/utils.py", line 457, in _run_app
+    run_and_report(
+  File "/home/sfchan/anaconda3/envs/loss_landscape/lib/python3.9/site-packages/hydra/_internal/utils.py", line 220, in run_and_report
+    return func()
+  File "/home/sfchan/anaconda3/envs/loss_landscape/lib/python3.9/site-packages/hydra/_internal/utils.py", line 458, in <lambda>
+    lambda: hydra.run(
+  File "/home/sfchan/anaconda3/envs/loss_landscape/lib/python3.9/site-packages/hydra/_internal/hydra.py", line 119, in run
+    ret = run_job(
+  File "/home/sfchan/anaconda3/envs/loss_landscape/lib/python3.9/site-packages/hydra/core/utils.py", line 186, in run_job
+    ret.return_value = task_function(task_cfg)
+  File "/hdda/models/my_own_models/architectural_and_learning_on_loss_landscape/experiments/basic_training/single_loss_gradient_expr.py", line 112, in main
+    # alternative way to track loss, by batch loss
+  File "/hdda/models/my_own_models/architectural_and_learning_on_loss_landscape/src/algos/supervised/basic_backprop.py", line 46, in learn
+KeyboardInterrupt

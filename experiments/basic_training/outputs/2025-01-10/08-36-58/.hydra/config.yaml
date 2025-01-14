@@ -1,0 +1,35 @@
+use_wandb: true
+runs: 1
+seed: 42
+device: cuda:0
+epochs: 100
+batch_size: 128
+data:
+  dataset: CIFAR10
+  use_torchvision: true
+  data_path: /hdda/datasets
+  num_classes: 10
+net:
+  type: resnet_custom
+  netparams:
+    pretrained: false
+    num_classes: ${data.num_classes}
+    initialization: kaiming
+learner:
+  type: backprop
+  device: ${device}
+  opt: sgd
+  loss: cross_entropy
+  step_size: 0.01
+  beta_1: 0.95
+  beta_2: 0.999
+  weight_decay: 0.01
+  to_perturb: false
+  perturb_scale: 0.05
+  momentum: 0.9
+evaluation:
+  eval_freq_epoch: 1
+  eval_metrics:
+  - accuracy
+  - loss
+  save_dir: /results/results_raw

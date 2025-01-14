@@ -1,0 +1,53 @@
+runs: 1
+run_id: 0
+seed: 42
+device: cuda:0
+epochs: 250
+batch_size: 256
+test: false
+use_wandb: true
+log_freq_every_n_task: 1
+wandb:
+  project: shifting_tasks_on_Imagenet
+  entity: continual_learning
+  tags:
+  - shifting_tasks
+  - Imagenet
+  notes: basic training on Imagenet with shifting tasks
+project_name: shifting_tasks_on_Imagenet
+task_id: 0
+train_size_per_class: 600
+val_size_per_class: 100
+num_tasks: 5000
+num_classes_per_task: 2
+new_heads_for_new_task: false
+data:
+  dataset: imagenet_for_plasticity
+  use_torchvision: false
+  data_path: /hdda/datasets
+  num_classes: 1000
+net:
+  type: ConvNet
+  netparams:
+    pretrained: false
+    num_classes: ${num_classes_per_task}
+    initialization: kaiming
+learner:
+  type: backprop
+  device: ${device}
+  opt: sgd
+  loss: cross_entropy
+  step_size: 0.01
+  beta_1: 0.95
+  beta_2: 0.999
+  weight_decay: 0.01
+  to_perturb: false
+  perturb_scale: 0.05
+  momentum: 0.9
+evaluation:
+  use_test_set: true
+  eval_freq_epoch: 50
+  eval_metrics:
+  - accuracy
+  - loss
+  save_dir: /results/results_raw

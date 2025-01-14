@@ -1,9 +1,9 @@
-src/models/__pycache__/
-src/data_loading/__pycache__/
-src/algos/supervised/__pycache__/
-outputs
-outputs/*
-configs/__pycache__/
+/rc/models/__pycache__/
+/src/data_loading/__pycache__/
+/src/algos/supervised/__pycache__/
+/outputs
+/outputs/*
+/configs/__pycache__/
 
 __pycache__/
 *.pyc

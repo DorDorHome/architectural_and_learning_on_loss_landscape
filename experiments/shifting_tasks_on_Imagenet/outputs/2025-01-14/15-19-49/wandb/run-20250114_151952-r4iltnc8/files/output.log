@@ -1,0 +1,31 @@
+  0%|                                                     | 0/5000 [00:02<?, ?it/s]
+Traceback (most recent call last):
+  File "/hdda/models/my_own_models/architectural_and_learning_on_loss_landscape/experiments/shifting_tasks_on_Imagenet/train_on_shifting_tasks.py", line 224, in <module>
+    main()
+  File "/home/sfchan/anaconda3/envs/loss_landscape/lib/python3.9/site-packages/hydra/main.py", line 94, in decorated_main
+    _run_hydra(
+  File "/home/sfchan/anaconda3/envs/loss_landscape/lib/python3.9/site-packages/hydra/_internal/utils.py", line 394, in _run_hydra
+    _run_app(
+  File "/home/sfchan/anaconda3/envs/loss_landscape/lib/python3.9/site-packages/hydra/_internal/utils.py", line 457, in _run_app
+    run_and_report(
+  File "/home/sfchan/anaconda3/envs/loss_landscape/lib/python3.9/site-packages/hydra/_internal/utils.py", line 220, in run_and_report
+    return func()
+  File "/home/sfchan/anaconda3/envs/loss_landscape/lib/python3.9/site-packages/hydra/_internal/utils.py", line 458, in <lambda>
+    lambda: hydra.run(
+  File "/home/sfchan/anaconda3/envs/loss_landscape/lib/python3.9/site-packages/hydra/_internal/hydra.py", line 119, in run
+    ret = run_job(
+  File "/home/sfchan/anaconda3/envs/loss_landscape/lib/python3.9/site-packages/hydra/core/utils.py", line 186, in run_job
+    ret.return_value = task_function(task_cfg)
+  File "/hdda/models/my_own_models/architectural_and_learning_on_loss_landscape/experiments/shifting_tasks_on_Imagenet/train_on_shifting_tasks.py", line 153, in main
+    loss, output = learner.learn(x_batch, y_batch)
+  File "/hdda/models/my_own_models/architectural_and_learning_on_loss_landscape/src/algos/supervised/continuous_backprop_with_GnT.py", line 206, in learn
+    output, features = self.net.predict(x=x)
+  File "/hdda/models/my_own_models/architectural_and_learning_on_loss_landscape/src/models/conv_net.py", line 54, in predict
+    x4 = self.layers[7](self.layers[6](x3))
+  File "/home/sfchan/anaconda3/envs/loss_landscape/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1051, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/home/sfchan/anaconda3/envs/loss_landscape/lib/python3.9/site-packages/torch/nn/modules/linear.py", line 96, in forward
+    return F.linear(input, self.weight, self.bias)
+  File "/home/sfchan/anaconda3/envs/loss_landscape/lib/python3.9/site-packages/torch/nn/functional.py", line 1847, in linear
+    return torch._C._nn.linear(input, weight, bias)
+KeyboardInterrupt
