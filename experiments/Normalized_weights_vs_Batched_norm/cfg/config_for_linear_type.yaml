@@ -31,7 +31,7 @@ data:
 
 # network architecture:
 net:
-  type: "deep_ffnn_weight_norm_multi_channel_rescale" #  #"ffnn_normal_BN" #"deep_ffnn_weight_norm_multi_channel_rescale" #"deep_ffnn_weight_batch_norm" # "deep_ffnn_weight_norm_single_rescale" # options: "deep_ffnn_weight_batch_norm" , "deep_ffnn_weight_norm" # "deep_ffnn" # "vgg_custom" #options: 'ConvNet', "vgg_custom" , "resnet_custom" 
+  type: "deep_ffnn_weight_batch_norm" #  #"ffnn_normal_BN" #"deep_ffnn_weight_norm_multi_channel_rescale" #"deep_ffnn_weight_batch_norm" # "deep_ffnn_weight_norm_single_rescale" # options: "deep_ffnn_weight_batch_norm" , "deep_ffnn_weight_norm" # "deep_ffnn" # "vgg_custom" #options: 'ConvNet', "vgg_custom" , "resnet_custom" 
   network_class: "fc" # 'fc' for fully connected, 'conv' for convolutional
   netparams:
     #pretrained: False
@@ -41,7 +41,7 @@ net:
     num_hidden_layers: 2
     act_type: 'relu'
     initialization: 'kaiming'
-    alpha_for_EMA: 0.9 # for EMA, only applicable for network that depends on EMA on batch
+    alpha_for_EMA: 0.8 # for EMA, only applicable for network that depends on EMA on batch
 
 # learning algorithm:
 learner:

@@ -10,3 +10,6 @@ from tqdm import tqdm
 # models:
 from src.models.VGG16 import VGG16
 from src.models.conv_net import ConvNet
+
+# import tracking tools for l2 of gradients
+

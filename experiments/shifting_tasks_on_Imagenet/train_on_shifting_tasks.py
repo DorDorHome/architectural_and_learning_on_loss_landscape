@@ -60,15 +60,17 @@ def compute_accuracy(output, target):
         total = target.size(0)
         return correct / total
 
-@hydra.main(config_path="cfg", config_name="shifting_tasks_config.yaml")
+@hydra.main(config_path="cfg", config_name="shifting_tasks_linear_config.yaml")
 def main(cfg :ExperimentConfig):
     print(OmegaConf.to_yaml(cfg))
     
     #setup network architecture, 
     
     #net = ConvNet(cfg.net.netparams)
-    
-    assert cfg.net.netparams.num_classes == cfg.num_classes_per_task
+    if cfg.net.network_class == 'fc':
+        assert cfg.net.netparams.num_outputs == cfg.num_classes_per_task
+    elif cfg.net.network_class == 'conv':
+        assert cfg.net.netparams.num_classes == cfg.num_classes_per_task
     
     net = model_factory(cfg.net)
     # set device for net
@@ -150,6 +152,8 @@ def main(cfg :ExperimentConfig):
             for batch_idx in range(0, train_examples_per_epoch, cfg.batch_size):
                 x_batch = x_train[batch_idx: batch_idx+cfg.batch_size]
                 y_batch = y_train[batch_idx: batch_idx+cfg.batch_size]
+                if cfg.net.network_class == 'fc':
+                    x_batch = x_batch.flatten(start_dim=1)
                 loss, output = learner.learn(x_batch, y_batch)
                 with torch.no_grad():
                     running_loss+= loss*x_batch.size(0)
@@ -185,7 +189,8 @@ def main(cfg :ExperimentConfig):
                         for batch_idx in range(0, x_test.size(0), cfg.batch_size):
                             x_test_batch = x_test[batch_idx: batch_idx+cfg.batch_size]
                             y_test_batch = y_test[batch_idx: batch_idx+cfg.batch_size]
-                            
+                            if cfg.net.network_class == 'fc':
+                                x_test_batch = x_test_batch.flatten(start_dim=1)
                             test_output, _ = net.predict(x_test_batch)
                             
                             # test_running_loss +=

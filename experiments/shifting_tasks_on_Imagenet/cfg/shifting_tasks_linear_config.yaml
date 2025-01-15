@@ -36,17 +36,23 @@ data:
 
 
 # network architecture:
+# network architecture:
 net:
-  type: 'ConvNet' # "vgg_custom" #options: 'ConvNet', vgg_custom, "resnet_custom"
+  type: "deep_ffnn" #  #"ffnn_normal_BN" #"deep_ffnn_weight_norm_multi_channel_rescale" #"deep_ffnn_weight_batch_norm" # "deep_ffnn_weight_norm_single_rescale" # options: "deep_ffnn_weight_batch_norm" , "deep_ffnn_weight_norm" # "deep_ffnn" # "vgg_custom" #options: 'ConvNet', "vgg_custom" , "resnet_custom" 
   network_class: "fc" # 'fc' for fully connected, 'conv' for convolutional
-  device: ${device}
   netparams:
-    pretrained: False
-    num_classes: ${num_classes_per_task}
+    #pretrained: False
+    input_size: 3072 # need to match the dataset used. # 3072 # 224*224*3 for Imagenet, 784 for MNIST, 3072 for CIFAR10
+    num_features: 2000
+    num_outputs: ${num_classes_per_task} #$data.num_classes} 
+    num_hidden_layers: 4 # 2 is enough for MNIST
+    act_type: 'relu'
     initialization: 'kaiming'
+    alpha_for_EMA: 0.8 # for EMA, only applicable for network that depends on EMA on batch
+
 # learning algorithm:
 learner:
-  type: 'cbp' # Choices: 'backprop', 'cbp' 'continual_backprop'
+  type: 'backprop' # Choices: 'backprop', 'cbp' 'continual_backprop'
   
   # needed only for cbp:
   neurons_replacement_rate: 0.001
