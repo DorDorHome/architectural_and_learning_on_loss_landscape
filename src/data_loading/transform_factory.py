@@ -10,6 +10,10 @@ import pathlib
 PROJECT_ROOT = pathlib.Path(__file__).resolve().parent.parent.parent
 sys.path.append(str(PROJECT_ROOT))
 
+deep_ffnn_series = ['deep_ffnn',
+                    'deep_ffnn_weight_norm',
+                    "deep_ffnn_weight_norm_multi_channel_rescale",
+                    'deep_ffnn_weight_batch_norm']
 
 
 def transform_factory(dataset_name: str, model_name: str):
@@ -70,6 +74,9 @@ def transform_factory(dataset_name: str, model_name: str):
                 transforms.ToTensor(),
                 transforms.Normalize((0.5,), (0.5,))
             ])
+        if model_name in deep_ffnn_series:
+            transform = transforms.Compose([transforms.ToTensor()])
+            return transform
     else:
         raise ValueError(f"Unsupported dataset {dataset_name}")
     

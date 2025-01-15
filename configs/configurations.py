@@ -31,9 +31,9 @@ class NetParams:
 
 @dataclass
 class LinearNetParams:
-    input_size: Optional[Union[None, int]] = 784 #784 for MINST  
-    num_features = 2000
-    num_outputs = 10
+    input_size: Optional[Union[None, int]] = 784  # 784 for MNIST
+    num_features: int = 2000
+    num_outputs: int = 10
     num_hidden_layers: Optional[Union[None, int]] = 2
     act_type: Optional[Union[None, str]] = 'relu'
     class Config:
@@ -119,18 +119,16 @@ class ExperimentConfig:
     device: str = 'cuda'
     epochs: int = 10
     batch_size: int = 128
-    data: DataConfig = DataConfig()
-    net: NetConfig = NetConfig(type='ConvNet')
-    learner: Union[BackpropConfig] = BackpropConfig()
-    evaluation: Union[EvaluationConfig, None] = EvaluationConfig()
-    
+    data: DataConfig = field(default_factory=DataConfig)
+    net: NetConfig = field(default_factory=lambda: NetConfig(type='ConvNet'))
+    learner: Union[BackpropConfig, ContinuousBackpropConfig] = field(default_factory=BackpropConfig)
+    evaluation: Union[EvaluationConfig, None] = field(default_factory=EvaluationConfig)
     
     def __post_init__(self):
-        if self.net.num_classes != self.data.num_classes:
+        if self.net.params.num_classes != self.data.num_classes:
             raise ValueError("net.num_classes must match data.num_classes")
     class Config:
         version_base = "1.1"
 
 # Register the configurations with Hydra
 cs = ConfigStore.instance()
-cs.store(name="experiment_config", node=ExperimentConfig)

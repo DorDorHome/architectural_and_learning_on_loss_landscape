@@ -51,10 +51,26 @@ def model_factory(config: NetConfig) -> Any:
             raise ValueError("config.params cannot be None for resnet_custom")
         return ResNet_custom(config.netparams)
     if model_type == "deep_ffnn":
-        from src.models.deep_ffnn import DeepFFNN:
+        from src.models.deep_ffnn import DeepFFNN
         if config.netparams is None:
             raise ValueError("config.params cannot be None for deep_ffnn")
         return DeepFFNN(config.netparams)
+    if model_type == "deep_ffnn_weight_norm_single_rescale":
+        from src.models.deep_ffnn_with_normalized_weights import DeepFFNN_weight_norm
+        if config.netparams is None:
+            raise ValueError("config.params cannot be None for weight_norm_deep_ffnn")
+        return DeepFFNN_weight_norm(config.netparams)
+    if model_type== "deep_ffnn_weight_norm_multi_channel_rescale":
+        from src.models.deep_ffnn_with_normalized_weights import DeepFFNN_weight_norm_multi_channel_recale
+        if config.netparams is None:
+            raise ValueError("config.params cannot be None for weight_norm_deep_ffnn")
+        return DeepFFNN_weight_norm_multi_channel_recale(config.netparams)
+    if model_type == "deep_ffnn_weight_batch_norm":
+        from src.models.deep_ffnn_with_normalized_weights import DeepFFNN_EMA_batch_weight_norm
+        return DeepFFNN_EMA_batch_weight_norm(config.netparams)
+    if model_type == "ffnn_normal_BN":
+        from src.models.deep_ffnn import FFNN_with_BN
+        return FFNN_with_BN(config.netparams)
     
     else:
         # If the model type is not supported, raise a ValueError

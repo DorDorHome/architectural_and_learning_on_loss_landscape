@@ -1,0 +1,18 @@
+{"time":"2025-01-15T17:10:04.523063456+08:00","level":"INFO","msg":"using version","core version":"0.18.1"}
+{"time":"2025-01-15T17:10:04.523072728+08:00","level":"INFO","msg":"created symlink","path":"/hdda/models/loss_landscape/experiments/Normalized_weights_vs_Batched_norm/outputs/2025-01-15/17-10-03/wandb/run-20250115_171004-h57grbt3/logs/debug-core.log"}
+{"time":"2025-01-15T17:10:04.52310434+08:00","level":"INFO","msg":"using version","core version":"0.18.1"}
+{"time":"2025-01-15T17:10:04.523106827+08:00","level":"INFO","msg":"created symlink","path":"/hdda/models/loss_landscape/experiments/Normalized_weights_vs_Batched_norm/outputs/2025-01-15/17-10-03/wandb/run-20250115_171004-h57grbt3/logs/debug-core.log"}
+{"time":"2025-01-15T17:10:04.524792939+08:00","level":"INFO","msg":"created new stream","id":"h57grbt3"}
+{"time":"2025-01-15T17:10:04.524801075+08:00","level":"INFO","msg":"stream: started","id":"h57grbt3"}
+{"time":"2025-01-15T17:10:04.524812812+08:00","level":"INFO","msg":"handler: started","stream_id":{"value":"h57grbt3"}}
+{"time":"2025-01-15T17:10:04.524846178+08:00","level":"INFO","msg":"writer: Do: started","stream_id":{"value":"h57grbt3"}}
+{"time":"2025-01-15T17:10:04.524837998+08:00","level":"INFO","msg":"sender: started","stream_id":{"value":"h57grbt3"}}
+{"time":"2025-01-15T17:10:04.815761665+08:00","level":"INFO","msg":"wandb-core","!BADKEY":null}
+{"time":"2025-01-15T17:10:04.816490275+08:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2025-01-15T18:00:45.568028925+08:00","level":"INFO","msg":"stream: closing","id":"h57grbt3"}
+{"time":"2025-01-15T18:00:45.56805335+08:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2025-01-15T18:00:45.568135407+08:00","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2025-01-15T18:00:47.584201444+08:00","level":"INFO","msg":"handler: closed","stream_id":{"value":"h57grbt3"}}
+{"time":"2025-01-15T18:00:47.584225048+08:00","level":"INFO","msg":"sender: closed","stream_id":{"value":"h57grbt3"}}
+{"time":"2025-01-15T18:00:47.584223141+08:00","level":"INFO","msg":"writer: Close: closed","stream_id":{"value":"h57grbt3"}}
+{"time":"2025-01-15T18:00:47.584249201+08:00","level":"INFO","msg":"stream: closed","id":"h57grbt3"}

@@ -1,0 +1,18 @@
+{"time":"2025-01-15T22:28:02.634629351+08:00","level":"INFO","msg":"using version","core version":"0.18.1"}
+{"time":"2025-01-15T22:28:02.634634217+08:00","level":"INFO","msg":"created symlink","path":"/hdda/models/loss_landscape/experiments/Normalized_weights_vs_Batched_norm/outputs/2025-01-15/22-28-01/wandb/run-20250115_222802-f45ixfbk/logs/debug-core.log"}
+{"time":"2025-01-15T22:28:02.634647885+08:00","level":"INFO","msg":"using version","core version":"0.18.1"}
+{"time":"2025-01-15T22:28:02.634649256+08:00","level":"INFO","msg":"created symlink","path":"/hdda/models/loss_landscape/experiments/Normalized_weights_vs_Batched_norm/outputs/2025-01-15/22-28-01/wandb/run-20250115_222802-f45ixfbk/logs/debug-core.log"}
+{"time":"2025-01-15T22:28:02.635838994+08:00","level":"INFO","msg":"created new stream","id":"f45ixfbk"}
+{"time":"2025-01-15T22:28:02.63584604+08:00","level":"INFO","msg":"stream: started","id":"f45ixfbk"}
+{"time":"2025-01-15T22:28:02.635857627+08:00","level":"INFO","msg":"handler: started","stream_id":{"value":"f45ixfbk"}}
+{"time":"2025-01-15T22:28:02.635891631+08:00","level":"INFO","msg":"writer: Do: started","stream_id":{"value":"f45ixfbk"}}
+{"time":"2025-01-15T22:28:02.635920934+08:00","level":"INFO","msg":"sender: started","stream_id":{"value":"f45ixfbk"}}
+{"time":"2025-01-15T22:28:03.190722482+08:00","level":"INFO","msg":"wandb-core","!BADKEY":null}
+{"time":"2025-01-15T22:28:03.191429813+08:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2025-01-15T22:37:11.721996406+08:00","level":"INFO","msg":"stream: closing","id":"f45ixfbk"}
+{"time":"2025-01-15T22:37:11.722007357+08:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2025-01-15T22:37:11.722100904+08:00","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2025-01-15T22:37:13.422707201+08:00","level":"INFO","msg":"handler: closed","stream_id":{"value":"f45ixfbk"}}
+{"time":"2025-01-15T22:37:13.422719844+08:00","level":"INFO","msg":"writer: Close: closed","stream_id":{"value":"f45ixfbk"}}
+{"time":"2025-01-15T22:37:13.422741494+08:00","level":"INFO","msg":"sender: closed","stream_id":{"value":"f45ixfbk"}}
+{"time":"2025-01-15T22:37:13.422744464+08:00","level":"INFO","msg":"stream: closed","id":"f45ixfbk"}

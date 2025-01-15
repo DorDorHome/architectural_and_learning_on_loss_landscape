@@ -1,0 +1,11 @@
+{"time":"2025-01-15T22:54:11.271561911+08:00","level":"INFO","msg":"using version","core version":"0.18.1"}
+{"time":"2025-01-15T22:54:11.271570592+08:00","level":"INFO","msg":"created symlink","path":"/hdda/models/loss_landscape/experiments/Normalized_weights_vs_Batched_norm/outputs/2025-01-15/22-54-10/wandb/run-20250115_225411-jxkqokfq/logs/debug-core.log"}
+{"time":"2025-01-15T22:54:11.271601638+08:00","level":"INFO","msg":"using version","core version":"0.18.1"}
+{"time":"2025-01-15T22:54:11.271604142+08:00","level":"INFO","msg":"created symlink","path":"/hdda/models/loss_landscape/experiments/Normalized_weights_vs_Batched_norm/outputs/2025-01-15/22-54-10/wandb/run-20250115_225411-jxkqokfq/logs/debug-core.log"}
+{"time":"2025-01-15T22:54:11.273363124+08:00","level":"INFO","msg":"created new stream","id":"jxkqokfq"}
+{"time":"2025-01-15T22:54:11.273375181+08:00","level":"INFO","msg":"stream: started","id":"jxkqokfq"}
+{"time":"2025-01-15T22:54:11.273388703+08:00","level":"INFO","msg":"writer: Do: started","stream_id":{"value":"jxkqokfq"}}
+{"time":"2025-01-15T22:54:11.273425523+08:00","level":"INFO","msg":"handler: started","stream_id":{"value":"jxkqokfq"}}
+{"time":"2025-01-15T22:54:11.273389315+08:00","level":"INFO","msg":"sender: started","stream_id":{"value":"jxkqokfq"}}
+{"time":"2025-01-15T22:54:11.58011959+08:00","level":"INFO","msg":"wandb-core","!BADKEY":null}
+{"time":"2025-01-15T22:54:11.581599835+08:00","level":"INFO","msg":"Starting system monitor"}

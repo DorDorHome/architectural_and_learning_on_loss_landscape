@@ -1,0 +1,17 @@
+Epoch: 0, progress on batches: 100%|███████████████████████████████████████| 59/59 [00:02<00:00, 22.90it/s]
+Epoch:   0%|                                                                       | 0/500 [00:02<?, ?it/s]
+Epoch: 0, trainset accuracy: 0.12116666666666667, trainset loss: 2.307457134882609
+Logging to WandB: {'epoch': 0, 'trainset_accuracy': 0.12116666666666667, 'trainset_loss': 2.307457134882609}
+Error executing job with overrides: []
+Traceback (most recent call last):
+  File "/hdda/models/loss_landscape/experiments/Normalized_weights_vs_Batched_norm/single_run.py", line 107, in main
+    output = net(input)
+             ^^^^^^^^^^
+  File "/home/sfchan/mambaforge/envs/pytorch_latest/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1501, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sfchan/mambaforge/envs/pytorch_latest/lib/python3.11/site-packages/torch/nn/modules/module.py", line 363, in _forward_unimplemented
+    raise NotImplementedError(f"Module [{type(self).__name__}] is missing the required \"forward\" function")
+NotImplementedError: Module [DeepFFNN_EMA_batch_weight_norm] is missing the required "forward" function
+
+Set the environment variable HYDRA_FULL_ERROR=1 for a complete stack trace.

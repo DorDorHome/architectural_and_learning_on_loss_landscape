@@ -1,0 +1,42 @@
+{
+  "os": "Linux-6.8.0-51-generic-x86_64-with-glibc2.35",
+  "python": "3.11.5",
+  "startedAt": "2025-01-15T08:49:14.482878Z",
+  "program": "/hdda/models/loss_landscape/experiments/Normalized_weights_vs_Batched_norm/single_run.py",
+  "codePath": "experiments/Normalized_weights_vs_Batched_norm/single_run.py",
+  "git": {
+    "remote": "git@github.com:DorDorHome/architectural_and_learning_on_loss_landscape.git",
+    "commit": "8b31f7f543c2b30fb89ba432915d657eaf275d2e"
+  },
+  "email": "shufaichan@gmail.com",
+  "root": "/hdda/models/loss_landscape/experiments/Normalized_weights_vs_Batched_norm/outputs/2025-01-15/16-49-13",
+  "host": "user-Z790-Taichi",
+  "username": "sfchan",
+  "executable": "/home/sfchan/mambaforge/envs/pytorch_latest/bin/python",
+  "cpu_count": 24,
+  "cpu_count_logical": 32,
+  "gpu": "[NVIDIA GeForce RTX 4090]",
+  "gpu_count": 1,
+  "disk": {
+    "/": {
+      "total": "1967317549056",
+      "used": "384364023808"
+    }
+  },
+  "memory": {
+    "total": "134806470656"
+  },
+  "cpu": {
+    "count": 24,
+    "countLogical": 32
+  },
+  "gpu_nvidia": [
+    {
+      "name": "NVIDIA GeForce RTX 4090",
+      "memoryTotal": "25757220864",
+      "cudaCores": 16384,
+      "architecture": "Ada"
+    }
+  ],
+  "cudaVersion": "12.2"
+}

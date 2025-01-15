@@ -1,0 +1,772 @@
+Epoch: 0, progress on batches: 100%|███████████████████████████████████████| 59/59 [00:01<00:00, 46.41it/s]
+Epoch: 1, progress on batches: 100%|███████████████████████████████████████| 59/59 [00:01<00:00, 53.28it/s]
+Epoch: 0, trainset accuracy: 0.777, trainset loss: 0.7941635720570882
+Logging to WandB: {'epoch': 0, 'trainset_accuracy': 0.777, 'trainset_loss': 0.7941635720570882}
+Epoch: 0, testset accuracy: 0.9029, testset loss: 0.3525942265987396
+Epoch: 2, progress on batches: 100%|███████████████████████████████████████| 59/59 [00:01<00:00, 52.98it/s]
+Epoch: 1, trainset accuracy: 0.9103166666666667, trainset loss: 0.33208314666748046
+Logging to WandB: {'epoch': 1, 'trainset_accuracy': 0.9103166666666667, 'trainset_loss': 0.33208314666748046}
+Epoch: 1, testset accuracy: 0.9219, testset loss: 0.29071244597435
+Epoch: 3, progress on batches: 100%|███████████████████████████████████████| 59/59 [00:01<00:00, 53.18it/s]
+Epoch: 2, trainset accuracy: 0.9229, trainset loss: 0.2873403704086939
+Logging to WandB: {'epoch': 2, 'trainset_accuracy': 0.9229, 'trainset_loss': 0.2873403704086939}
+Epoch: 2, testset accuracy: 0.9289, testset loss: 0.26227107644081116
+Epoch: 4, progress on batches: 100%|███████████████████████████████████████| 59/59 [00:01<00:00, 53.06it/s]
+Epoch: 3, trainset accuracy: 0.93005, trainset loss: 0.2640628390153249
+Logging to WandB: {'epoch': 3, 'trainset_accuracy': 0.93005, 'trainset_loss': 0.2640628390153249}
+Epoch: 3, testset accuracy: 0.9337, testset loss: 0.24785356223583221
+Epoch: 5, progress on batches: 100%|███████████████████████████████████████| 59/59 [00:01<00:00, 52.95it/s]
+Epoch: 4, trainset accuracy: 0.9340833333333334, trainset loss: 0.24949542795817056
+Logging to WandB: {'epoch': 4, 'trainset_accuracy': 0.9340833333333334, 'trainset_loss': 0.24949542795817056}
+Epoch: 4, testset accuracy: 0.9361, testset loss: 0.23483158648014069
+Epoch: 6, progress on batches: 100%|███████████████████████████████████████| 59/59 [00:01<00:00, 53.04it/s]
+Epoch: 5, trainset accuracy: 0.9376333333333333, trainset loss: 0.2391727022488912
+Logging to WandB: {'epoch': 5, 'trainset_accuracy': 0.9376333333333333, 'trainset_loss': 0.2391727022488912}
+Epoch: 5, testset accuracy: 0.9372, testset loss: 0.2291896641254425
+Epoch: 7, progress on batches: 100%|███████████████████████████████████████| 59/59 [00:01<00:00, 53.01it/s]
+Epoch: 6, trainset accuracy: 0.9409, trainset loss: 0.2296752020517985
+Logging to WandB: {'epoch': 6, 'trainset_accuracy': 0.9409, 'trainset_loss': 0.2296752020517985}
+Epoch: 6, testset accuracy: 0.9406, testset loss: 0.22099699079990387
+Epoch: 8, progress on batches: 100%|███████████████████████████████████████| 59/59 [00:01<00:00, 53.09it/s]
+Epoch: 7, trainset accuracy: 0.9418, trainset loss: 0.22484583717187245
+Logging to WandB: {'epoch': 7, 'trainset_accuracy': 0.9418, 'trainset_loss': 0.22484583717187245}
+Epoch: 7, testset accuracy: 0.944, testset loss: 0.21620239317417145
+Epoch: 9, progress on batches: 100%|███████████████████████████████████████| 59/59 [00:01<00:00, 52.94it/s]
+Epoch: 8, trainset accuracy: 0.9443333333333334, trainset loss: 0.21832919131914774
+Logging to WandB: {'epoch': 8, 'trainset_accuracy': 0.9443333333333334, 'trainset_loss': 0.21832919131914774}
+Epoch: 8, testset accuracy: 0.9437, testset loss: 0.21194396913051605
+Epoch: 10, progress on batches: 100%|██████████████████████████████████████| 59/59 [00:01<00:00, 53.17it/s]
+Epoch: 9, trainset accuracy: 0.9455166666666667, trainset loss: 0.21417646761735282
+Logging to WandB: {'epoch': 9, 'trainset_accuracy': 0.9455166666666667, 'trainset_loss': 0.21417646761735282}
+Epoch: 9, testset accuracy: 0.9458, testset loss: 0.20833410322666168
+Epoch: 11, progress on batches: 100%|██████████████████████████████████████| 59/59 [00:01<00:00, 53.10it/s]
+Epoch: 10, trainset accuracy: 0.9464333333333333, trainset loss: 0.21088982314268748
+Logging to WandB: {'epoch': 10, 'trainset_accuracy': 0.9464333333333333, 'trainset_loss': 0.21088982314268748}
+Epoch: 10, testset accuracy: 0.9468, testset loss: 0.20556554198265076
+Epoch: 12, progress on batches: 100%|██████████████████████████████████████| 59/59 [00:01<00:00, 53.05it/s]
+Epoch: 11, trainset accuracy: 0.9478833333333333, trainset loss: 0.20754664409955342
+Logging to WandB: {'epoch': 11, 'trainset_accuracy': 0.9478833333333333, 'trainset_loss': 0.20754664409955342}
+Epoch: 11, testset accuracy: 0.9487, testset loss: 0.203919917345047
+Epoch: 13, progress on batches: 100%|██████████████████████████████████████| 59/59 [00:01<00:00, 52.93it/s]
+Epoch: 12, trainset accuracy: 0.9484833333333333, trainset loss: 0.20537914363543192
+Logging to WandB: {'epoch': 12, 'trainset_accuracy': 0.9484833333333333, 'trainset_loss': 0.20537914363543192}
+Epoch: 12, testset accuracy: 0.9485, testset loss: 0.20091204345226288
+Epoch: 14, progress on batches: 100%|████████████████████| 59/59 [00:01<00:00, 52.90it/s]<10:46,  1.33s/it]
+Epoch: 13, trainset accuracy: 0.9492166666666667, trainset loss: 0.20310203896363577
+Logging to WandB: {'epoch': 13, 'trainset_accuracy': 0.9492166666666667, 'trainset_loss': 0.20310203896363577}
+Epoch: 13, testset accuracy: 0.9492, testset loss: 0.19791442155838013
+Epoch: 15, progress on batches: 100%|████████████████████| 59/59 [00:01<00:00, 52.49it/s]<10:45,  1.33s/it]
+Epoch: 14, trainset accuracy: 0.9496166666666667, trainset loss: 0.2016249847571055
+Logging to WandB: {'epoch': 14, 'trainset_accuracy': 0.9496166666666667, 'trainset_loss': 0.2016249847571055}
+Epoch: 14, testset accuracy: 0.9499, testset loss: 0.1951589435338974
+Epoch: 16, progress on batches: 100%|████████████████████| 59/59 [00:01<00:00, 52.83it/s]<10:45,  1.33s/it]
+Epoch: 15, trainset accuracy: 0.9505333333333333, trainset loss: 0.19862128975391388
+Logging to WandB: {'epoch': 15, 'trainset_accuracy': 0.9505333333333333, 'trainset_loss': 0.19862128975391388}
+Epoch: 15, testset accuracy: 0.951, testset loss: 0.19613371789455414
+Epoch: 17, progress on batches: 100%|██████████████████████████████████████| 59/59 [00:01<00:00, 52.90it/s]
+Epoch: 16, trainset accuracy: 0.9512166666666667, trainset loss: 0.19646359259287516
+Logging to WandB: {'epoch': 16, 'trainset_accuracy': 0.9512166666666667, 'trainset_loss': 0.19646359259287516}
+Epoch: 16, testset accuracy: 0.9505, testset loss: 0.19503240287303925
+Epoch: 18, progress on batches: 100%|██████████████████████████████████████| 59/59 [00:01<00:00, 52.87it/s]
+Epoch: 17, trainset accuracy: 0.9517166666666667, trainset loss: 0.1937832859436671
+Logging to WandB: {'epoch': 17, 'trainset_accuracy': 0.9517166666666667, 'trainset_loss': 0.1937832859436671}
+Epoch: 17, testset accuracy: 0.9512, testset loss: 0.1902180314064026
+Epoch: 19, progress on batches: 100%|██████████████████████████████████████| 59/59 [00:01<00:00, 52.89it/s]
+Epoch: 18, trainset accuracy: 0.9525166666666667, trainset loss: 0.19248693958123525
+Logging to WandB: {'epoch': 18, 'trainset_accuracy': 0.9525166666666667, 'trainset_loss': 0.19248693958123525}
+Epoch: 18, testset accuracy: 0.9514, testset loss: 0.19059932231903076
+Epoch: 20, progress on batches: 100%|██████████████████████████████████████| 59/59 [00:01<00:00, 53.06it/s]
+Epoch: 19, trainset accuracy: 0.95275, trainset loss: 0.19041341048081717
+Logging to WandB: {'epoch': 19, 'trainset_accuracy': 0.95275, 'trainset_loss': 0.19041341048081717}
+Epoch: 19, testset accuracy: 0.9504, testset loss: 0.18936222791671753
+Epoch: 21, progress on batches: 100%|██████████████████████████████████████| 59/59 [00:01<00:00, 52.96it/s]
+Epoch: 20, trainset accuracy: 0.9536333333333333, trainset loss: 0.1884122819741567
+Logging to WandB: {'epoch': 20, 'trainset_accuracy': 0.9536333333333333, 'trainset_loss': 0.1884122819741567}
+Epoch: 20, testset accuracy: 0.9539, testset loss: 0.18479977548122406
+Epoch: 22, progress on batches: 100%|██████████████████████████████████████| 59/59 [00:01<00:00, 52.93it/s]
+Epoch: 21, trainset accuracy: 0.954, trainset loss: 0.18589262663523357
+Logging to WandB: {'epoch': 21, 'trainset_accuracy': 0.954, 'trainset_loss': 0.18589262663523357}
+Epoch: 21, testset accuracy: 0.9541, testset loss: 0.1827949732542038
+Epoch: 23, progress on batches: 100%|██████████████████████████████████████| 59/59 [00:01<00:00, 52.93it/s]
+Epoch: 22, trainset accuracy: 0.9545333333333333, trainset loss: 0.18368153258959452
+Logging to WandB: {'epoch': 22, 'trainset_accuracy': 0.9545333333333333, 'trainset_loss': 0.18368153258959452}
+Epoch: 22, testset accuracy: 0.9528, testset loss: 0.17933997511863708
+Epoch: 24, progress on batches: 100%|██████████████████████████████████████| 59/59 [00:01<00:00, 53.00it/s]
+Epoch: 23, trainset accuracy: 0.9550166666666666, trainset loss: 0.18166105478604636
+Logging to WandB: {'epoch': 23, 'trainset_accuracy': 0.9550166666666666, 'trainset_loss': 0.18166105478604636}
+Epoch: 23, testset accuracy: 0.9536, testset loss: 0.17825576663017273
+Epoch: 25, progress on batches: 100%|██████████████████████████████████████| 59/59 [00:01<00:00, 53.06it/s]
+Epoch: 24, trainset accuracy: 0.9559166666666666, trainset loss: 0.17883313485781352
+Logging to WandB: {'epoch': 24, 'trainset_accuracy': 0.9559166666666666, 'trainset_loss': 0.17883313485781352}
+Epoch: 24, testset accuracy: 0.9552, testset loss: 0.17534580826759338
+Epoch: 26, progress on batches: 100%|██████████████████████████████████████| 59/59 [00:01<00:00, 52.95it/s]
+Epoch: 25, trainset accuracy: 0.9557, trainset loss: 0.17709684996604919
+Logging to WandB: {'epoch': 25, 'trainset_accuracy': 0.9557, 'trainset_loss': 0.17709684996604919}
+Epoch: 25, testset accuracy: 0.9565, testset loss: 0.17347048223018646
+Epoch: 27, progress on batches: 100%|██████████████████████████████████████| 59/59 [00:01<00:00, 52.86it/s]
+Epoch: 26, trainset accuracy: 0.9566666666666667, trainset loss: 0.17470730644861857
+Logging to WandB: {'epoch': 26, 'trainset_accuracy': 0.9566666666666667, 'trainset_loss': 0.17470730644861857}
+Epoch: 26, testset accuracy: 0.9548, testset loss: 0.17342352867126465
+Epoch: 28, progress on batches: 100%|██████████████████████████████████████| 59/59 [00:01<00:00, 52.79it/s]
+Epoch: 27, trainset accuracy: 0.9567, trainset loss: 0.17295719254016875
+Logging to WandB: {'epoch': 27, 'trainset_accuracy': 0.9567, 'trainset_loss': 0.17295719254016875}
+Epoch: 27, testset accuracy: 0.9576, testset loss: 0.16565364599227905
+Epoch: 29, progress on batches: 100%|██████████████████████████████████████| 59/59 [00:01<00:00, 52.89it/s]
+Epoch: 28, trainset accuracy: 0.9579166666666666, trainset loss: 0.16832615106900534
+Logging to WandB: {'epoch': 28, 'trainset_accuracy': 0.9579166666666666, 'trainset_loss': 0.16832615106900534}
+Epoch: 28, testset accuracy: 0.9566, testset loss: 0.16526950895786285
+Epoch: 30, progress on batches: 100%|██████████████████████████████████████| 59/59 [00:01<00:00, 52.96it/s]
+Epoch: 29, trainset accuracy: 0.9587, trainset loss: 0.16579710795084635
+Logging to WandB: {'epoch': 29, 'trainset_accuracy': 0.9587, 'trainset_loss': 0.16579710795084635}
+Epoch: 29, testset accuracy: 0.9591, testset loss: 0.1611580103635788
+Epoch: 31, progress on batches: 100%|██████████████████████████████████████| 59/59 [00:01<00:00, 53.17it/s]
+Epoch: 30, trainset accuracy: 0.9597166666666667, trainset loss: 0.16266597452958426
+Logging to WandB: {'epoch': 30, 'trainset_accuracy': 0.9597166666666667, 'trainset_loss': 0.16266597452958426}
+Epoch: 30, testset accuracy: 0.9592, testset loss: 0.1594064086675644
+Epoch: 32, progress on batches: 100%|██████████████████████████████████████| 59/59 [00:01<00:00, 53.17it/s]
+Epoch: 31, trainset accuracy: 0.9598333333333333, trainset loss: 0.16092338922818503
+Logging to WandB: {'epoch': 31, 'trainset_accuracy': 0.9598333333333333, 'trainset_loss': 0.16092338922818503}
+Epoch: 31, testset accuracy: 0.9594, testset loss: 0.15929104387760162
+Epoch: 33, progress on batches: 100%|██████████████████████████████████████| 59/59 [00:01<00:00, 52.97it/s]
+Epoch: 32, trainset accuracy: 0.9613666666666667, trainset loss: 0.1572482040087382
+Logging to WandB: {'epoch': 32, 'trainset_accuracy': 0.9613666666666667, 'trainset_loss': 0.1572482040087382}
+Epoch: 32, testset accuracy: 0.9604, testset loss: 0.15333913266658783
+Epoch: 34, progress on batches: 100%|██████████████████████████████████████| 59/59 [00:01<00:00, 53.00it/s]
+Epoch: 33, trainset accuracy: 0.9621333333333333, trainset loss: 0.15333268212477366
+Logging to WandB: {'epoch': 33, 'trainset_accuracy': 0.9621333333333333, 'trainset_loss': 0.15333268212477366}
+Epoch: 33, testset accuracy: 0.961, testset loss: 0.15174943208694458
+Epoch: 35, progress on batches: 100%|██████████████████████████████████████| 59/59 [00:01<00:00, 53.04it/s]
+Epoch: 34, trainset accuracy: 0.9622666666666667, trainset loss: 0.15212918416659038
+Logging to WandB: {'epoch': 34, 'trainset_accuracy': 0.9622666666666667, 'trainset_loss': 0.15212918416659038}
+Epoch: 34, testset accuracy: 0.9606, testset loss: 0.15099602937698364
+Epoch: 36, progress on batches: 100%|██████████████████████████████████████| 59/59 [00:01<00:00, 52.91it/s]
+Epoch: 35, trainset accuracy: 0.9629, trainset loss: 0.14996014778614045
+Logging to WandB: {'epoch': 35, 'trainset_accuracy': 0.9629, 'trainset_loss': 0.14996014778614045}
+Epoch: 35, testset accuracy: 0.962, testset loss: 0.14717334508895874
+Epoch: 37, progress on batches: 100%|██████████████████████████████████████| 59/59 [00:01<00:00, 53.10it/s]
+Epoch: 36, trainset accuracy: 0.9634666666666667, trainset loss: 0.14826246394316356
+Logging to WandB: {'epoch': 36, 'trainset_accuracy': 0.9634666666666667, 'trainset_loss': 0.14826246394316356}
+Epoch: 36, testset accuracy: 0.9626, testset loss: 0.14479960501194
+Epoch: 38, progress on batches: 100%|██████████████████████████████████████| 59/59 [00:01<00:00, 53.07it/s]
+Epoch: 37, trainset accuracy: 0.9642833333333334, trainset loss: 0.1442740695476532
+Logging to WandB: {'epoch': 37, 'trainset_accuracy': 0.9642833333333334, 'trainset_loss': 0.1442740695476532}
+Epoch: 37, testset accuracy: 0.9641, testset loss: 0.14119958877563477
+Epoch: 39, progress on batches: 100%|████████████████████| 59/59 [00:01<00:00, 52.82it/s]<10:12,  1.33s/it]
+Epoch: 38, trainset accuracy: 0.9648333333333333, trainset loss: 0.14234215543270112
+Logging to WandB: {'epoch': 38, 'trainset_accuracy': 0.9648333333333333, 'trainset_loss': 0.14234215543270112}
+Epoch: 38, testset accuracy: 0.963, testset loss: 0.14294354617595673
+Epoch: 40, progress on batches: 100%|██████████| 59/59 [00:01<00:00, 53.16it/s]500 [00:53<10:12,  1.33s/it]
+Epoch: 39, trainset accuracy: 0.9656, trainset loss: 0.14025590628385542
+Logging to WandB: {'epoch': 39, 'trainset_accuracy': 0.9656, 'trainset_loss': 0.14025590628385542}
+Epoch: 39, testset accuracy: 0.9644, testset loss: 0.14050239324569702
+Epoch: 41, progress on batches: 100%|██████████| 59/59 [00:01<00:00, 52.94it/s]500 [00:54<10:10,  1.33s/it]
+Epoch: 40, trainset accuracy: 0.9652166666666666, trainset loss: 0.14048552955786386
+Logging to WandB: {'epoch': 40, 'trainset_accuracy': 0.9652166666666666, 'trainset_loss': 0.14048552955786386}
+Epoch: 40, testset accuracy: 0.9647, testset loss: 0.13757912814617157
+Epoch: 42, progress on batches: 100%|██████████| 59/59 [00:01<00:00, 53.04it/s]500 [00:56<10:08,  1.33s/it]
+Epoch: 41, trainset accuracy: 0.9668, trainset loss: 0.13721862489382425
+Logging to WandB: {'epoch': 41, 'trainset_accuracy': 0.9668, 'trainset_loss': 0.13721862489382425}
+Epoch: 41, testset accuracy: 0.9654, testset loss: 0.1348026990890503
+Epoch: 43, progress on batches: 100%|██████████| 59/59 [00:01<00:00, 52.97it/s]500 [00:57<10:07,  1.33s/it]
+Epoch: 42, trainset accuracy: 0.9670166666666666, trainset loss: 0.13532523737748464
+Logging to WandB: {'epoch': 42, 'trainset_accuracy': 0.9670166666666666, 'trainset_loss': 0.13532523737748464}
+Epoch: 42, testset accuracy: 0.9633, testset loss: 0.1393391638994217
+Epoch: 44, progress on batches: 100%|██████████| 59/59 [00:01<00:00, 52.91it/s]500 [00:58<10:06,  1.33s/it]
+Epoch: 43, trainset accuracy: 0.9673, trainset loss: 0.1350642674446106
+Logging to WandB: {'epoch': 43, 'trainset_accuracy': 0.9673, 'trainset_loss': 0.1350642674446106}
+Epoch: 43, testset accuracy: 0.9652, testset loss: 0.13842923939228058
+Epoch: 45, progress on batches: 100%|██████████| 59/59 [00:01<00:00, 53.13it/s]500 [01:00<10:05,  1.33s/it]
+Epoch: 44, trainset accuracy: 0.96715, trainset loss: 0.13491823368072509
+Logging to WandB: {'epoch': 44, 'trainset_accuracy': 0.96715, 'trainset_loss': 0.13491823368072509}
+Epoch: 44, testset accuracy: 0.9643, testset loss: 0.13817523419857025
+Epoch: 46, progress on batches: 100%|██████████| 59/59 [00:01<00:00, 53.04it/s]500 [01:01<10:03,  1.33s/it]
+Epoch: 45, trainset accuracy: 0.9673833333333334, trainset loss: 0.13322088072299956
+Logging to WandB: {'epoch': 45, 'trainset_accuracy': 0.9673833333333334, 'trainset_loss': 0.13322088072299956}
+Epoch: 45, testset accuracy: 0.9663, testset loss: 0.13098661601543427
+Epoch: 47, progress on batches: 100%|██████████| 59/59 [00:01<00:00, 52.90it/s]500 [01:02<10:02,  1.33s/it]
+Epoch: 46, trainset accuracy: 0.9686, trainset loss: 0.1303007357319196
+Logging to WandB: {'epoch': 46, 'trainset_accuracy': 0.9686, 'trainset_loss': 0.1303007357319196}
+Epoch: 46, testset accuracy: 0.9668, testset loss: 0.1303723305463791
+Epoch: 48, progress on batches: 100%|██████████| 59/59 [00:01<00:00, 52.78it/s]500 [01:04<10:01,  1.33s/it]
+Epoch: 47, trainset accuracy: 0.9683666666666667, trainset loss: 0.13040246466795605
+Logging to WandB: {'epoch': 47, 'trainset_accuracy': 0.9683666666666667, 'trainset_loss': 0.13040246466795605}
+Epoch: 47, testset accuracy: 0.964, testset loss: 0.13459934294223785
+Epoch: 49, progress on batches: 100%|██████████| 59/59 [00:01<00:00, 52.86it/s]500 [01:05<10:00,  1.33s/it]
+Epoch: 48, trainset accuracy: 0.9680166666666666, trainset loss: 0.131372066450119
+Logging to WandB: {'epoch': 48, 'trainset_accuracy': 0.9680166666666666, 'trainset_loss': 0.131372066450119}
+Epoch: 48, testset accuracy: 0.966, testset loss: 0.12884603440761566
+Epoch: 50, progress on batches: 100%|██████████| 59/59 [00:01<00:00, 52.87it/s]500 [01:06<09:59,  1.33s/it]
+Epoch: 49, trainset accuracy: 0.9684666666666667, trainset loss: 0.1292208662112554
+Logging to WandB: {'epoch': 49, 'trainset_accuracy': 0.9684666666666667, 'trainset_loss': 0.1292208662112554}
+Epoch: 49, testset accuracy: 0.9652, testset loss: 0.13291966915130615
+Epoch: 51, progress on batches: 100%|██████████| 59/59 [00:01<00:00, 53.24it/s]500 [01:08<09:58,  1.33s/it]
+Epoch: 50, trainset accuracy: 0.9682333333333333, trainset loss: 0.13045634771982828
+Logging to WandB: {'epoch': 50, 'trainset_accuracy': 0.9682333333333333, 'trainset_loss': 0.13045634771982828}
+Epoch: 50, testset accuracy: 0.9631, testset loss: 0.13439154624938965
+Epoch: 52, progress on batches: 100%|██████████| 59/59 [00:01<00:00, 52.91it/s]500 [01:09<09:55,  1.33s/it]
+Epoch: 51, trainset accuracy: 0.9681166666666666, trainset loss: 0.13141469411849976
+Logging to WandB: {'epoch': 51, 'trainset_accuracy': 0.9681166666666666, 'trainset_loss': 0.13141469411849976}
+Epoch: 51, testset accuracy: 0.9663, testset loss: 0.13327865302562714
+Epoch: 53, progress on batches: 100%|██████████| 59/59 [00:01<00:00, 53.04it/s]500 [01:10<09:54,  1.33s/it]
+Epoch: 52, trainset accuracy: 0.9685666666666667, trainset loss: 0.1298365435361862
+Logging to WandB: {'epoch': 52, 'trainset_accuracy': 0.9685666666666667, 'trainset_loss': 0.1298365435361862}
+Epoch: 52, testset accuracy: 0.9645, testset loss: 0.14143265783786774
+Epoch: 54, progress on batches: 100%|██████████| 59/59 [00:01<00:00, 52.67it/s]500 [01:12<09:53,  1.33s/it]
+Epoch: 53, trainset accuracy: 0.96815, trainset loss: 0.13051890538533528
+Logging to WandB: {'epoch': 53, 'trainset_accuracy': 0.96815, 'trainset_loss': 0.13051890538533528}
+Epoch: 53, testset accuracy: 0.9672, testset loss: 0.12765328586101532
+Epoch: 55, progress on batches: 100%|██████████| 59/59 [00:01<00:00, 52.89it/s]500 [01:13<09:53,  1.33s/it]
+Epoch: 54, trainset accuracy: 0.9663166666666667, trainset loss: 0.13342269179821015
+Logging to WandB: {'epoch': 54, 'trainset_accuracy': 0.9663166666666667, 'trainset_loss': 0.13342269179821015}
+Epoch: 54, testset accuracy: 0.9644, testset loss: 0.13389648497104645
+Epoch: 56, progress on batches: 100%|██████████| 59/59 [00:01<00:00, 53.02it/s]500 [01:14<09:51,  1.33s/it]
+Epoch: 55, trainset accuracy: 0.9684, trainset loss: 0.12870861142079035
+Logging to WandB: {'epoch': 55, 'trainset_accuracy': 0.9684, 'trainset_loss': 0.12870861142079035}
+Epoch: 55, testset accuracy: 0.9673, testset loss: 0.12738037109375
+Epoch: 57, progress on batches: 100%|██████████| 59/59 [00:01<00:00, 53.13it/s]500 [01:16<09:49,  1.33s/it]
+Epoch: 56, trainset accuracy: 0.96805, trainset loss: 0.1310170995314916
+Logging to WandB: {'epoch': 56, 'trainset_accuracy': 0.96805, 'trainset_loss': 0.1310170995314916}
+Epoch: 56, testset accuracy: 0.966, testset loss: 0.12842251360416412
+Epoch: 58, progress on batches: 100%|██████████| 59/59 [00:01<00:00, 52.93it/s]500 [01:17<09:47,  1.33s/it]
+Epoch: 57, trainset accuracy: 0.9678333333333333, trainset loss: 0.13190479468504587
+Logging to WandB: {'epoch': 57, 'trainset_accuracy': 0.9678333333333333, 'trainset_loss': 0.13190479468504587}
+Epoch: 57, testset accuracy: 0.967, testset loss: 0.13147974014282227
+Epoch: 59, progress on batches: 100%|██████████| 59/59 [00:01<00:00, 52.43it/s]500 [01:18<09:46,  1.33s/it]
+Epoch: 58, trainset accuracy: 0.9685833333333334, trainset loss: 0.1293943434357643
+Logging to WandB: {'epoch': 58, 'trainset_accuracy': 0.9685833333333334, 'trainset_loss': 0.1293943434357643}
+Epoch: 58, testset accuracy: 0.9659, testset loss: 0.1347503513097763
+Epoch: 60, progress on batches: 100%|██████████| 59/59 [00:01<00:00, 53.06it/s]500 [01:20<09:46,  1.33s/it]
+Epoch: 59, trainset accuracy: 0.96835, trainset loss: 0.13048220306237537
+Logging to WandB: {'epoch': 59, 'trainset_accuracy': 0.96835, 'trainset_loss': 0.13048220306237537}
+Epoch: 59, testset accuracy: 0.9662, testset loss: 0.132339745759964
+Epoch: 61, progress on batches: 100%|██████████| 59/59 [00:01<00:00, 53.01it/s]500 [01:21<09:44,  1.33s/it]
+Epoch: 60, trainset accuracy: 0.96905, trainset loss: 0.13069996416171392
+Logging to WandB: {'epoch': 60, 'trainset_accuracy': 0.96905, 'trainset_loss': 0.13069996416171392}
+Epoch: 60, testset accuracy: 0.9666, testset loss: 0.12581533193588257
+Epoch: 62, progress on batches: 100%|██████████| 59/59 [00:01<00:00, 52.93it/s]500 [01:22<09:42,  1.33s/it]
+Epoch: 61, trainset accuracy: 0.96775, trainset loss: 0.1335895624955495
+Logging to WandB: {'epoch': 61, 'trainset_accuracy': 0.96775, 'trainset_loss': 0.1335895624955495}
+Epoch: 61, testset accuracy: 0.9669, testset loss: 0.1271534264087677
+Epoch: 63, progress on batches: 100%|██████████| 59/59 [00:01<00:00, 53.02it/s]500 [01:24<09:41,  1.33s/it]
+Epoch: 62, trainset accuracy: 0.9671, trainset loss: 0.13222603212197623
+Logging to WandB: {'epoch': 62, 'trainset_accuracy': 0.9671, 'trainset_loss': 0.13222603212197623}
+Epoch: 62, testset accuracy: 0.9657, testset loss: 0.1313105970621109
+Epoch: 64, progress on batches: 100%|██████████| 59/59 [00:01<00:00, 53.02it/s]500 [01:25<09:39,  1.33s/it]
+Epoch: 63, trainset accuracy: 0.9671333333333333, trainset loss: 0.13360667494138082
+Logging to WandB: {'epoch': 63, 'trainset_accuracy': 0.9671333333333333, 'trainset_loss': 0.13360667494138082}
+Epoch: 63, testset accuracy: 0.9674, testset loss: 0.1303148865699768
+Epoch: 65, progress on batches: 100%|██████████| 59/59 [00:01<00:00, 53.10it/s]500 [01:26<09:38,  1.33s/it]
+Epoch: 64, trainset accuracy: 0.9671, trainset loss: 0.1335665644009908
+Logging to WandB: {'epoch': 64, 'trainset_accuracy': 0.9671, 'trainset_loss': 0.1335665644009908}
+Epoch: 64, testset accuracy: 0.9682, testset loss: 0.1278025507926941
+Epoch: 66, progress on batches: 100%|██████████| 59/59 [00:01<00:00, 52.90it/s]500 [01:28<09:37,  1.33s/it]
+Epoch: 65, trainset accuracy: 0.9675, trainset loss: 0.133481032594045
+Logging to WandB: {'epoch': 65, 'trainset_accuracy': 0.9675, 'trainset_loss': 0.133481032594045}
+Epoch: 65, testset accuracy: 0.9635, testset loss: 0.13684819638729095
+Epoch: 67, progress on batches: 100%|██████████| 59/59 [00:01<00:00, 52.78it/s]500 [01:29<09:36,  1.33s/it]
+Epoch: 66, trainset accuracy: 0.9680333333333333, trainset loss: 0.13125467878182728
+Logging to WandB: {'epoch': 66, 'trainset_accuracy': 0.9680333333333333, 'trainset_loss': 0.13125467878182728}
+Epoch: 66, testset accuracy: 0.9659, testset loss: 0.1313306838274002
+Epoch: 68, progress on batches: 100%|██████████| 59/59 [00:01<00:00, 52.88it/s]500 [01:30<09:35,  1.33s/it]
+Epoch: 67, trainset accuracy: 0.9675833333333334, trainset loss: 0.1316850641568502
+Logging to WandB: {'epoch': 67, 'trainset_accuracy': 0.9675833333333334, 'trainset_loss': 0.1316850641568502}
+Epoch: 67, testset accuracy: 0.9648, testset loss: 0.1335776150226593
+Epoch: 69, progress on batches: 100%|██████████| 59/59 [00:01<00:00, 52.89it/s]500 [01:32<09:34,  1.33s/it]
+Epoch: 68, trainset accuracy: 0.9669, trainset loss: 0.13371263608137768
+Logging to WandB: {'epoch': 68, 'trainset_accuracy': 0.9669, 'trainset_loss': 0.13371263608137768}
+Epoch: 68, testset accuracy: 0.9681, testset loss: 0.12889960408210754
+Epoch: 70, progress on batches: 100%|██████████| 59/59 [00:01<00:00, 52.89it/s]500 [01:33<09:33,  1.33s/it]
+Epoch: 69, trainset accuracy: 0.96575, trainset loss: 0.1367992234190305
+Logging to WandB: {'epoch': 69, 'trainset_accuracy': 0.96575, 'trainset_loss': 0.1367992234190305}
+Epoch: 69, testset accuracy: 0.9659, testset loss: 0.13378044962882996
+Epoch: 71, progress on batches: 100%|██████████| 59/59 [00:01<00:00, 52.95it/s]500 [01:34<09:31,  1.33s/it]
+Epoch: 70, trainset accuracy: 0.9672666666666667, trainset loss: 0.13368560242652894
+Logging to WandB: {'epoch': 70, 'trainset_accuracy': 0.9672666666666667, 'trainset_loss': 0.13368560242652894}
+Epoch: 70, testset accuracy: 0.9642, testset loss: 0.13564898073673248
+Epoch: 72, progress on batches: 100%|██████████| 59/59 [00:01<00:00, 52.96it/s]500 [01:36<09:30,  1.33s/it]
+Epoch: 71, trainset accuracy: 0.9668666666666667, trainset loss: 0.13356310017903647
+Logging to WandB: {'epoch': 71, 'trainset_accuracy': 0.9668666666666667, 'trainset_loss': 0.13356310017903647}
+Epoch: 71, testset accuracy: 0.967, testset loss: 0.13465875387191772
+Epoch: 73, progress on batches: 100%|██████████| 59/59 [00:01<00:00, 53.05it/s]500 [01:37<09:28,  1.33s/it]
+Epoch: 72, trainset accuracy: 0.9648666666666667, trainset loss: 0.1406642826795578
+Logging to WandB: {'epoch': 72, 'trainset_accuracy': 0.9648666666666667, 'trainset_loss': 0.1406642826795578}
+Epoch: 72, testset accuracy: 0.9631, testset loss: 0.14038191735744476
+Epoch: 74, progress on batches: 100%|██████████| 59/59 [00:01<00:00, 52.99it/s]500 [01:38<09:27,  1.33s/it]
+Epoch: 73, trainset accuracy: 0.9658, trainset loss: 0.13741401530106861
+Logging to WandB: {'epoch': 73, 'trainset_accuracy': 0.9658, 'trainset_loss': 0.13741401530106861}
+Epoch: 73, testset accuracy: 0.9553, testset loss: 0.15278387069702148
+Epoch: 75, progress on batches: 100%|██████████| 59/59 [00:01<00:00, 53.03it/s]500 [01:40<09:25,  1.33s/it]
+Epoch: 74, trainset accuracy: 0.9658666666666667, trainset loss: 0.13803831493059793
+Logging to WandB: {'epoch': 74, 'trainset_accuracy': 0.9658666666666667, 'trainset_loss': 0.13803831493059793}
+Epoch: 74, testset accuracy: 0.9664, testset loss: 0.13181525468826294
+Epoch: 76, progress on batches: 100%|██████████| 59/59 [00:01<00:00, 53.18it/s]500 [01:41<09:24,  1.33s/it]
+Epoch: 75, trainset accuracy: 0.9685333333333334, trainset loss: 0.13056791849136354
+Logging to WandB: {'epoch': 75, 'trainset_accuracy': 0.9685333333333334, 'trainset_loss': 0.13056791849136354}
+Epoch: 75, testset accuracy: 0.967, testset loss: 0.13157589733600616
+Epoch: 77, progress on batches: 100%|██████████| 59/59 [00:01<00:00, 53.09it/s]500 [01:42<09:22,  1.33s/it]
+Epoch: 76, trainset accuracy: 0.9670666666666666, trainset loss: 0.13422600824832917
+Logging to WandB: {'epoch': 76, 'trainset_accuracy': 0.9670666666666666, 'trainset_loss': 0.13422600824832917}
+Epoch: 76, testset accuracy: 0.9647, testset loss: 0.13856181502342224
+Epoch: 78, progress on batches: 100%|██████████| 59/59 [00:01<00:00, 52.91it/s]500 [01:44<09:20,  1.33s/it]
+Epoch: 77, trainset accuracy: 0.9675833333333334, trainset loss: 0.1327841864824295
+Logging to WandB: {'epoch': 77, 'trainset_accuracy': 0.9675833333333334, 'trainset_loss': 0.1327841864824295}
+Epoch: 77, testset accuracy: 0.9677, testset loss: 0.12876319885253906
+Epoch: 79, progress on batches: 100%|██████████| 59/59 [00:01<00:00, 52.99it/s]500 [01:45<09:19,  1.33s/it]
+Epoch: 78, trainset accuracy: 0.96725, trainset loss: 0.1352004301548004
+Logging to WandB: {'epoch': 78, 'trainset_accuracy': 0.96725, 'trainset_loss': 0.1352004301548004}
+Epoch: 78, testset accuracy: 0.9675, testset loss: 0.13011889159679413
+Epoch: 80, progress on batches: 100%|██████████| 59/59 [00:01<00:00, 52.76it/s]500 [01:46<09:18,  1.33s/it]
+Epoch: 79, trainset accuracy: 0.9662333333333334, trainset loss: 0.13678840795358022
+Logging to WandB: {'epoch': 79, 'trainset_accuracy': 0.9662333333333334, 'trainset_loss': 0.13678840795358022}
+Epoch: 79, testset accuracy: 0.9643, testset loss: 0.13924409449100494
+Epoch: 81, progress on batches: 100%|██████████| 59/59 [00:01<00:00, 52.97it/s]500 [01:48<09:17,  1.33s/it]
+Epoch: 80, trainset accuracy: 0.9667666666666667, trainset loss: 0.13518120391368865
+Logging to WandB: {'epoch': 80, 'trainset_accuracy': 0.9667666666666667, 'trainset_loss': 0.13518120391368865}
+Epoch: 80, testset accuracy: 0.9652, testset loss: 0.13137632608413696
+Epoch: 82, progress on batches: 100%|██████████| 59/59 [00:01<00:00, 53.04it/s]500 [01:49<09:16,  1.33s/it]
+Epoch: 81, trainset accuracy: 0.9682833333333334, trainset loss: 0.13289608651796977
+Logging to WandB: {'epoch': 81, 'trainset_accuracy': 0.9682833333333334, 'trainset_loss': 0.13289608651796977}
+Epoch: 81, testset accuracy: 0.9682, testset loss: 0.13248559832572937
+Epoch: 83, progress on batches: 100%|██████████| 59/59 [00:01<00:00, 52.92it/s]500 [01:50<09:14,  1.33s/it]
+Epoch: 82, trainset accuracy: 0.9678666666666667, trainset loss: 0.13262017812728882
+Logging to WandB: {'epoch': 82, 'trainset_accuracy': 0.9678666666666667, 'trainset_loss': 0.13262017812728882}
+Epoch: 82, testset accuracy: 0.9649, testset loss: 0.13918544352054596
+Epoch: 84, progress on batches: 100%|██████████| 59/59 [00:01<00:00, 52.94it/s]500 [01:52<09:13,  1.33s/it]
+Epoch: 83, trainset accuracy: 0.9675666666666667, trainset loss: 0.13567946739594142
+Logging to WandB: {'epoch': 83, 'trainset_accuracy': 0.9675666666666667, 'trainset_loss': 0.13567946739594142}
+Epoch: 83, testset accuracy: 0.9652, testset loss: 0.13808654248714447
+Epoch: 85, progress on batches: 100%|██████████| 59/59 [00:01<00:00, 53.24it/s]500 [01:53<09:12,  1.33s/it]
+Epoch: 84, trainset accuracy: 0.9663333333333334, trainset loss: 0.13470018068552017
+Logging to WandB: {'epoch': 84, 'trainset_accuracy': 0.9663333333333334, 'trainset_loss': 0.13470018068552017}
+Epoch: 84, testset accuracy: 0.9669, testset loss: 0.13409259915351868
+Epoch: 86, progress on batches: 100%|██████████| 59/59 [00:01<00:00, 53.14it/s]500 [01:54<09:10,  1.33s/it]
+Epoch: 85, trainset accuracy: 0.9677, trainset loss: 0.13483976846536
+Logging to WandB: {'epoch': 85, 'trainset_accuracy': 0.9677, 'trainset_loss': 0.13483976846536}
+Epoch: 85, testset accuracy: 0.9658, testset loss: 0.13546405732631683
+Epoch: 87, progress on batches: 100%|██████████| 59/59 [00:01<00:00, 53.24it/s]500 [01:56<09:08,  1.33s/it]
+Epoch: 86, trainset accuracy: 0.96745, trainset loss: 0.13415996435483296
+Logging to WandB: {'epoch': 86, 'trainset_accuracy': 0.96745, 'trainset_loss': 0.13415996435483296}
+Epoch: 86, testset accuracy: 0.9669, testset loss: 0.12952503561973572
+Epoch: 88, progress on batches: 100%|██████████| 59/59 [00:01<00:00, 52.88it/s]500 [01:57<09:06,  1.33s/it]
+Epoch: 87, trainset accuracy: 0.9665166666666667, trainset loss: 0.13640098818937937
+Logging to WandB: {'epoch': 87, 'trainset_accuracy': 0.9665166666666667, 'trainset_loss': 0.13640098818937937}
+Epoch: 87, testset accuracy: 0.968, testset loss: 0.12972722947597504
+Epoch: 89, progress on batches: 100%|██████████| 59/59 [00:01<00:00, 53.20it/s]500 [01:58<09:06,  1.33s/it]
+Epoch: 88, trainset accuracy: 0.9673166666666667, trainset loss: 0.1332996950785319
+Logging to WandB: {'epoch': 88, 'trainset_accuracy': 0.9673166666666667, 'trainset_loss': 0.1332996950785319}
+Epoch: 88, testset accuracy: 0.9667, testset loss: 0.134828582406044
+Epoch: 90, progress on batches: 100%|██████████| 59/59 [00:01<00:00, 53.04it/s]500 [02:00<09:04,  1.33s/it]
+Epoch: 89, trainset accuracy: 0.9677, trainset loss: 0.13242187678813935
+Logging to WandB: {'epoch': 89, 'trainset_accuracy': 0.9677, 'trainset_loss': 0.13242187678813935}
+Epoch: 89, testset accuracy: 0.9655, testset loss: 0.13426032662391663
+Epoch: 91, progress on batches: 100%|██████████| 59/59 [00:01<00:00, 53.05it/s]500 [02:01<09:03,  1.33s/it]
+Epoch: 90, trainset accuracy: 0.9674, trainset loss: 0.13341248856385549
+Logging to WandB: {'epoch': 90, 'trainset_accuracy': 0.9674, 'trainset_loss': 0.13341248856385549}
+Epoch: 90, testset accuracy: 0.9677, testset loss: 0.12662817537784576
+Epoch: 92, progress on batches: 100%|██████████| 59/59 [00:01<00:00, 53.24it/s]500 [02:02<09:01,  1.33s/it]
+Epoch: 91, trainset accuracy: 0.9679833333333333, trainset loss: 0.13314864575068155
+Logging to WandB: {'epoch': 91, 'trainset_accuracy': 0.9679833333333333, 'trainset_loss': 0.13314864575068155}
+Epoch: 91, testset accuracy: 0.9681, testset loss: 0.13020041584968567
+Epoch: 93, progress on batches: 100%|██████████| 59/59 [00:01<00:00, 53.10it/s]500 [02:03<08:59,  1.33s/it]
+Epoch: 92, trainset accuracy: 0.9670166666666666, trainset loss: 0.1333776005268097
+Logging to WandB: {'epoch': 92, 'trainset_accuracy': 0.9670166666666666, 'trainset_loss': 0.1333776005268097}
+Epoch: 92, testset accuracy: 0.9671, testset loss: 0.1272844523191452
+Epoch: 94, progress on batches: 100%|██████████| 59/59 [00:01<00:00, 53.08it/s]500 [02:05<08:58,  1.33s/it]
+Epoch: 93, trainset accuracy: 0.9670166666666666, trainset loss: 0.1346409808953603
+Logging to WandB: {'epoch': 93, 'trainset_accuracy': 0.9670166666666666, 'trainset_loss': 0.1346409808953603}
+Epoch: 93, testset accuracy: 0.9656, testset loss: 0.136275053024292
+Epoch: 95, progress on batches: 100%|██████████| 59/59 [00:01<00:00, 52.98it/s]500 [02:06<08:57,  1.33s/it]
+Epoch: 94, trainset accuracy: 0.9660666666666666, trainset loss: 0.13652770200570424
+Logging to WandB: {'epoch': 94, 'trainset_accuracy': 0.9660666666666666, 'trainset_loss': 0.13652770200570424}
+Epoch: 94, testset accuracy: 0.9683, testset loss: 0.12798210978507996
+Epoch: 96, progress on batches: 100%|██████████| 59/59 [00:01<00:00, 53.07it/s]500 [02:07<08:56,  1.33s/it]
+Epoch: 95, trainset accuracy: 0.9667333333333333, trainset loss: 0.13562531531651814
+Logging to WandB: {'epoch': 95, 'trainset_accuracy': 0.9667333333333333, 'trainset_loss': 0.13562531531651814}
+Epoch: 95, testset accuracy: 0.9639, testset loss: 0.1419050395488739
+Epoch: 97, progress on batches: 100%|██████████| 59/59 [00:01<00:00, 53.11it/s]500 [02:09<08:55,  1.33s/it]
+Epoch: 96, trainset accuracy: 0.9669833333333333, trainset loss: 0.13497967276970546
+Logging to WandB: {'epoch': 96, 'trainset_accuracy': 0.9669833333333333, 'trainset_loss': 0.13497967276970546}
+Epoch: 96, testset accuracy: 0.9643, testset loss: 0.13776473701000214
+Epoch: 98, progress on batches: 100%|██████████| 59/59 [00:01<00:00, 53.08it/s]500 [02:10<08:53,  1.33s/it]
+Epoch: 97, trainset accuracy: 0.9673166666666667, trainset loss: 0.1334856647491455
+Logging to WandB: {'epoch': 97, 'trainset_accuracy': 0.9673166666666667, 'trainset_loss': 0.1334856647491455}
+Epoch: 97, testset accuracy: 0.9641, testset loss: 0.1344308853149414
+Epoch: 99, progress on batches: 100%|██████████| 59/59 [00:01<00:00, 53.02it/s]500 [02:11<08:52,  1.33s/it]
+Epoch: 98, trainset accuracy: 0.9651166666666666, trainset loss: 0.13909716777006786
+Logging to WandB: {'epoch': 98, 'trainset_accuracy': 0.9651166666666666, 'trainset_loss': 0.13909716777006786}
+Epoch: 98, testset accuracy: 0.959, testset loss: 0.1648472249507904
+Epoch: 100, progress on batches: 100%|█████████| 59/59 [00:01<00:00, 53.12it/s]500 [02:13<08:51,  1.33s/it]
+Epoch: 99, trainset accuracy: 0.9661666666666666, trainset loss: 0.13733482542037964
+Logging to WandB: {'epoch': 99, 'trainset_accuracy': 0.9661666666666666, 'trainset_loss': 0.13733482542037964}
+Epoch: 99, testset accuracy: 0.9634, testset loss: 0.1390818953514099
+Epoch: 101, progress on batches: 100%|█████████| 59/59 [00:01<00:00, 52.78it/s]500 [02:14<08:49,  1.33s/it]
+Epoch: 100, trainset accuracy: 0.9681833333333333, trainset loss: 0.13252668572266896
+Logging to WandB: {'epoch': 100, 'trainset_accuracy': 0.9681833333333333, 'trainset_loss': 0.13252668572266896}
+Epoch: 100, testset accuracy: 0.9651, testset loss: 0.1327832043170929
+Epoch: 102, progress on batches: 100%|█████████| 59/59 [00:01<00:00, 52.88it/s]500 [02:15<08:49,  1.33s/it]
+Epoch: 101, trainset accuracy: 0.9667166666666667, trainset loss: 0.13371871856053671
+Logging to WandB: {'epoch': 101, 'trainset_accuracy': 0.9667166666666667, 'trainset_loss': 0.13371871856053671}
+Epoch: 101, testset accuracy: 0.9671, testset loss: 0.13199470937252045
+Epoch: 103, progress on batches: 100%|█████████| 59/59 [00:01<00:00, 52.93it/s]500 [02:17<08:48,  1.33s/it]
+Epoch: 102, trainset accuracy: 0.9664333333333334, trainset loss: 0.13612110385894777
+Logging to WandB: {'epoch': 102, 'trainset_accuracy': 0.9664333333333334, 'trainset_loss': 0.13612110385894777}
+Epoch: 102, testset accuracy: 0.968, testset loss: 0.13283300399780273
+Epoch: 104, progress on batches: 100%|█████████| 59/59 [00:01<00:00, 53.02it/s]500 [02:18<08:46,  1.33s/it]
+Epoch: 103, trainset accuracy: 0.9673166666666667, trainset loss: 0.13403307135502499
+Logging to WandB: {'epoch': 103, 'trainset_accuracy': 0.9673166666666667, 'trainset_loss': 0.13403307135502499}
+Epoch: 103, testset accuracy: 0.9651, testset loss: 0.13023222982883453
+Epoch: 105, progress on batches: 100%|█████████| 59/59 [00:01<00:00, 53.00it/s]500 [02:19<08:45,  1.33s/it]
+Epoch: 104, trainset accuracy: 0.9677666666666667, trainset loss: 0.1329005979458491
+Logging to WandB: {'epoch': 104, 'trainset_accuracy': 0.9677666666666667, 'trainset_loss': 0.1329005979458491}
+Epoch: 104, testset accuracy: 0.9685, testset loss: 0.1270485371351242
+Epoch: 106, progress on batches: 100%|█████████| 59/59 [00:01<00:00, 53.05it/s]500 [02:21<08:43,  1.33s/it]
+Epoch: 105, trainset accuracy: 0.9661333333333333, trainset loss: 0.1360400635321935
+Logging to WandB: {'epoch': 105, 'trainset_accuracy': 0.9661333333333333, 'trainset_loss': 0.1360400635321935}
+Epoch: 105, testset accuracy: 0.965, testset loss: 0.13377510011196136
+Epoch: 107, progress on batches: 100%|█████████| 59/59 [00:01<00:00, 52.92it/s]500 [02:22<08:42,  1.33s/it]
+Epoch: 106, trainset accuracy: 0.9663833333333334, trainset loss: 0.1354222680489222
+Logging to WandB: {'epoch': 106, 'trainset_accuracy': 0.9663833333333334, 'trainset_loss': 0.1354222680489222}
+Epoch: 106, testset accuracy: 0.9656, testset loss: 0.14086945354938507
+Epoch: 108, progress on batches: 100%|█████████| 59/59 [00:01<00:00, 52.42it/s]500 [02:23<08:41,  1.33s/it]
+Epoch: 107, trainset accuracy: 0.9678666666666667, trainset loss: 0.13355774625937145
+Logging to WandB: {'epoch': 107, 'trainset_accuracy': 0.9678666666666667, 'trainset_loss': 0.13355774625937145}
+Epoch: 107, testset accuracy: 0.9663, testset loss: 0.1350947767496109
+Epoch: 109, progress on batches: 100%|█████████| 59/59 [00:01<00:00, 53.01it/s]500 [02:25<08:41,  1.33s/it]
+Epoch: 108, trainset accuracy: 0.9677333333333333, trainset loss: 0.132549564687411
+Logging to WandB: {'epoch': 108, 'trainset_accuracy': 0.9677333333333333, 'trainset_loss': 0.132549564687411}
+Epoch: 108, testset accuracy: 0.9674, testset loss: 0.13026931881904602
+Epoch: 110, progress on batches: 100%|█████████| 59/59 [00:01<00:00, 52.92it/s]500 [02:26<08:39,  1.33s/it]
+Epoch: 109, trainset accuracy: 0.9671333333333333, trainset loss: 0.13574847411314647
+Logging to WandB: {'epoch': 109, 'trainset_accuracy': 0.9671333333333333, 'trainset_loss': 0.13574847411314647}
+Epoch: 109, testset accuracy: 0.9644, testset loss: 0.139145627617836
+Epoch: 111, progress on batches: 100%|█████████| 59/59 [00:01<00:00, 53.02it/s]500 [02:27<08:38,  1.33s/it]
+Epoch: 110, trainset accuracy: 0.9669, trainset loss: 0.1347623610019684
+Logging to WandB: {'epoch': 110, 'trainset_accuracy': 0.9669, 'trainset_loss': 0.1347623610019684}
+Epoch: 110, testset accuracy: 0.9674, testset loss: 0.13057173788547516
+Epoch: 112, progress on batches: 100%|█████████| 59/59 [00:01<00:00, 52.98it/s]500 [02:29<08:36,  1.33s/it]
+Epoch: 111, trainset accuracy: 0.9658166666666667, trainset loss: 0.13717400862375895
+Logging to WandB: {'epoch': 111, 'trainset_accuracy': 0.9658166666666667, 'trainset_loss': 0.13717400862375895}
+Epoch: 111, testset accuracy: 0.9624, testset loss: 0.14160092175006866
+Epoch: 113, progress on batches: 100%|█████████| 59/59 [00:01<00:00, 52.95it/s]500 [02:30<08:35,  1.33s/it]
+Epoch: 112, trainset accuracy: 0.9675833333333334, trainset loss: 0.13381032473246257
+Logging to WandB: {'epoch': 112, 'trainset_accuracy': 0.9675833333333334, 'trainset_loss': 0.13381032473246257}
+Epoch: 112, testset accuracy: 0.9668, testset loss: 0.130264014005661
+Epoch: 114, progress on batches: 100%|█████████| 59/59 [00:01<00:00, 52.92it/s]500 [02:31<08:33,  1.33s/it]
+Epoch: 113, trainset accuracy: 0.9672166666666666, trainset loss: 0.13535760139624278
+Logging to WandB: {'epoch': 113, 'trainset_accuracy': 0.9672166666666666, 'trainset_loss': 0.13535760139624278}
+Epoch: 113, testset accuracy: 0.9663, testset loss: 0.13356997072696686
+Epoch: 115, progress on batches: 100%|█████████| 59/59 [00:01<00:00, 52.98it/s]500 [02:33<08:32,  1.33s/it]
+Epoch: 114, trainset accuracy: 0.9673666666666667, trainset loss: 0.13446015445391338
+Logging to WandB: {'epoch': 114, 'trainset_accuracy': 0.9673666666666667, 'trainset_loss': 0.13446015445391338}
+Epoch: 114, testset accuracy: 0.9682, testset loss: 0.13078539073467255
+Epoch: 116, progress on batches: 100%|█████████| 59/59 [00:01<00:00, 52.88it/s]500 [02:34<08:30,  1.33s/it]
+Epoch: 115, trainset accuracy: 0.96755, trainset loss: 0.13378465486367544
+Logging to WandB: {'epoch': 115, 'trainset_accuracy': 0.96755, 'trainset_loss': 0.13378465486367544}
+Epoch: 115, testset accuracy: 0.9682, testset loss: 0.1287272423505783
+Epoch: 117, progress on batches: 100%|█████████| 59/59 [00:01<00:00, 52.90it/s]500 [02:35<08:29,  1.33s/it]
+Epoch: 116, trainset accuracy: 0.9679833333333333, trainset loss: 0.1322355990489324
+Logging to WandB: {'epoch': 116, 'trainset_accuracy': 0.9679833333333333, 'trainset_loss': 0.1322355990489324}
+Epoch: 116, testset accuracy: 0.9599, testset loss: 0.14116224646568298
+Epoch: 118, progress on batches: 100%|█████████| 59/59 [00:01<00:00, 52.81it/s]500 [02:37<08:28,  1.33s/it]
+Epoch: 117, trainset accuracy: 0.9673666666666667, trainset loss: 0.13473924513657887
+Logging to WandB: {'epoch': 117, 'trainset_accuracy': 0.9673666666666667, 'trainset_loss': 0.13473924513657887}
+Epoch: 117, testset accuracy: 0.965, testset loss: 0.13570453226566315
+Epoch: 119, progress on batches: 100%|█████████| 59/59 [00:01<00:00, 52.89it/s]500 [02:38<08:27,  1.33s/it]
+Epoch: 118, trainset accuracy: 0.96665, trainset loss: 0.13457722196976343
+Logging to WandB: {'epoch': 118, 'trainset_accuracy': 0.96665, 'trainset_loss': 0.13457722196976343}
+Epoch: 118, testset accuracy: 0.9672, testset loss: 0.12895673513412476
+Epoch: 120, progress on batches: 100%|█████████| 59/59 [00:01<00:00, 52.82it/s]500 [02:39<08:26,  1.33s/it]
+Epoch: 119, trainset accuracy: 0.9667833333333333, trainset loss: 0.13554087209701537
+Logging to WandB: {'epoch': 119, 'trainset_accuracy': 0.9667833333333333, 'trainset_loss': 0.13554087209701537}
+Epoch: 119, testset accuracy: 0.9664, testset loss: 0.13376395404338837
+Epoch: 121, progress on batches: 100%|█████████████████████████████████████| 59/59 [00:01<00:00, 52.87it/s]
+Epoch: 120, trainset accuracy: 0.9666166666666667, trainset loss: 0.1366170635064443
+Logging to WandB: {'epoch': 120, 'trainset_accuracy': 0.9666166666666667, 'trainset_loss': 0.1366170635064443}
+Epoch: 120, testset accuracy: 0.9644, testset loss: 0.13430671393871307
+Epoch: 122, progress on batches: 100%|█████████████████████████████████████| 59/59 [00:01<00:00, 52.82it/s]
+Epoch: 121, trainset accuracy: 0.96685, trainset loss: 0.1344527457157771
+Logging to WandB: {'epoch': 121, 'trainset_accuracy': 0.96685, 'trainset_loss': 0.1344527457157771}
+Epoch: 121, testset accuracy: 0.9668, testset loss: 0.1358506977558136
+Epoch: 123, progress on batches: 100%|█████████████████████████████████████| 59/59 [00:01<00:00, 52.88it/s]
+Epoch: 122, trainset accuracy: 0.9667333333333333, trainset loss: 0.13619185057083766
+Logging to WandB: {'epoch': 122, 'trainset_accuracy': 0.9667333333333333, 'trainset_loss': 0.13619185057083766}
+Epoch: 122, testset accuracy: 0.9631, testset loss: 0.14512504637241364
+Epoch: 124, progress on batches: 100%|█████████████████████████████████████| 59/59 [00:01<00:00, 53.08it/s]
+Epoch: 123, trainset accuracy: 0.9670166666666666, trainset loss: 0.13560436979134877
+Logging to WandB: {'epoch': 123, 'trainset_accuracy': 0.9670166666666666, 'trainset_loss': 0.13560436979134877}
+Epoch: 123, testset accuracy: 0.9647, testset loss: 0.13742583990097046
+Epoch: 125, progress on batches: 100%|█████████████████████████████████████| 59/59 [00:01<00:00, 52.93it/s]
+Epoch: 124, trainset accuracy: 0.9661, trainset loss: 0.13671348268985747
+Logging to WandB: {'epoch': 124, 'trainset_accuracy': 0.9661, 'trainset_loss': 0.13671348268985747}
+Epoch: 124, testset accuracy: 0.9637, testset loss: 0.14348894357681274
+Epoch: 126, progress on batches: 100%|█████████████████████████████████████| 59/59 [00:01<00:00, 53.13it/s]
+Epoch: 125, trainset accuracy: 0.9676333333333333, trainset loss: 0.13351637999216714
+Logging to WandB: {'epoch': 125, 'trainset_accuracy': 0.9676333333333333, 'trainset_loss': 0.13351637999216714}
+Epoch: 125, testset accuracy: 0.968, testset loss: 0.1298280507326126
+Epoch: 127, progress on batches: 100%|█████████| 59/59 [00:01<00:00, 52.93it/s]500 [02:49<08:15,  1.33s/it]
+Epoch: 126, trainset accuracy: 0.9670333333333333, trainset loss: 0.13566159857114157
+Logging to WandB: {'epoch': 126, 'trainset_accuracy': 0.9670333333333333, 'trainset_loss': 0.13566159857114157}
+Epoch: 126, testset accuracy: 0.9659, testset loss: 0.13240838050842285
+Epoch: 128, progress on batches: 100%|█████████| 59/59 [00:01<00:00, 53.06it/s]500 [02:50<08:14,  1.33s/it]
+Epoch: 127, trainset accuracy: 0.9669166666666666, trainset loss: 0.13443398185571034
+Logging to WandB: {'epoch': 127, 'trainset_accuracy': 0.9669166666666666, 'trainset_loss': 0.13443398185571034}
+Epoch: 127, testset accuracy: 0.9674, testset loss: 0.12727966904640198
+Epoch: 129, progress on batches: 100%|█████████| 59/59 [00:01<00:00, 53.09it/s]500 [02:51<08:13,  1.33s/it]
+Epoch: 128, trainset accuracy: 0.96655, trainset loss: 0.13587586216131847
+Logging to WandB: {'epoch': 128, 'trainset_accuracy': 0.96655, 'trainset_loss': 0.13587586216131847}
+Epoch: 128, testset accuracy: 0.9681, testset loss: 0.1297975778579712
+Epoch: 130, progress on batches: 100%|█████████| 59/59 [00:01<00:00, 52.87it/s]500 [02:53<08:12,  1.33s/it]
+Epoch: 129, trainset accuracy: 0.9680833333333333, trainset loss: 0.13288097682793934
+Logging to WandB: {'epoch': 129, 'trainset_accuracy': 0.9680833333333333, 'trainset_loss': 0.13288097682793934}
+Epoch: 129, testset accuracy: 0.966, testset loss: 0.1285153478384018
+Epoch: 131, progress on batches: 100%|█████████| 59/59 [00:01<00:00, 52.98it/s]500 [02:54<08:11,  1.33s/it]
+Epoch: 130, trainset accuracy: 0.9685666666666667, trainset loss: 0.13206211966276168
+Logging to WandB: {'epoch': 130, 'trainset_accuracy': 0.9685666666666667, 'trainset_loss': 0.13206211966276168}
+Epoch: 130, testset accuracy: 0.965, testset loss: 0.13610437512397766
+Epoch: 132, progress on batches: 100%|█████████████████████████████████████| 59/59 [00:01<00:00, 52.93it/s]
+Epoch: 131, trainset accuracy: 0.9673166666666667, trainset loss: 0.13459913958708444
+Logging to WandB: {'epoch': 131, 'trainset_accuracy': 0.9673166666666667, 'trainset_loss': 0.13459913958708444}
+Epoch: 131, testset accuracy: 0.9646, testset loss: 0.13572974503040314
+Epoch: 133, progress on batches: 100%|█████████████████████████████████████| 59/59 [00:01<00:00, 52.98it/s]
+Epoch: 132, trainset accuracy: 0.9657833333333333, trainset loss: 0.1366576787074407
+Logging to WandB: {'epoch': 132, 'trainset_accuracy': 0.9657833333333333, 'trainset_loss': 0.1366576787074407}
+Epoch: 132, testset accuracy: 0.9645, testset loss: 0.132851243019104
+Epoch: 134, progress on batches: 100%|█████████████████████████████████████| 59/59 [00:01<00:00, 52.96it/s]
+Epoch: 133, trainset accuracy: 0.9669333333333333, trainset loss: 0.13584592202504475
+Logging to WandB: {'epoch': 133, 'trainset_accuracy': 0.9669333333333333, 'trainset_loss': 0.13584592202504475}
+Epoch: 133, testset accuracy: 0.9645, testset loss: 0.13557928800582886
+Epoch: 135, progress on batches: 100%|█████████████████████████████████████| 59/59 [00:01<00:00, 52.77it/s]
+Epoch: 134, trainset accuracy: 0.9663833333333334, trainset loss: 0.1367054033279419
+Logging to WandB: {'epoch': 134, 'trainset_accuracy': 0.9663833333333334, 'trainset_loss': 0.1367054033279419}
+Epoch: 134, testset accuracy: 0.9663, testset loss: 0.12847821414470673
+Epoch: 136, progress on batches: 100%|█████████| 59/59 [00:01<00:00, 52.80it/s]500 [03:01<08:04,  1.33s/it]
+Epoch: 135, trainset accuracy: 0.9669666666666666, trainset loss: 0.13533867812156677
+Logging to WandB: {'epoch': 135, 'trainset_accuracy': 0.9669666666666666, 'trainset_loss': 0.13533867812156677}
+Epoch: 135, testset accuracy: 0.9676, testset loss: 0.1344449371099472
+Epoch: 137, progress on batches: 100%|█████████| 59/59 [00:01<00:00, 52.95it/s]500 [03:02<08:03,  1.33s/it]
+Epoch: 136, trainset accuracy: 0.9676, trainset loss: 0.13310802781979242
+Logging to WandB: {'epoch': 136, 'trainset_accuracy': 0.9676, 'trainset_loss': 0.13310802781979242}
+Epoch: 136, testset accuracy: 0.9657, testset loss: 0.1321827918291092
+Epoch: 138, progress on batches: 100%|█████████| 59/59 [00:01<00:00, 53.19it/s]500 [03:03<08:01,  1.33s/it]
+Epoch: 137, trainset accuracy: 0.9688166666666667, trainset loss: 0.1309989689787229
+Logging to WandB: {'epoch': 137, 'trainset_accuracy': 0.9688166666666667, 'trainset_loss': 0.1309989689787229}
+Epoch: 137, testset accuracy: 0.9683, testset loss: 0.13216039538383484
+Epoch: 139, progress on batches: 100%|█████████| 59/59 [00:01<00:00, 53.07it/s]500 [03:05<08:00,  1.33s/it]
+Epoch: 138, trainset accuracy: 0.9666833333333333, trainset loss: 0.13554058890342713
+Logging to WandB: {'epoch': 138, 'trainset_accuracy': 0.9666833333333333, 'trainset_loss': 0.13554058890342713}
+Epoch: 138, testset accuracy: 0.9598, testset loss: 0.14972816407680511
+Epoch: 140, progress on batches: 100%|█████████| 59/59 [00:01<00:00, 53.09it/s]500 [03:06<07:58,  1.33s/it]
+Epoch: 139, trainset accuracy: 0.9671, trainset loss: 0.13467618552049002
+Logging to WandB: {'epoch': 139, 'trainset_accuracy': 0.9671, 'trainset_loss': 0.13467618552049002}
+Epoch: 139, testset accuracy: 0.963, testset loss: 0.14127743244171143
+Epoch: 141, progress on batches: 100%|█████████| 59/59 [00:01<00:00, 52.99it/s]500 [03:07<07:56,  1.33s/it]
+Epoch: 140, trainset accuracy: 0.9677166666666667, trainset loss: 0.13266539874076844
+Logging to WandB: {'epoch': 140, 'trainset_accuracy': 0.9677166666666667, 'trainset_loss': 0.13266539874076844}
+Epoch: 140, testset accuracy: 0.9656, testset loss: 0.13256745040416718
+Epoch: 142, progress on batches: 100%|█████████| 59/59 [00:01<00:00, 52.83it/s]500 [03:09<07:55,  1.33s/it]
+Epoch: 141, trainset accuracy: 0.9655666666666667, trainset loss: 0.13783220183849335
+Logging to WandB: {'epoch': 141, 'trainset_accuracy': 0.9655666666666667, 'trainset_loss': 0.13783220183849335}
+Epoch: 141, testset accuracy: 0.9659, testset loss: 0.13202282786369324
+Epoch: 143, progress on batches: 100%|█████████| 59/59 [00:01<00:00, 53.13it/s]500 [03:10<07:54,  1.33s/it]
+Epoch: 142, trainset accuracy: 0.9675166666666667, trainset loss: 0.13239345127344132
+Logging to WandB: {'epoch': 142, 'trainset_accuracy': 0.9675166666666667, 'trainset_loss': 0.13239345127344132}
+Epoch: 142, testset accuracy: 0.9679, testset loss: 0.12907809019088745
+Epoch: 144, progress on batches: 100%|█████████| 59/59 [00:01<00:00, 52.94it/s]500 [03:11<07:53,  1.33s/it]
+Epoch: 143, trainset accuracy: 0.9669333333333333, trainset loss: 0.13345901269515356
+Logging to WandB: {'epoch': 143, 'trainset_accuracy': 0.9669333333333333, 'trainset_loss': 0.13345901269515356}
+Epoch: 143, testset accuracy: 0.9683, testset loss: 0.12873050570487976
+Epoch: 145, progress on batches: 100%|█████████| 59/59 [00:01<00:00, 52.90it/s]500 [03:13<07:51,  1.33s/it]
+Epoch: 144, trainset accuracy: 0.9665, trainset loss: 0.1354340660095215
+Logging to WandB: {'epoch': 144, 'trainset_accuracy': 0.9665, 'trainset_loss': 0.1354340660095215}
+Epoch: 144, testset accuracy: 0.9642, testset loss: 0.135621577501297
+Epoch: 146, progress on batches: 100%|█████████| 59/59 [00:01<00:00, 52.97it/s]500 [03:14<07:50,  1.33s/it]
+Epoch: 145, trainset accuracy: 0.9682666666666667, trainset loss: 0.1313226510365804
+Logging to WandB: {'epoch': 145, 'trainset_accuracy': 0.9682666666666667, 'trainset_loss': 0.1313226510365804}
+Epoch: 145, testset accuracy: 0.9677, testset loss: 0.13091589510440826
+Epoch: 147, progress on batches: 100%|█████████████████████████████████████| 59/59 [00:01<00:00, 53.00it/s]
+Epoch: 146, trainset accuracy: 0.9680833333333333, trainset loss: 0.13203465270996093
+Logging to WandB: {'epoch': 146, 'trainset_accuracy': 0.9680833333333333, 'trainset_loss': 0.13203465270996093}
+Epoch: 146, testset accuracy: 0.9682, testset loss: 0.13317784667015076
+Epoch: 148, progress on batches: 100%|█████████████████████████████████████| 59/59 [00:01<00:00, 52.96it/s]
+Epoch: 147, trainset accuracy: 0.96535, trainset loss: 0.13869879848957062
+Logging to WandB: {'epoch': 147, 'trainset_accuracy': 0.96535, 'trainset_loss': 0.13869879848957062}
+Epoch: 147, testset accuracy: 0.9644, testset loss: 0.13973531126976013
+Epoch: 149, progress on batches: 100%|█████████████████████████████████████| 59/59 [00:01<00:00, 52.86it/s]
+Epoch: 148, trainset accuracy: 0.9673, trainset loss: 0.13532067046960194
+Logging to WandB: {'epoch': 148, 'trainset_accuracy': 0.9673, 'trainset_loss': 0.13532067046960194}
+Epoch: 148, testset accuracy: 0.9645, testset loss: 0.13617856800556183
+Epoch: 150, progress on batches: 100%|█████████████████████████████████████| 59/59 [00:01<00:00, 52.87it/s]
+Epoch: 149, trainset accuracy: 0.9670666666666666, trainset loss: 0.13444897884527843
+Logging to WandB: {'epoch': 149, 'trainset_accuracy': 0.9670666666666666, 'trainset_loss': 0.13444897884527843}
+Epoch: 149, testset accuracy: 0.9661, testset loss: 0.12966664135456085
+Epoch: 151, progress on batches: 100%|█████████████████████████████████████| 59/59 [00:01<00:00, 52.87it/s]
+Epoch: 150, trainset accuracy: 0.9678666666666667, trainset loss: 0.1343564832210541
+Logging to WandB: {'epoch': 150, 'trainset_accuracy': 0.9678666666666667, 'trainset_loss': 0.1343564832210541}
+Epoch: 150, testset accuracy: 0.9651, testset loss: 0.13667510449886322
+Epoch: 152, progress on batches: 100%|█████████████████████████████████████| 59/59 [00:01<00:00, 52.92it/s]
+Epoch: 151, trainset accuracy: 0.9671166666666666, trainset loss: 0.13422324148019155
+Logging to WandB: {'epoch': 151, 'trainset_accuracy': 0.9671166666666666, 'trainset_loss': 0.13422324148019155}
+Epoch: 151, testset accuracy: 0.9678, testset loss: 0.1324145644903183
+Epoch: 153, progress on batches: 100%|█████████████████████████████████████| 59/59 [00:01<00:00, 53.02it/s]
+Epoch: 152, trainset accuracy: 0.9681, trainset loss: 0.1331148553609848
+Logging to WandB: {'epoch': 152, 'trainset_accuracy': 0.9681, 'trainset_loss': 0.1331148553609848}
+Epoch: 152, testset accuracy: 0.9654, testset loss: 0.13241884112358093
+Epoch: 154, progress on batches: 100%|█████████████████████████████████████| 59/59 [00:01<00:00, 53.12it/s]
+Epoch: 153, trainset accuracy: 0.9674333333333334, trainset loss: 0.1336961467107137
+Logging to WandB: {'epoch': 153, 'trainset_accuracy': 0.9674333333333334, 'trainset_loss': 0.1336961467107137}
+Epoch: 153, testset accuracy: 0.9626, testset loss: 0.13995443284511566
+Epoch: 155, progress on batches: 100%|█████████████████████████████████████| 59/59 [00:01<00:00, 53.02it/s]
+Epoch: 154, trainset accuracy: 0.96685, trainset loss: 0.13549518906672794
+Logging to WandB: {'epoch': 154, 'trainset_accuracy': 0.96685, 'trainset_loss': 0.13549518906672794}
+Epoch: 154, testset accuracy: 0.9678, testset loss: 0.1338670551776886
+Epoch: 156, progress on batches: 100%|█████████████████████████████████████| 59/59 [00:01<00:00, 53.00it/s]
+Epoch: 155, trainset accuracy: 0.9670833333333333, trainset loss: 0.1337513683239619
+Logging to WandB: {'epoch': 155, 'trainset_accuracy': 0.9670833333333333, 'trainset_loss': 0.1337513683239619}
+Epoch: 155, testset accuracy: 0.9667, testset loss: 0.12832589447498322
+Epoch: 157, progress on batches: 100%|█████████████████████████████████████| 59/59 [00:01<00:00, 53.04it/s]
+Epoch: 156, trainset accuracy: 0.9673166666666667, trainset loss: 0.13371509400208792
+Logging to WandB: {'epoch': 156, 'trainset_accuracy': 0.9673166666666667, 'trainset_loss': 0.13371509400208792}
+Epoch: 156, testset accuracy: 0.9661, testset loss: 0.13599960505962372
+Epoch: 158, progress on batches: 100%|█████████████████████████████████████| 59/59 [00:01<00:00, 53.01it/s]
+Epoch: 157, trainset accuracy: 0.9685, trainset loss: 0.13120549403031667
+Logging to WandB: {'epoch': 157, 'trainset_accuracy': 0.9685, 'trainset_loss': 0.13120549403031667}
+Epoch: 157, testset accuracy: 0.967, testset loss: 0.12889157235622406
+Epoch: 159, progress on batches: 100%|█████████████████████████████████████| 59/59 [00:01<00:00, 52.97it/s]
+Epoch: 158, trainset accuracy: 0.9677, trainset loss: 0.13398795204957326
+Logging to WandB: {'epoch': 158, 'trainset_accuracy': 0.9677, 'trainset_loss': 0.13398795204957326}
+Epoch: 158, testset accuracy: 0.9672, testset loss: 0.12779638171195984
+Epoch: 160, progress on batches: 100%|█████████████████████████████████████| 59/59 [00:01<00:00, 53.02it/s]
+Epoch: 159, trainset accuracy: 0.9654666666666667, trainset loss: 0.1397392572402954
+Logging to WandB: {'epoch': 159, 'trainset_accuracy': 0.9654666666666667, 'trainset_loss': 0.1397392572402954}
+Epoch: 159, testset accuracy: 0.9622, testset loss: 0.14553113281726837
+Epoch: 161, progress on batches: 100%|█████████████████████████████████████| 59/59 [00:01<00:00, 53.07it/s]
+Epoch: 160, trainset accuracy: 0.9670833333333333, trainset loss: 0.13564367690086365
+Logging to WandB: {'epoch': 160, 'trainset_accuracy': 0.9670833333333333, 'trainset_loss': 0.13564367690086365}
+Epoch: 160, testset accuracy: 0.9663, testset loss: 0.131464883685112
+Epoch: 162, progress on batches: 100%|█████████████████████████████████████| 59/59 [00:01<00:00, 52.96it/s]
+Epoch: 161, trainset accuracy: 0.9690333333333333, trainset loss: 0.12905084437529246
+Logging to WandB: {'epoch': 161, 'trainset_accuracy': 0.9690333333333333, 'trainset_loss': 0.12905084437529246}
+Epoch: 161, testset accuracy: 0.9683, testset loss: 0.12898966670036316
+Epoch: 163, progress on batches: 100%|█████████████████████████████████████| 59/59 [00:01<00:00, 52.97it/s]
+Epoch: 162, trainset accuracy: 0.9666833333333333, trainset loss: 0.1359849687576294
+Logging to WandB: {'epoch': 162, 'trainset_accuracy': 0.9666833333333333, 'trainset_loss': 0.1359849687576294}
+Epoch: 162, testset accuracy: 0.9657, testset loss: 0.13948072493076324
+Epoch: 164, progress on batches: 100%|█████████████████████████████████████| 59/59 [00:01<00:00, 53.10it/s]
+Epoch: 163, trainset accuracy: 0.9680833333333333, trainset loss: 0.132441224916776
+Logging to WandB: {'epoch': 163, 'trainset_accuracy': 0.9680833333333333, 'trainset_loss': 0.132441224916776}
+Epoch: 163, testset accuracy: 0.9631, testset loss: 0.13948863744735718
+Epoch: 165, progress on batches: 100%|█████████████████████████████████████| 59/59 [00:01<00:00, 53.03it/s]
+Epoch: 164, trainset accuracy: 0.9673833333333334, trainset loss: 0.13436793599128724
+Logging to WandB: {'epoch': 164, 'trainset_accuracy': 0.9673833333333334, 'trainset_loss': 0.13436793599128724}
+Epoch: 164, testset accuracy: 0.9668, testset loss: 0.1305728405714035
+Epoch: 166, progress on batches: 100%|█████████████████████████████████████| 59/59 [00:01<00:00, 53.22it/s]
+Epoch: 165, trainset accuracy: 0.9685166666666667, trainset loss: 0.13189494082927705
+Logging to WandB: {'epoch': 165, 'trainset_accuracy': 0.9685166666666667, 'trainset_loss': 0.13189494082927705}
+Epoch: 165, testset accuracy: 0.9673, testset loss: 0.13221146166324615
+Epoch: 167, progress on batches: 100%|█████████████████████████████████████| 59/59 [00:01<00:00, 53.03it/s]
+Epoch: 166, trainset accuracy: 0.9665333333333334, trainset loss: 0.13696109782059987
+Logging to WandB: {'epoch': 166, 'trainset_accuracy': 0.9665333333333334, 'trainset_loss': 0.13696109782059987}
+Epoch: 166, testset accuracy: 0.9654, testset loss: 0.13775734603405
+Epoch: 168, progress on batches: 100%|█████████████████████████████████████| 59/59 [00:01<00:00, 52.97it/s]
+Epoch: 167, trainset accuracy: 0.9670666666666666, trainset loss: 0.1329536886850993
+Logging to WandB: {'epoch': 167, 'trainset_accuracy': 0.9670666666666666, 'trainset_loss': 0.1329536886850993}
+Epoch: 167, testset accuracy: 0.963, testset loss: 0.14000652730464935
+Epoch: 169, progress on batches: 100%|█████████████████████████████████████| 59/59 [00:01<00:00, 52.93it/s]
+Epoch: 168, trainset accuracy: 0.9662166666666666, trainset loss: 0.13710550598303478
+Logging to WandB: {'epoch': 168, 'trainset_accuracy': 0.9662166666666666, 'trainset_loss': 0.13710550598303478}
+Epoch: 168, testset accuracy: 0.9661, testset loss: 0.13501310348510742
+Epoch: 170, progress on batches: 100%|█████████████████████████████████████| 59/59 [00:01<00:00, 53.20it/s]
+Epoch: 169, trainset accuracy: 0.9659666666666666, trainset loss: 0.13811551644007364
+Logging to WandB: {'epoch': 169, 'trainset_accuracy': 0.9659666666666666, 'trainset_loss': 0.13811551644007364}
+Epoch: 169, testset accuracy: 0.9646, testset loss: 0.13563302159309387
+Epoch: 171, progress on batches: 100%|█████████████████████████████████████| 59/59 [00:01<00:00, 52.96it/s]
+Epoch: 170, trainset accuracy: 0.9680666666666666, trainset loss: 0.13165827729304633
+Logging to WandB: {'epoch': 170, 'trainset_accuracy': 0.9680666666666666, 'trainset_loss': 0.13165827729304633}
+Epoch: 170, testset accuracy: 0.9647, testset loss: 0.1350000947713852
+Epoch: 172, progress on batches: 100%|█████████████████████████████████████| 59/59 [00:01<00:00, 53.02it/s]
+Epoch: 171, trainset accuracy: 0.9672333333333333, trainset loss: 0.13350365790526073
+Logging to WandB: {'epoch': 171, 'trainset_accuracy': 0.9672333333333333, 'trainset_loss': 0.13350365790526073}
+Epoch: 171, testset accuracy: 0.9666, testset loss: 0.13465479016304016
+Epoch: 173, progress on batches: 100%|█████████████████████████████████████| 59/59 [00:01<00:00, 52.93it/s]
+Epoch: 172, trainset accuracy: 0.9671666666666666, trainset loss: 0.13387505679925282
+Logging to WandB: {'epoch': 172, 'trainset_accuracy': 0.9671666666666666, 'trainset_loss': 0.13387505679925282}
+Epoch: 172, testset accuracy: 0.9665, testset loss: 0.1304127722978592
+Epoch: 174, progress on batches: 100%|█████████████████████████████████████| 59/59 [00:01<00:00, 52.89it/s]
+Epoch: 173, trainset accuracy: 0.9673333333333334, trainset loss: 0.13215059257348377
+Logging to WandB: {'epoch': 173, 'trainset_accuracy': 0.9673333333333334, 'trainset_loss': 0.13215059257348377}
+Epoch: 173, testset accuracy: 0.9661, testset loss: 0.13454869389533997
+Epoch: 175, progress on batches: 100%|█████████████████████████████████████| 59/59 [00:01<00:00, 53.07it/s]
+Epoch: 174, trainset accuracy: 0.9678833333333333, trainset loss: 0.13303642907937369
+Logging to WandB: {'epoch': 174, 'trainset_accuracy': 0.9678833333333333, 'trainset_loss': 0.13303642907937369}
+Epoch: 174, testset accuracy: 0.9688, testset loss: 0.1286432445049286
+Epoch: 176, progress on batches: 100%|█████████████████████████████████████| 59/59 [00:01<00:00, 53.07it/s]
+Epoch: 175, trainset accuracy: 0.9678833333333333, trainset loss: 0.13195476926962535
+Logging to WandB: {'epoch': 175, 'trainset_accuracy': 0.9678833333333333, 'trainset_loss': 0.13195476926962535}
+Epoch: 175, testset accuracy: 0.9675, testset loss: 0.13215583562850952
+Epoch: 177, progress on batches: 100%|█████████████████████████████████████| 59/59 [00:01<00:00, 53.05it/s]
+Epoch: 176, trainset accuracy: 0.96755, trainset loss: 0.13295492436885833
+Logging to WandB: {'epoch': 176, 'trainset_accuracy': 0.96755, 'trainset_loss': 0.13295492436885833}
+Epoch: 176, testset accuracy: 0.9652, testset loss: 0.13821439445018768
+Epoch: 178, progress on batches: 100%|█████████████████████████████████████| 59/59 [00:01<00:00, 52.92it/s]
+Epoch: 177, trainset accuracy: 0.9660666666666666, trainset loss: 0.136380415391922
+Logging to WandB: {'epoch': 177, 'trainset_accuracy': 0.9660666666666666, 'trainset_loss': 0.136380415391922}
+Epoch: 177, testset accuracy: 0.9662, testset loss: 0.13771821558475494
+Epoch: 179, progress on batches: 100%|█████████████████████████████████████| 59/59 [00:01<00:00, 53.08it/s]
+Epoch: 178, trainset accuracy: 0.9679333333333333, trainset loss: 0.1326478272954623
+Logging to WandB: {'epoch': 178, 'trainset_accuracy': 0.9679333333333333, 'trainset_loss': 0.1326478272954623}
+Epoch: 178, testset accuracy: 0.9669, testset loss: 0.13310593366622925
+Epoch: 180, progress on batches: 100%|█████████████████████████████████████| 59/59 [00:01<00:00, 53.13it/s]
+Epoch: 179, trainset accuracy: 0.9680166666666666, trainset loss: 0.13281808982690174
+Logging to WandB: {'epoch': 179, 'trainset_accuracy': 0.9680166666666666, 'trainset_loss': 0.13281808982690174}
+Epoch: 179, testset accuracy: 0.9662, testset loss: 0.1325218677520752
+Epoch: 181, progress on batches: 100%|█████████████████████████████████████| 59/59 [00:01<00:00, 53.08it/s]
+Epoch: 180, trainset accuracy: 0.9662, trainset loss: 0.13569134140809377
+Logging to WandB: {'epoch': 180, 'trainset_accuracy': 0.9662, 'trainset_loss': 0.13569134140809377}
+Epoch: 180, testset accuracy: 0.9651, testset loss: 0.13568970561027527
+Epoch: 182, progress on batches: 100%|█████████████████████████████████████| 59/59 [00:01<00:00, 53.00it/s]
+Epoch: 181, trainset accuracy: 0.9655833333333333, trainset loss: 0.1376532517115275
+Logging to WandB: {'epoch': 181, 'trainset_accuracy': 0.9655833333333333, 'trainset_loss': 0.1376532517115275}
+Epoch: 181, testset accuracy: 0.9643, testset loss: 0.14060768485069275
+Epoch: 183, progress on batches: 100%|█████████████████████████████████████| 59/59 [00:01<00:00, 52.85it/s]
+Epoch: 182, trainset accuracy: 0.9664833333333334, trainset loss: 0.13667279603481292
+Logging to WandB: {'epoch': 182, 'trainset_accuracy': 0.9664833333333334, 'trainset_loss': 0.13667279603481292}
+Epoch: 182, testset accuracy: 0.9646, testset loss: 0.1380317211151123
+Epoch: 184, progress on batches: 100%|█████████████████████████████████████| 59/59 [00:01<00:00, 52.92it/s]
+Epoch: 183, trainset accuracy: 0.9666666666666667, trainset loss: 0.13511947937011717
+Logging to WandB: {'epoch': 183, 'trainset_accuracy': 0.9666666666666667, 'trainset_loss': 0.13511947937011717}
+Epoch: 183, testset accuracy: 0.9667, testset loss: 0.13662412762641907
+Epoch: 185, progress on batches: 100%|█████████████████████████████████████| 59/59 [00:01<00:00, 52.95it/s]
+Epoch: 184, trainset accuracy: 0.9681833333333333, trainset loss: 0.13167135639190675
+Logging to WandB: {'epoch': 184, 'trainset_accuracy': 0.9681833333333333, 'trainset_loss': 0.13167135639190675}
+Epoch: 184, testset accuracy: 0.9655, testset loss: 0.1312350332736969
+Epoch: 186, progress on batches: 100%|█████████████████████████████████████| 59/59 [00:01<00:00, 52.79it/s]
+Epoch: 185, trainset accuracy: 0.9691166666666666, trainset loss: 0.13055671350558598
+Logging to WandB: {'epoch': 185, 'trainset_accuracy': 0.9691166666666666, 'trainset_loss': 0.13055671350558598}
+Epoch: 185, testset accuracy: 0.9675, testset loss: 0.1257641762495041
+Epoch: 187, progress on batches: 100%|█████████████████████████████████████| 59/59 [00:01<00:00, 52.71it/s]
+Epoch: 186, trainset accuracy: 0.9684833333333334, trainset loss: 0.13163209986686705
+Logging to WandB: {'epoch': 186, 'trainset_accuracy': 0.9684833333333334, 'trainset_loss': 0.13163209986686705}
+Epoch: 186, testset accuracy: 0.9669, testset loss: 0.13124580681324005
+Epoch: 188, progress on batches: 100%|█████████████████████████████████████| 59/59 [00:01<00:00, 53.03it/s]
+Epoch: 187, trainset accuracy: 0.96775, trainset loss: 0.13344334431489308
+Logging to WandB: {'epoch': 187, 'trainset_accuracy': 0.96775, 'trainset_loss': 0.13344334431489308}
+Epoch: 187, testset accuracy: 0.9646, testset loss: 0.14030447602272034
+Epoch: 189, progress on batches: 100%|█████████████████████████████████████| 59/59 [00:01<00:00, 52.94it/s]
+Epoch: 188, trainset accuracy: 0.9668833333333333, trainset loss: 0.13486621328194937
+Logging to WandB: {'epoch': 188, 'trainset_accuracy': 0.9668833333333333, 'trainset_loss': 0.13486621328194937}
+Epoch: 188, testset accuracy: 0.9685, testset loss: 0.12874577939510345
+Epoch: 190, progress on batches: 100%|█████████████████████████████████████| 59/59 [00:01<00:00, 52.85it/s]
+Epoch: 189, trainset accuracy: 0.9687, trainset loss: 0.13168500253359477
+Logging to WandB: {'epoch': 189, 'trainset_accuracy': 0.9687, 'trainset_loss': 0.13168500253359477}
+Epoch: 189, testset accuracy: 0.966, testset loss: 0.133134663105011
+Epoch: 191, progress on batches: 100%|█████████████████████████████████████| 59/59 [00:01<00:00, 52.79it/s]
+Epoch: 190, trainset accuracy: 0.9671333333333333, trainset loss: 0.13387361728350322
+Logging to WandB: {'epoch': 190, 'trainset_accuracy': 0.9671333333333333, 'trainset_loss': 0.13387361728350322}
+Epoch: 190, testset accuracy: 0.9655, testset loss: 0.13359367847442627
+Epoch: 192, progress on batches: 100%|█████████████████████████████████████| 59/59 [00:01<00:00, 52.75it/s]
+Epoch: 191, trainset accuracy: 0.9677833333333333, trainset loss: 0.1334028064886729
+Logging to WandB: {'epoch': 191, 'trainset_accuracy': 0.9677833333333333, 'trainset_loss': 0.1334028064886729}
+Epoch: 191, testset accuracy: 0.9672, testset loss: 0.13018417358398438
+Epoch: 192, progress on batches:  97%|███████████████████████████████████▋ | 57/59 [00:01<00:00, 53.99it/s]
+Epoch: 192, trainset accuracy: 0.9676666666666667, trainset loss: 0.13340968868732453
+Logging to WandB: {'epoch': 192, 'trainset_accuracy': 0.9676666666666667, 'trainset_loss': 0.13340968868732453}

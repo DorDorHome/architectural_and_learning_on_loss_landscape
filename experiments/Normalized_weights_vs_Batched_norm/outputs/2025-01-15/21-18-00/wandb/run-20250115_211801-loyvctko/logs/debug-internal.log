@@ -1,0 +1,18 @@
+{"time":"2025-01-15T21:18:01.173347052+08:00","level":"INFO","msg":"using version","core version":"0.18.1"}
+{"time":"2025-01-15T21:18:01.173356248+08:00","level":"INFO","msg":"created symlink","path":"/hdda/models/loss_landscape/experiments/Normalized_weights_vs_Batched_norm/outputs/2025-01-15/21-18-00/wandb/run-20250115_211801-loyvctko/logs/debug-core.log"}
+{"time":"2025-01-15T21:18:01.17338825+08:00","level":"INFO","msg":"using version","core version":"0.18.1"}
+{"time":"2025-01-15T21:18:01.173391632+08:00","level":"INFO","msg":"created symlink","path":"/hdda/models/loss_landscape/experiments/Normalized_weights_vs_Batched_norm/outputs/2025-01-15/21-18-00/wandb/run-20250115_211801-loyvctko/logs/debug-core.log"}
+{"time":"2025-01-15T21:18:01.175887553+08:00","level":"INFO","msg":"created new stream","id":"loyvctko"}
+{"time":"2025-01-15T21:18:01.175902089+08:00","level":"INFO","msg":"stream: started","id":"loyvctko"}
+{"time":"2025-01-15T21:18:01.17595269+08:00","level":"INFO","msg":"writer: Do: started","stream_id":{"value":"loyvctko"}}
+{"time":"2025-01-15T21:18:01.175916778+08:00","level":"INFO","msg":"handler: started","stream_id":{"value":"loyvctko"}}
+{"time":"2025-01-15T21:18:01.175929541+08:00","level":"INFO","msg":"sender: started","stream_id":{"value":"loyvctko"}}
+{"time":"2025-01-15T21:18:01.509030333+08:00","level":"INFO","msg":"wandb-core","!BADKEY":null}
+{"time":"2025-01-15T21:18:01.50956152+08:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2025-01-15T21:18:01.847661796+08:00","level":"INFO","msg":"stream: closing","id":"loyvctko"}
+{"time":"2025-01-15T21:18:01.84768332+08:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2025-01-15T21:18:01.847790796+08:00","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2025-01-15T21:18:03.976804929+08:00","level":"INFO","msg":"handler: closed","stream_id":{"value":"loyvctko"}}
+{"time":"2025-01-15T21:18:03.976831136+08:00","level":"INFO","msg":"writer: Close: closed","stream_id":{"value":"loyvctko"}}
+{"time":"2025-01-15T21:18:03.976850939+08:00","level":"INFO","msg":"sender: closed","stream_id":{"value":"loyvctko"}}
+{"time":"2025-01-15T21:18:03.976876039+08:00","level":"INFO","msg":"stream: closed","id":"loyvctko"}

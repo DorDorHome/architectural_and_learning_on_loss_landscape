@@ -1,0 +1,19 @@
+Epoch: 0, progress on batches:   0%|                                               | 0/59 [00:00<?, ?it/s]
+Epoch:   0%|                                                                      | 0/500 [00:00<?, ?it/s]
+Error executing job with overrides: []
+Traceback (most recent call last):
+  File "/hdda/models/loss_landscape/experiments/Normalized_weights_vs_Batched_norm/single_run.py", line 82, in main
+    loss, output = learner.learn(input, label)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/hdda/models/loss_landscape/src/algos/supervised/basic_backprop.py", line 34, in learn
+    output, features = self.net.predict(x)
+                       ^^^^^^^^^^^^^^^^^^^
+  File "/hdda/models/loss_landscape/src/models/deep_ffnn_with_normalized_weights.py", line 133, in predict
+    out = self.in_layer.forward(input)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/hdda/models/loss_landscape/src/models/normalized_weights_FC.py", line 211, in forward
+    scaled_corrected_weight = self.weight*self.weight_scale*(self.weight_correction_scale / self.input_mean_mean_across_dim)
+                              ~~~~~~~~~~~^~~~~~~~~~~~~~~~~~
+RuntimeError: The size of tensor a (784) must match the size of tensor b (2000) at non-singleton dimension 1
+
+Set the environment variable HYDRA_FULL_ERROR=1 for a complete stack trace.

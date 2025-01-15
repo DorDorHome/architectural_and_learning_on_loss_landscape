@@ -1,0 +1,14 @@
+Epoch: 0, progress on batches: 100%|███████████████████████████████████████| 59/59 [00:02<00:00, 22.32it/s]
+Epoch:   0%|                                                                       | 0/500 [00:02<?, ?it/s]
+Epoch: 0, trainset accuracy: 0.16115, trainset loss: 2.285898237482707
+Logging to WandB: {'epoch': 0, 'trainset_accuracy': 0.16115, 'trainset_loss': 2.285898237482707}
+Error executing job with overrides: []
+Traceback (most recent call last):
+  File "/hdda/models/loss_landscape/experiments/Normalized_weights_vs_Batched_norm/single_run.py", line 104, in main
+    if cfg.learner.net_type == 'fc':
+       ^^^^^^^^^^^^^^^^^^^^
+omegaconf.errors.ConfigAttributeError: Key 'net_type' is not in struct
+    full_key: learner.net_type
+    object_type=dict
+
+Set the environment variable HYDRA_FULL_ERROR=1 for a complete stack trace.

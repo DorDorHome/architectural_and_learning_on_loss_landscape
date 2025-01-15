@@ -46,12 +46,12 @@ class DeepFFNN(nn.Module):
                 #  act_type='relu'):
     
         super(DeepFFNN, self).__init__()
-        self.num_inputs = config.input_size
+        self.input_size = config.input_size
         self.num_features = config.num_features
         self.num_outputs = config.num_outputs
         self.num_hidden_layers = config.num_hidden_layers
         self.act_type = config.act_type
-        self.layers_to_log = [-(i * 2 + 1) for i in range(num_hidden_layers + 1)]
+        self.layers_to_log = [-(i * 2 + 1) for i in range(self.num_hidden_layers + 1)]
 
         # define the architecture
         self.layers = nn.ModuleList()

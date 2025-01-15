@@ -1,0 +1,1001 @@
+Epoch: 0, progress on batches: 100%|█████████████████████| 59/59 [00:03<00:00, 17.46it/s]
+Epoch: 1, progress on batches: 100%|█████████████████████| 59/59 [00:03<00:00, 17.20it/s]
+Epoch: 0, trainset accuracy: 0.10941666666666666, trainset loss: 3.968844251397259e+17
+Epoch: 2, progress on batches: 100%|█████████████████████| 59/59 [00:03<00:00, 17.40it/s]
+Epoch: 1, trainset accuracy: 0.11236666666666667, trainset loss: 2.31029465713501
+Epoch: 3, progress on batches: 100%|█████████████████████| 59/59 [00:02<00:00, 20.66it/s]
+Epoch: 2, trainset accuracy: 0.11236666666666667, trainset loss: 2.3032289918263755
+Epoch: 4, progress on batches: 100%|█████████████████████| 59/59 [00:03<00:00, 17.11it/s]
+Epoch: 3, trainset accuracy: 0.11236666666666667, trainset loss: 2.301642142232259
+Epoch: 5, progress on batches: 100%|█████████████████████| 59/59 [00:03<00:00, 15.55it/s]
+Epoch: 4, trainset accuracy: 0.11236666666666667, trainset loss: 2.3013148913065593
+Epoch: 6, progress on batches: 100%|█████████████████████| 59/59 [00:03<00:00, 16.00it/s]
+Epoch: 5, trainset accuracy: 0.11236666666666667, trainset loss: 2.301237367502848
+Epoch: 7, progress on batches: 100%|█████████████████████| 59/59 [00:03<00:00, 15.62it/s]
+Epoch: 6, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012169083913165
+Epoch: 8, progress on batches: 100%|█████████████████████| 59/59 [00:04<00:00, 14.28it/s]
+Epoch: 7, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012171911875408
+Epoch: 9, progress on batches: 100%|█████████████████████| 59/59 [00:04<00:00, 12.97it/s]
+Epoch: 8, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012317045847577
+Epoch: 10, progress on batches: 100%|████████████████████| 59/59 [00:05<00:00, 10.79it/s]
+Epoch: 9, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012425771077476
+Epoch: 11, progress on batches: 100%|████████████████████| 59/59 [00:05<00:00,  9.90it/s]
+Epoch: 10, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012573070526123
+Epoch: 12, progress on batches: 100%|████████████████████| 59/59 [00:06<00:00,  9.61it/s]
+Epoch: 11, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012338287353518
+Epoch: 13, progress on batches: 100%|████████████████████| 59/59 [00:09<00:00,  6.51it/s]
+Epoch: 12, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012932748158774
+Epoch: 14, progress on batches: 100%|████████████████████| 59/59 [00:06<00:00,  8.82it/s]
+Epoch: 13, trainset accuracy: 0.11236666666666667, trainset loss: 2.301436693954468
+Epoch: 15, progress on batches: 100%|████████████████████| 59/59 [00:06<00:00,  8.85it/s]
+Epoch: 14, trainset accuracy: 0.11236666666666667, trainset loss: 2.3013188475290933
+Epoch: 16, progress on batches: 100%|████████████████████| 59/59 [00:06<00:00,  9.33it/s]
+Epoch: 15, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012237452189126
+Epoch: 17, progress on batches: 100%|████████████████████| 59/59 [00:07<00:00,  8.30it/s]
+Epoch: 16, trainset accuracy: 0.11236666666666667, trainset loss: 2.301223060353597
+Epoch: 18, progress on batches: 100%|████████████████████| 59/59 [00:06<00:00,  8.92it/s]
+Epoch: 17, trainset accuracy: 0.11236666666666667, trainset loss: 2.301250822321574
+Epoch: 19, progress on batches: 100%|████████████████████| 59/59 [00:06<00:00,  8.47it/s]
+Epoch: 18, trainset accuracy: 0.11236666666666667, trainset loss: 2.301251365407308
+Epoch: 20, progress on batches: 100%|████████████████████| 59/59 [00:06<00:00,  8.57it/s]
+Epoch: 19, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012422203063965
+Epoch: 21, progress on batches: 100%|████████████████████| 59/59 [00:07<00:00,  8.02it/s]
+Epoch: 20, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012355730692544
+Epoch: 22, progress on batches: 100%|████████████████████| 59/59 [00:06<00:00,  8.83it/s]
+Epoch: 21, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012799512227375
+Epoch: 23, progress on batches: 100%|████████████████████| 59/59 [00:06<00:00,  8.62it/s]
+Epoch: 22, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012185897827147
+Epoch: 24, progress on batches: 100%|████████████████████| 59/59 [00:06<00:00,  9.03it/s]
+Epoch: 23, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012165102640787
+Epoch: 25, progress on batches: 100%|████████████████████| 59/59 [00:06<00:00,  8.50it/s]
+Epoch: 24, trainset accuracy: 0.11236666666666667, trainset loss: 2.301248125330607
+Epoch: 26, progress on batches: 100%|████████████████████| 59/59 [00:06<00:00,  9.02it/s]
+Epoch: 25, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012337975819905
+Epoch: 27, progress on batches: 100%|████████████████████| 59/59 [00:06<00:00,  8.62it/s]
+Epoch: 26, trainset accuracy: 0.11236666666666667, trainset loss: 2.301223806889852
+Epoch: 28, progress on batches: 100%|████████████████████| 59/59 [00:06<00:00,  8.82it/s]
+Epoch: 27, trainset accuracy: 0.11236666666666667, trainset loss: 2.301226903661092
+Epoch: 29, progress on batches: 100%|████████████████████| 59/59 [00:06<00:00,  8.88it/s]
+Epoch: 28, trainset accuracy: 0.11236666666666667, trainset loss: 2.301205420811971
+Epoch: 30, progress on batches: 100%|████████████████████| 59/59 [00:06<00:00,  8.83it/s]
+Epoch: 29, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012062870025636
+Epoch: 31, progress on batches: 100%|████████████████████| 59/59 [00:06<00:00,  9.18it/s]
+Epoch: 30, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012124726613363
+Epoch: 32, progress on batches: 100%|████████████████████| 59/59 [00:06<00:00,  8.62it/s]
+Epoch: 31, trainset accuracy: 0.11236666666666667, trainset loss: 2.301205708312988
+Epoch: 33, progress on batches: 100%|████████████████████| 59/59 [00:06<00:00,  9.11it/s]
+Epoch: 32, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011999815622968
+Epoch: 34, progress on batches: 100%|████████████████████| 59/59 [00:06<00:00,  8.48it/s]
+Epoch: 33, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011995852152505
+Epoch: 35, progress on batches: 100%|████████████████████| 59/59 [00:06<00:00,  8.88it/s]
+Epoch: 34, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012035765329997
+Epoch: 36, progress on batches: 100%|████████████████████| 59/59 [00:06<00:00,  8.46it/s]
+Epoch: 35, trainset accuracy: 0.11236666666666667, trainset loss: 2.301201415379842
+Epoch: 37, progress on batches: 100%|████████████████████| 59/59 [00:06<00:00,  9.17it/s]
+Epoch: 36, trainset accuracy: 0.11236666666666667, trainset loss: 2.301203989028931
+Epoch: 38, progress on batches: 100%|████████████████████| 59/59 [00:06<00:00,  8.85it/s]
+Epoch: 37, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012061632792156
+Epoch: 39, progress on batches: 100%|████████████████████| 59/59 [00:07<00:00,  8.36it/s]
+Epoch: 38, trainset accuracy: 0.11236666666666667, trainset loss: 2.301194820912679
+Epoch: 40, progress on batches: 100%|████████████████████| 59/59 [00:06<00:00,  9.07it/s]
+Epoch: 39, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012063911437988
+Epoch: 41, progress on batches: 100%|████████████████████| 59/59 [00:06<00:00,  8.96it/s]
+Epoch: 40, trainset accuracy: 0.11236666666666667, trainset loss: 2.301200517654419
+Epoch: 42, progress on batches: 100%|████████████████████| 59/59 [00:06<00:00,  9.79it/s]
+Epoch: 41, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012046034495035
+Epoch: 43, progress on batches: 100%|████████████████████| 59/59 [00:06<00:00,  8.51it/s]
+Epoch: 42, trainset accuracy: 0.11236666666666667, trainset loss: 2.301211440149943
+Epoch: 44, progress on batches: 100%|████████████████████| 59/59 [00:06<00:00,  9.33it/s]
+Epoch: 43, trainset accuracy: 0.11236666666666667, trainset loss: 2.301204747517904
+Epoch: 45, progress on batches: 100%|████████████████████| 59/59 [00:06<00:00,  9.22it/s]
+Epoch: 44, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012078612009685
+Epoch: 46, progress on batches: 100%|████████████████████| 59/59 [00:06<00:00,  9.34it/s]
+Epoch: 45, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012085175832113
+Epoch: 47, progress on batches: 100%|████████████████████| 59/59 [00:06<00:00,  8.60it/s]
+Epoch: 46, trainset accuracy: 0.11236666666666667, trainset loss: 2.301198951594035
+Epoch: 48, progress on batches: 100%|████████████████████| 59/59 [00:07<00:00,  8.42it/s]
+Epoch: 47, trainset accuracy: 0.11236666666666667, trainset loss: 2.301198826980591
+Epoch: 49, progress on batches: 100%|████████████████████| 59/59 [00:06<00:00,  8.78it/s]
+Epoch: 48, trainset accuracy: 0.11236666666666667, trainset loss: 2.30121796875
+Epoch: 50, progress on batches: 100%|████████████████████| 59/59 [00:06<00:00,  8.43it/s]
+Epoch: 49, trainset accuracy: 0.11236666666666667, trainset loss: 2.301206103134155
+Epoch: 51, progress on batches: 100%|████████████████████| 59/59 [00:06<00:00,  8.46it/s]
+Epoch: 50, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011887472788493
+Epoch: 52, progress on batches: 100%|████████████████████| 59/59 [00:06<00:00,  8.52it/s]
+Epoch: 51, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011982476552326
+Epoch: 53, progress on batches: 100%|████████████████████| 59/59 [00:06<00:00,  9.02it/s]
+Epoch: 52, trainset accuracy: 0.11236666666666667, trainset loss: 2.301202471033732
+Epoch: 54, progress on batches: 100%|████████████████████| 59/59 [00:07<00:00,  8.11it/s]
+Epoch: 53, trainset accuracy: 0.11236666666666667, trainset loss: 2.301195786412557
+Epoch: 55, progress on batches: 100%|████████████████████| 59/59 [00:06<00:00,  8.57it/s]
+Epoch: 54, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012038810729982
+Epoch: 56, progress on batches: 100%|████████████████████| 59/59 [00:07<00:00,  8.02it/s]
+Epoch: 55, trainset accuracy: 0.11236666666666667, trainset loss: 2.301209814198812
+Epoch: 57, progress on batches: 100%|████████████████████| 59/59 [00:06<00:00,  8.68it/s]
+Epoch: 56, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011969755808512
+Epoch: 58, progress on batches: 100%|████████████████████| 59/59 [00:06<00:00,  8.66it/s]
+Epoch: 57, trainset accuracy: 0.11236666666666667, trainset loss: 2.301188092549642
+Epoch: 59, progress on batches: 100%|████████████████████| 59/59 [00:06<00:00,  8.67it/s]
+Epoch: 58, trainset accuracy: 0.11236666666666667, trainset loss: 2.301206190999349
+Epoch: 60, progress on batches: 100%|████████████████████| 59/59 [00:06<00:00,  8.68it/s]
+Epoch: 59, trainset accuracy: 0.11236666666666667, trainset loss: 2.301202714920044
+Epoch: 61, progress on batches: 100%|████████████████████| 59/59 [00:07<00:00,  8.39it/s]
+Epoch: 60, trainset accuracy: 0.11236666666666667, trainset loss: 2.301206444168091
+Epoch: 62, progress on batches: 100%|████████████████████| 59/59 [00:07<00:00,  8.42it/s]
+Epoch: 61, trainset accuracy: 0.11236666666666667, trainset loss: 2.301197887166341
+Epoch: 63, progress on batches: 100%|████████████████████| 59/59 [00:07<00:00,  8.24it/s]
+Epoch: 62, trainset accuracy: 0.11236666666666667, trainset loss: 2.30121777305603
+Epoch: 64, progress on batches: 100%|████████████████████| 59/59 [00:06<00:00,  8.89it/s]
+Epoch: 63, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012074228922526
+Epoch: 65, progress on batches: 100%|████████████████████| 59/59 [00:06<00:00,  8.50it/s]
+Epoch: 64, trainset accuracy: 0.11236666666666667, trainset loss: 2.301200560379028
+Epoch: 66, progress on batches: 100%|████████████████████| 59/59 [00:06<00:00,  9.18it/s]
+Epoch: 65, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012066527048747
+Epoch: 67, progress on batches: 100%|████████████████████| 59/59 [00:07<00:00,  8.22it/s]
+Epoch: 66, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012026782989503
+Epoch: 68, progress on batches: 100%|████████████████████| 59/59 [00:09<00:00,  6.25it/s]
+Epoch: 67, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012098861694334
+Epoch: 69, progress on batches: 100%|████████████████████| 59/59 [00:06<00:00,  8.46it/s]
+Epoch: 68, trainset accuracy: 0.11236666666666667, trainset loss: 2.301227035776774
+Epoch: 70, progress on batches: 100%|████████████████████| 59/59 [00:06<00:00,  9.18it/s]
+Epoch: 69, trainset accuracy: 0.11236666666666667, trainset loss: 2.301208009592692
+Epoch: 71, progress on batches: 100%|████████████████████| 59/59 [00:06<00:00,  8.53it/s]
+Epoch: 70, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012014925638833
+Epoch: 72, progress on batches: 100%|████████████████████| 59/59 [00:06<00:00,  8.47it/s]
+Epoch: 71, trainset accuracy: 0.11236666666666667, trainset loss: 2.301220305379232
+Epoch: 73, progress on batches: 100%|████████████████████| 59/59 [00:07<00:00,  8.17it/s]
+Epoch: 72, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012225248972573
+Epoch: 74, progress on batches: 100%|████████████████████| 59/59 [00:06<00:00,  9.21it/s]
+Epoch: 73, trainset accuracy: 0.11236666666666667, trainset loss: 2.301209878540039
+Epoch: 75, progress on batches: 100%|████████████████████| 59/59 [00:07<00:00,  8.32it/s]
+Epoch: 74, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011926094055175
+Epoch: 76, progress on batches: 100%|████████████████████| 59/59 [00:06<00:00,  8.55it/s]
+Epoch: 75, trainset accuracy: 0.11236666666666667, trainset loss: 2.301197109222412
+Epoch: 77, progress on batches: 100%|████████████████████| 59/59 [00:07<00:00,  8.23it/s]
+Epoch: 76, trainset accuracy: 0.11236666666666667, trainset loss: 2.301198552703857
+Epoch: 78, progress on batches: 100%|████████████████████| 59/59 [00:06<00:00,  8.86it/s]
+Epoch: 77, trainset accuracy: 0.11236666666666667, trainset loss: 2.301206628926595
+Epoch: 79, progress on batches: 100%|████████████████████| 59/59 [00:06<00:00,  8.54it/s]
+Epoch: 78, trainset accuracy: 0.11236666666666667, trainset loss: 2.301207358296712
+Epoch: 80, progress on batches: 100%|████████████████████| 59/59 [00:06<00:00,  8.48it/s]
+Epoch: 79, trainset accuracy: 0.11236666666666667, trainset loss: 2.301211504618327
+Epoch: 81, progress on batches: 100%|████████████████████| 59/59 [00:06<00:00,  8.86it/s]
+Epoch: 80, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012033392588296
+Epoch: 82, progress on batches: 100%|████████████████████| 59/59 [00:07<00:00,  8.35it/s]
+Epoch: 81, trainset accuracy: 0.11236666666666667, trainset loss: 2.301204268137614
+Epoch: 83, progress on batches: 100%|████████████████████| 59/59 [00:06<00:00,  9.02it/s]
+Epoch: 82, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011955205281573
+Epoch: 84, progress on batches: 100%|████████████████████| 59/59 [00:06<00:00,  8.59it/s]
+Epoch: 83, trainset accuracy: 0.11236666666666667, trainset loss: 2.301202708816528
+Epoch: 85, progress on batches: 100%|████████████████████| 59/59 [00:06<00:00,  8.49it/s]
+Epoch: 84, trainset accuracy: 0.11236666666666667, trainset loss: 2.301200355656942
+Epoch: 86, progress on batches: 100%|████████████████████| 59/59 [00:10<00:00,  5.82it/s]
+Epoch: 85, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011997829437254
+Epoch: 87, progress on batches: 100%|████████████████████| 59/59 [00:06<00:00,  9.22it/s]
+Epoch: 86, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012037212371825
+Epoch: 88, progress on batches: 100%|████████████████████| 59/59 [00:06<00:00,  8.78it/s]
+Epoch: 87, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012109244028727
+Epoch: 89, progress on batches: 100%|████████████████████| 59/59 [00:06<00:00,  8.93it/s]
+Epoch: 88, trainset accuracy: 0.11236666666666667, trainset loss: 2.301205599975586
+Epoch: 90, progress on batches: 100%|████████████████████| 59/59 [00:06<00:00,  8.72it/s]
+Epoch: 89, trainset accuracy: 0.11236666666666667, trainset loss: 2.301190585454305
+Epoch: 91, progress on batches: 100%|████████████████████| 59/59 [00:07<00:00,  8.31it/s]
+Epoch: 90, trainset accuracy: 0.11236666666666667, trainset loss: 2.301205317179362
+Epoch: 92, progress on batches: 100%|████████████████████| 59/59 [00:06<00:00,  8.76it/s]
+Epoch: 91, trainset accuracy: 0.11236666666666667, trainset loss: 2.301202179336548
+Epoch: 93, progress on batches: 100%|████████████████████| 59/59 [00:06<00:00,  8.47it/s]
+Epoch: 92, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011990865071614
+Epoch: 94, progress on batches: 100%|████████████████████| 59/59 [00:06<00:00,  8.53it/s]
+Epoch: 93, trainset accuracy: 0.11236666666666667, trainset loss: 2.301192738087972
+Epoch: 95, progress on batches: 100%|████████████████████| 59/59 [00:06<00:00,  8.88it/s]
+Epoch: 94, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011979846954347
+Epoch: 96, progress on batches: 100%|████████████████████| 59/59 [00:06<00:00,  8.59it/s]
+Epoch: 95, trainset accuracy: 0.11236666666666667, trainset loss: 2.301197819773356
+Epoch: 97, progress on batches: 100%|████████████████████| 59/59 [00:06<00:00,  8.58it/s]
+Epoch: 96, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012034034729005
+Epoch: 98, progress on batches: 100%|████████████████████| 59/59 [00:06<00:00,  8.82it/s]
+Epoch: 97, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011983042399087
+Epoch: 99, progress on batches: 100%|████████████████████| 59/59 [00:06<00:00,  8.90it/s]
+Epoch: 98, trainset accuracy: 0.11236666666666667, trainset loss: 2.301193856048584
+Epoch: 100, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.21it/s]
+Epoch: 99, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012115502675377
+Epoch: 101, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  8.50it/s]
+Epoch: 100, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012073858896893
+Epoch: 102, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  8.62it/s]
+Epoch: 101, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012102882385252
+Epoch: 103, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  8.74it/s]
+Epoch: 102, trainset accuracy: 0.11236666666666667, trainset loss: 2.301198717371623
+Epoch: 104, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  8.64it/s]
+Epoch: 103, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012007732391355
+Epoch: 105, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.05it/s]
+Epoch: 104, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011947765350342
+Epoch: 106, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  8.57it/s]
+Epoch: 105, trainset accuracy: 0.11236666666666667, trainset loss: 2.301201358795166
+Epoch: 107, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.34it/s]
+Epoch: 106, trainset accuracy: 0.11236666666666667, trainset loss: 2.301199217859904
+Epoch: 108, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  8.76it/s]
+Epoch: 107, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012028757731118
+Epoch: 109, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.01it/s]
+Epoch: 108, trainset accuracy: 0.11236666666666667, trainset loss: 2.301209840011597
+Epoch: 110, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  8.45it/s]
+Epoch: 109, trainset accuracy: 0.11236666666666667, trainset loss: 2.301200461578369
+Epoch: 111, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.09it/s]
+Epoch: 110, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012007097880045
+Epoch: 112, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  8.60it/s]
+Epoch: 111, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011963227589924
+Epoch: 113, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  8.93it/s]
+Epoch: 112, trainset accuracy: 0.11236666666666667, trainset loss: 2.301203039677938
+Epoch: 114, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.25it/s]
+Epoch: 113, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012037194569905
+Epoch: 115, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  8.95it/s]
+Epoch: 114, trainset accuracy: 0.11236666666666667, trainset loss: 2.301193557739258
+Epoch: 116, progress on batches: 100%|███████████████████| 59/59 [00:07<00:00,  8.42it/s]
+Epoch: 115, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011953011830646
+Epoch: 117, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.24it/s]
+Epoch: 116, trainset accuracy: 0.11236666666666667, trainset loss: 2.301200498708089
+Epoch: 118, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.59it/s]
+Epoch: 117, trainset accuracy: 0.11236666666666667, trainset loss: 2.301195836130778
+Epoch: 119, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00,  9.86it/s]
+Epoch: 118, trainset accuracy: 0.11236666666666667, trainset loss: 2.30119896329244
+Epoch: 120, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.27it/s]
+Epoch: 119, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012079204559326
+Epoch: 121, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  8.74it/s]
+Epoch: 120, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012016208648682
+Epoch: 122, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00, 11.13it/s]
+Epoch: 121, trainset accuracy: 0.11236666666666667, trainset loss: 2.301204985809326
+Epoch: 123, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00, 10.98it/s]
+Epoch: 122, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012018666585288
+Epoch: 124, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00, 10.31it/s]
+Epoch: 123, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011996772766112
+Epoch: 125, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00, 10.42it/s]
+Epoch: 124, trainset accuracy: 0.11236666666666667, trainset loss: 2.301206588490804
+Epoch: 126, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00, 10.92it/s]
+Epoch: 125, trainset accuracy: 0.11236666666666667, trainset loss: 2.30120103263855
+Epoch: 127, progress on batches: 100%|███████████████████| 59/59 [00:04<00:00, 12.21it/s]
+Epoch: 126, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011868141174316
+Epoch: 128, progress on batches: 100%|███████████████████| 59/59 [00:04<00:00, 12.42it/s]
+Epoch: 127, trainset accuracy: 0.11236666666666667, trainset loss: 2.301197482808431
+Epoch: 129, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.39it/s]
+Epoch: 128, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012023115793863
+Epoch: 130, progress on batches: 100%|███████████████████| 59/59 [00:04<00:00, 11.96it/s]
+Epoch: 129, trainset accuracy: 0.11236666666666667, trainset loss: 2.301198189798991
+Epoch: 131, progress on batches: 100%|███████████████████| 59/59 [00:04<00:00, 12.01it/s]
+Epoch: 130, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012000988006593
+Epoch: 132, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00, 10.91it/s]
+Epoch: 131, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011987551371256
+Epoch: 133, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00, 10.34it/s]
+Epoch: 132, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011948822021484
+Epoch: 134, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00, 10.07it/s]
+Epoch: 133, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012000307718914
+Epoch: 135, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.80it/s]
+Epoch: 134, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012088901519774
+Epoch: 136, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.45it/s]
+Epoch: 135, trainset accuracy: 0.11236666666666667, trainset loss: 2.301202076212565
+Epoch: 137, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.56it/s]
+Epoch: 136, trainset accuracy: 0.11236666666666667, trainset loss: 2.301200227355957
+Epoch: 138, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.79it/s]
+Epoch: 137, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011992643992105
+Epoch: 139, progress on batches: 100%|███████████████████| 59/59 [00:08<00:00,  7.15it/s]
+Epoch: 138, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012021840413412
+Epoch: 140, progress on batches: 100%|███████████████████| 59/59 [00:10<00:00,  5.67it/s]
+Epoch: 139, trainset accuracy: 0.11236666666666667, trainset loss: 2.301203030268351
+Epoch: 141, progress on batches: 100%|███████████████████| 59/59 [00:09<00:00,  6.03it/s]
+Epoch: 140, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012030248006186
+Epoch: 142, progress on batches: 100%|███████████████████| 59/59 [00:10<00:00,  5.71it/s]
+Epoch: 141, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011936250050864
+Epoch: 143, progress on batches: 100%|███████████████████| 59/59 [00:08<00:00,  7.09it/s]
+Epoch: 142, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011905853271486
+Epoch: 144, progress on batches: 100%|███████████████████| 59/59 [00:08<00:00,  7.10it/s]
+Epoch: 143, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011995162963865
+Epoch: 145, progress on batches: 100%|███████████████████| 59/59 [00:08<00:00,  6.79it/s]
+Epoch: 144, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011986441294354
+Epoch: 146, progress on batches: 100%|███████████████████| 59/59 [00:08<00:00,  7.14it/s]
+Epoch: 145, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011981913248696
+Epoch: 147, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.43it/s]
+Epoch: 146, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011964832305907
+Epoch: 148, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.64it/s]
+Epoch: 147, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011988549550373
+Epoch: 149, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.69it/s]
+Epoch: 148, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012081104278566
+Epoch: 150, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.12it/s]
+Epoch: 149, trainset accuracy: 0.11236666666666667, trainset loss: 2.301208413696289
+Epoch: 151, progress on batches: 100%|███████████████████| 59/59 [00:07<00:00,  8.31it/s]
+Epoch: 150, trainset accuracy: 0.11236666666666667, trainset loss: 2.301199020385742
+Epoch: 152, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  8.81it/s]
+Epoch: 151, trainset accuracy: 0.11236666666666667, trainset loss: 2.301199496714274
+Epoch: 153, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  8.88it/s]
+Epoch: 152, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011995473225912
+Epoch: 154, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  8.58it/s]
+Epoch: 153, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011960193634033
+Epoch: 155, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.23it/s]
+Epoch: 154, trainset accuracy: 0.11236666666666667, trainset loss: 2.301209857177734
+Epoch: 156, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  8.82it/s]
+Epoch: 155, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012092047373454
+Epoch: 157, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.18it/s]
+Epoch: 156, trainset accuracy: 0.11236666666666667, trainset loss: 2.301193171564738
+Epoch: 158, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  8.99it/s]
+Epoch: 157, trainset accuracy: 0.11236666666666667, trainset loss: 2.301207593154907
+Epoch: 159, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.23it/s]
+Epoch: 158, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012056884765624
+Epoch: 160, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.32it/s]
+Epoch: 159, trainset accuracy: 0.11236666666666667, trainset loss: 2.30120837504069
+Epoch: 161, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  8.83it/s]
+Epoch: 160, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011922616322837
+Epoch: 162, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.10it/s]
+Epoch: 161, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011989676157634
+Epoch: 163, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  8.77it/s]
+Epoch: 162, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012086490631103
+Epoch: 164, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  8.60it/s]
+Epoch: 163, trainset accuracy: 0.11236666666666667, trainset loss: 2.301196129480998
+Epoch: 165, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  8.88it/s]
+Epoch: 164, trainset accuracy: 0.11236666666666667, trainset loss: 2.30119618212382
+Epoch: 166, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  8.94it/s]
+Epoch: 165, trainset accuracy: 0.11236666666666667, trainset loss: 2.301210696411133
+Epoch: 167, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00, 11.12it/s]
+Epoch: 166, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011940701802573
+Epoch: 168, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00, 11.27it/s]
+Epoch: 167, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011950242360433
+Epoch: 169, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.65it/s]
+Epoch: 168, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012065883636477
+Epoch: 170, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.68it/s]
+Epoch: 169, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012046591440836
+Epoch: 171, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.56it/s]
+Epoch: 170, trainset accuracy: 0.11236666666666667, trainset loss: 2.301206742477417
+Epoch: 172, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00,  9.85it/s]
+Epoch: 171, trainset accuracy: 0.11236666666666667, trainset loss: 2.301194491704305
+Epoch: 173, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00, 10.18it/s]
+Epoch: 172, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012067854563396
+Epoch: 174, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00, 10.46it/s]
+Epoch: 173, trainset accuracy: 0.11236666666666667, trainset loss: 2.301191286468506
+Epoch: 175, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00, 10.68it/s]
+Epoch: 174, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012051708221435
+Epoch: 176, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.45it/s]
+Epoch: 175, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011949677785237
+Epoch: 177, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.65it/s]
+Epoch: 176, trainset accuracy: 0.11236666666666667, trainset loss: 2.301198154703776
+Epoch: 178, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.66it/s]
+Epoch: 177, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012052663167317
+Epoch: 179, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.50it/s]
+Epoch: 178, trainset accuracy: 0.11236666666666667, trainset loss: 2.301193222173055
+Epoch: 180, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.67it/s]
+Epoch: 179, trainset accuracy: 0.11236666666666667, trainset loss: 2.301200920613607
+Epoch: 181, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.64it/s]
+Epoch: 180, trainset accuracy: 0.11236666666666667, trainset loss: 2.301205671183268
+Epoch: 182, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.62it/s]
+Epoch: 181, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012023834228517
+Epoch: 183, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.76it/s]
+Epoch: 182, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012058897654217
+Epoch: 184, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.56it/s]
+Epoch: 183, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011909563700357
+Epoch: 185, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.76it/s]
+Epoch: 184, trainset accuracy: 0.11236666666666667, trainset loss: 2.301209245936076
+Epoch: 186, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.45it/s]
+Epoch: 185, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012057544708253
+Epoch: 187, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00, 10.05it/s]
+Epoch: 186, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012081265767415
+Epoch: 188, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00, 10.10it/s]
+Epoch: 187, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011922868092856
+Epoch: 189, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.49it/s]
+Epoch: 188, trainset accuracy: 0.11236666666666667, trainset loss: 2.301208288701375
+Epoch: 190, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.69it/s]
+Epoch: 189, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012185389200845
+Epoch: 191, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.64it/s]
+Epoch: 190, trainset accuracy: 0.11236666666666667, trainset loss: 2.301214501953125
+Epoch: 192, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.32it/s]
+Epoch: 191, trainset accuracy: 0.11236666666666667, trainset loss: 2.301217118326823
+Epoch: 193, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.55it/s]
+Epoch: 192, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011962120056153
+Epoch: 194, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.79it/s]
+Epoch: 193, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012031978607177
+Epoch: 195, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.50it/s]
+Epoch: 194, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011951010386147
+Epoch: 196, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.63it/s]
+Epoch: 195, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012097215016682
+Epoch: 197, progress on batches: 100%|███████████████████| 59/59 [00:09<00:00,  6.42it/s]
+Epoch: 196, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012039175669354
+Epoch: 198, progress on batches: 100%|███████████████████| 59/59 [00:08<00:00,  7.08it/s]
+Epoch: 197, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011982527414956
+Epoch: 199, progress on batches: 100%|███████████████████| 59/59 [00:08<00:00,  7.11it/s]
+Epoch: 198, trainset accuracy: 0.11236666666666667, trainset loss: 2.30120154914856
+Epoch: 200, progress on batches: 100%|███████████████████| 59/59 [00:08<00:00,  7.10it/s]
+Epoch: 199, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012029585520426
+Epoch: 201, progress on batches: 100%|███████████████████| 59/59 [00:08<00:00,  6.93it/s]
+Epoch: 200, trainset accuracy: 0.11236666666666667, trainset loss: 2.301206995900472
+Epoch: 202, progress on batches: 100%|███████████████████| 59/59 [00:08<00:00,  7.16it/s]
+Epoch: 201, trainset accuracy: 0.11236666666666667, trainset loss: 2.301195496749878
+Epoch: 203, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  8.52it/s]
+Epoch: 202, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011980422973632
+Epoch: 204, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00, 10.31it/s]
+Epoch: 203, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011923159281413
+Epoch: 205, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00, 10.11it/s]
+Epoch: 204, trainset accuracy: 0.11236666666666667, trainset loss: 2.301194793701172
+Epoch: 206, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00, 10.10it/s]
+Epoch: 205, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012074261983235
+Epoch: 207, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.53it/s]
+Epoch: 206, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012041423797607
+Epoch: 208, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.68it/s]
+Epoch: 207, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012010171254476
+Epoch: 209, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.48it/s]
+Epoch: 208, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012000354766844
+Epoch: 210, progress on batches: 100%|███████████████████| 59/59 [00:07<00:00,  8.24it/s]
+Epoch: 209, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012034395853678
+Epoch: 211, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  8.48it/s]
+Epoch: 210, trainset accuracy: 0.11236666666666667, trainset loss: 2.301198621622721
+Epoch: 212, progress on batches: 100%|███████████████████| 59/59 [00:07<00:00,  7.99it/s]
+Epoch: 211, trainset accuracy: 0.11236666666666667, trainset loss: 2.301201519648234
+Epoch: 213, progress on batches: 100%|███████████████████| 59/59 [00:07<00:00,  8.41it/s]
+Epoch: 212, trainset accuracy: 0.11236666666666667, trainset loss: 2.301196828333537
+Epoch: 214, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  8.46it/s]
+Epoch: 213, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012079526265463
+Epoch: 215, progress on batches: 100%|███████████████████| 59/59 [00:07<00:00,  8.08it/s]
+Epoch: 214, trainset accuracy: 0.11236666666666667, trainset loss: 2.301190102640788
+Epoch: 216, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  8.77it/s]
+Epoch: 215, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011884349822997
+Epoch: 217, progress on batches: 100%|███████████████████| 59/59 [00:07<00:00,  8.25it/s]
+Epoch: 216, trainset accuracy: 0.11236666666666667, trainset loss: 2.301204979324341
+Epoch: 218, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  8.59it/s]
+Epoch: 217, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011964796702067
+Epoch: 219, progress on batches: 100%|███████████████████| 59/59 [00:07<00:00,  8.11it/s]
+Epoch: 218, trainset accuracy: 0.11236666666666667, trainset loss: 2.301192202758789
+Epoch: 220, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  8.98it/s]
+Epoch: 219, trainset accuracy: 0.11236666666666667, trainset loss: 2.301198648452759
+Epoch: 221, progress on batches: 100%|███████████████████| 59/59 [00:07<00:00,  8.20it/s]
+Epoch: 220, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011991424560545
+Epoch: 222, progress on batches: 100%|███████████████████| 59/59 [00:07<00:00,  8.18it/s]
+Epoch: 221, trainset accuracy: 0.11236666666666667, trainset loss: 2.301195094426473
+Epoch: 223, progress on batches: 100%|███████████████████| 59/59 [00:07<00:00,  8.42it/s]
+Epoch: 222, trainset accuracy: 0.11236666666666667, trainset loss: 2.301208313751221
+Epoch: 224, progress on batches: 100%|███████████████████| 59/59 [00:07<00:00,  8.07it/s]
+Epoch: 223, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012017426808673
+Epoch: 225, progress on batches: 100%|███████████████████| 59/59 [00:07<00:00,  8.08it/s]
+Epoch: 224, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012016399383546
+Epoch: 226, progress on batches: 100%|███████████████████| 59/59 [00:07<00:00,  7.98it/s]
+Epoch: 225, trainset accuracy: 0.11236666666666667, trainset loss: 2.301196842956543
+Epoch: 227, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  8.91it/s]
+Epoch: 226, trainset accuracy: 0.11236666666666667, trainset loss: 2.301200101343791
+Epoch: 228, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  8.46it/s]
+Epoch: 227, trainset accuracy: 0.11236666666666667, trainset loss: 2.301208315404256
+Epoch: 229, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.16it/s]
+Epoch: 228, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012125328063964
+Epoch: 230, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.13it/s]
+Epoch: 229, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011995843251545
+Epoch: 231, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.22it/s]
+Epoch: 230, trainset accuracy: 0.11236666666666667, trainset loss: 2.301209710820516
+Epoch: 232, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  8.69it/s]
+Epoch: 231, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011910369873045
+Epoch: 233, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.07it/s]
+Epoch: 232, trainset accuracy: 0.11236666666666667, trainset loss: 2.301198836771647
+Epoch: 234, progress on batches: 100%|███████████████████| 59/59 [00:07<00:00,  8.40it/s]
+Epoch: 233, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012147780100505
+Epoch: 235, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  8.89it/s]
+Epoch: 234, trainset accuracy: 0.11236666666666667, trainset loss: 2.301201175562541
+Epoch: 236, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  8.51it/s]
+Epoch: 235, trainset accuracy: 0.11236666666666667, trainset loss: 2.301199113591512
+Epoch: 237, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  8.62it/s]
+Epoch: 236, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012103832244875
+Epoch: 238, progress on batches: 100%|███████████████████| 59/59 [00:08<00:00,  6.71it/s]
+Epoch: 237, trainset accuracy: 0.11236666666666667, trainset loss: 2.30120123240153
+Epoch: 239, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  8.94it/s]
+Epoch: 238, trainset accuracy: 0.11236666666666667, trainset loss: 2.301195350265503
+Epoch: 240, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.00it/s]
+Epoch: 239, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012006785074868
+Epoch: 241, progress on batches: 100%|███████████████████| 59/59 [00:07<00:00,  8.36it/s]
+Epoch: 240, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012043200174968
+Epoch: 242, progress on batches: 100%|███████████████████| 59/59 [00:07<00:00,  8.20it/s]
+Epoch: 241, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011998657226562
+Epoch: 243, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  8.56it/s]
+Epoch: 242, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011940728505453
+Epoch: 244, progress on batches: 100%|███████████████████| 59/59 [00:07<00:00,  7.91it/s]
+Epoch: 243, trainset accuracy: 0.11236666666666667, trainset loss: 2.301221458943685
+Epoch: 245, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  8.91it/s]
+Epoch: 244, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011990151723225
+Epoch: 246, progress on batches: 100%|███████████████████| 59/59 [00:07<00:00,  8.42it/s]
+Epoch: 245, trainset accuracy: 0.11236666666666667, trainset loss: 2.301200843302409
+Epoch: 247, progress on batches: 100%|███████████████████| 59/59 [00:07<00:00,  8.28it/s]
+Epoch: 246, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011963877360024
+Epoch: 248, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.09it/s]
+Epoch: 247, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011975470225017
+Epoch: 249, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.61it/s]
+Epoch: 248, trainset accuracy: 0.11236666666666667, trainset loss: 2.30119632174174
+Epoch: 250, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.61it/s]
+Epoch: 249, trainset accuracy: 0.11236666666666667, trainset loss: 2.301220349884033
+Epoch: 251, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.06it/s]
+Epoch: 250, trainset accuracy: 0.11236666666666667, trainset loss: 2.301205442174276
+Epoch: 252, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  8.48it/s]
+Epoch: 251, trainset accuracy: 0.11236666666666667, trainset loss: 2.301199354171753
+Epoch: 253, progress on batches: 100%|███████████████████| 59/59 [00:09<00:00,  6.19it/s]
+Epoch: 252, trainset accuracy: 0.11236666666666667, trainset loss: 2.301200230153402
+Epoch: 254, progress on batches: 100%|███████████████████| 59/59 [00:07<00:00,  7.98it/s]
+Epoch: 253, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012037715911866
+Epoch: 255, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  8.67it/s]
+Epoch: 254, trainset accuracy: 0.11236666666666667, trainset loss: 2.301203587468465
+Epoch: 256, progress on batches: 100%|███████████████████| 59/59 [00:07<00:00,  8.22it/s]
+Epoch: 255, trainset accuracy: 0.11236666666666667, trainset loss: 2.301195542271932
+Epoch: 257, progress on batches: 100%|███████████████████| 59/59 [00:07<00:00,  8.35it/s]
+Epoch: 256, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011956798553466
+Epoch: 258, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  8.56it/s]
+Epoch: 257, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012078077952065
+Epoch: 259, progress on batches: 100%|███████████████████| 59/59 [00:09<00:00,  5.97it/s]
+Epoch: 258, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012007895151774
+Epoch: 260, progress on batches: 100%|███████████████████| 59/59 [00:09<00:00,  6.04it/s]
+Epoch: 259, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012093746185305
+Epoch: 261, progress on batches: 100%|███████████████████| 59/59 [00:09<00:00,  5.95it/s]
+Epoch: 260, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012119558970134
+Epoch: 262, progress on batches: 100%|███████████████████| 59/59 [00:10<00:00,  5.79it/s]
+Epoch: 261, trainset accuracy: 0.11236666666666667, trainset loss: 2.301195860290527
+Epoch: 263, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.27it/s]
+Epoch: 262, trainset accuracy: 0.11236666666666667, trainset loss: 2.301204080200195
+Epoch: 264, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.56it/s]
+Epoch: 263, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012021162668863
+Epoch: 265, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.45it/s]
+Epoch: 264, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012131783803302
+Epoch: 266, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.68it/s]
+Epoch: 265, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011950552622475
+Epoch: 267, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.58it/s]
+Epoch: 266, trainset accuracy: 0.11236666666666667, trainset loss: 2.301203969446818
+Epoch: 268, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.46it/s]
+Epoch: 267, trainset accuracy: 0.11236666666666667, trainset loss: 2.30120371055603
+Epoch: 269, progress on batches: 100%|███████████████████| 59/59 [00:08<00:00,  7.12it/s]
+Epoch: 268, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011982885996503
+Epoch: 270, progress on batches: 100%|███████████████████| 59/59 [00:08<00:00,  7.07it/s]
+Epoch: 269, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012140393575033
+Epoch: 271, progress on batches: 100%|███████████████████| 59/59 [00:08<00:00,  7.21it/s]
+Epoch: 270, trainset accuracy: 0.11236666666666667, trainset loss: 2.301216093190511
+Epoch: 272, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00, 10.04it/s]
+Epoch: 271, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011970083872475
+Epoch: 273, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00, 10.39it/s]
+Epoch: 272, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012010622660317
+Epoch: 274, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00, 10.49it/s]
+Epoch: 273, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012069547017417
+Epoch: 275, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00, 10.40it/s]
+Epoch: 274, trainset accuracy: 0.11236666666666667, trainset loss: 2.301194219080607
+Epoch: 276, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00, 10.23it/s]
+Epoch: 275, trainset accuracy: 0.11236666666666667, trainset loss: 2.301202081934611
+Epoch: 277, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00, 10.34it/s]
+Epoch: 276, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012003595987958
+Epoch: 278, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00, 10.18it/s]
+Epoch: 277, trainset accuracy: 0.11236666666666667, trainset loss: 2.301197500737508
+Epoch: 279, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00, 10.64it/s]
+Epoch: 278, trainset accuracy: 0.11236666666666667, trainset loss: 2.301207377878825
+Epoch: 280, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00, 10.96it/s]
+Epoch: 279, trainset accuracy: 0.11236666666666667, trainset loss: 2.301192648188273
+Epoch: 281, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00, 11.24it/s]
+Epoch: 280, trainset accuracy: 0.11236666666666667, trainset loss: 2.301197119649251
+Epoch: 282, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00, 10.66it/s]
+Epoch: 281, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012010548909507
+Epoch: 283, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.72it/s]
+Epoch: 282, trainset accuracy: 0.11236666666666667, trainset loss: 2.301196262995402
+Epoch: 284, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.55it/s]
+Epoch: 283, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012011503855385
+Epoch: 285, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.54it/s]
+Epoch: 284, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012069061279297
+Epoch: 286, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.73it/s]
+Epoch: 285, trainset accuracy: 0.11236666666666667, trainset loss: 2.301196011352539
+Epoch: 287, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.66it/s]
+Epoch: 286, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012031274159748
+Epoch: 288, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00, 10.20it/s]
+Epoch: 287, trainset accuracy: 0.11236666666666667, trainset loss: 2.301193868891398
+Epoch: 289, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.50it/s]
+Epoch: 288, trainset accuracy: 0.11236666666666667, trainset loss: 2.301213460667928
+Epoch: 290, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.56it/s]
+Epoch: 289, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012004225413003
+Epoch: 291, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00,  9.89it/s]
+Epoch: 290, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011963572184246
+Epoch: 292, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.53it/s]
+Epoch: 291, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012023821512857
+Epoch: 293, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.57it/s]
+Epoch: 292, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012043182373048
+Epoch: 294, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.52it/s]
+Epoch: 293, trainset accuracy: 0.11236666666666667, trainset loss: 2.301198062133789
+Epoch: 295, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00, 10.27it/s]
+Epoch: 294, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012036602020265
+Epoch: 296, progress on batches: 100%|███████████████████| 59/59 [00:04<00:00, 12.34it/s]
+Epoch: 295, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012028134663898
+Epoch: 297, progress on batches: 100%|███████████████████| 59/59 [00:04<00:00, 12.37it/s]
+Epoch: 296, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011933959960937
+Epoch: 298, progress on batches: 100%|███████████████████| 59/59 [00:04<00:00, 12.32it/s]
+Epoch: 297, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011978046417236
+Epoch: 299, progress on batches: 100%|███████████████████| 59/59 [00:04<00:00, 12.55it/s]
+Epoch: 298, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011980620066326
+Epoch: 300, progress on batches: 100%|███████████████████| 59/59 [00:04<00:00, 12.18it/s]
+Epoch: 299, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011938995361327
+Epoch: 301, progress on batches: 100%|███████████████████| 59/59 [00:04<00:00, 12.43it/s]
+Epoch: 300, trainset accuracy: 0.11236666666666667, trainset loss: 2.301203600056966
+Epoch: 302, progress on batches: 100%|███████████████████| 59/59 [00:04<00:00, 12.32it/s]
+Epoch: 301, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012024433135987
+Epoch: 303, progress on batches: 100%|███████████████████| 59/59 [00:04<00:00, 12.68it/s]
+Epoch: 302, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011948384602863
+Epoch: 304, progress on batches: 100%|███████████████████| 59/59 [00:04<00:00, 12.30it/s]
+Epoch: 303, trainset accuracy: 0.11236666666666667, trainset loss: 2.301196700668335
+Epoch: 305, progress on batches: 100%|███████████████████| 59/59 [00:04<00:00, 12.37it/s]
+Epoch: 304, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011915493011474
+Epoch: 306, progress on batches: 100%|███████████████████| 59/59 [00:04<00:00, 12.51it/s]
+Epoch: 305, trainset accuracy: 0.11236666666666667, trainset loss: 2.301204487482707
+Epoch: 307, progress on batches: 100%|███████████████████| 59/59 [00:04<00:00, 12.09it/s]
+Epoch: 306, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012039620717366
+Epoch: 308, progress on batches: 100%|███████████████████| 59/59 [00:04<00:00, 11.93it/s]
+Epoch: 307, trainset accuracy: 0.11236666666666667, trainset loss: 2.301192037455241
+Epoch: 309, progress on batches: 100%|███████████████████| 59/59 [00:04<00:00, 12.32it/s]
+Epoch: 308, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011962027231854
+Epoch: 310, progress on batches: 100%|███████████████████| 59/59 [00:04<00:00, 12.96it/s]
+Epoch: 309, trainset accuracy: 0.11236666666666667, trainset loss: 2.301197935994466
+Epoch: 311, progress on batches: 100%|███████████████████| 59/59 [00:04<00:00, 13.20it/s]
+Epoch: 310, trainset accuracy: 0.11236666666666667, trainset loss: 2.301204513676961
+Epoch: 312, progress on batches: 100%|███████████████████| 59/59 [00:04<00:00, 12.76it/s]
+Epoch: 311, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012017650604246
+Epoch: 313, progress on batches: 100%|███████████████████| 59/59 [00:04<00:00, 13.40it/s]
+Epoch: 312, trainset accuracy: 0.11236666666666667, trainset loss: 2.301211994552612
+Epoch: 314, progress on batches: 100%|███████████████████| 59/59 [00:04<00:00, 13.35it/s]
+Epoch: 313, trainset accuracy: 0.11236666666666667, trainset loss: 2.301191458384196
+Epoch: 315, progress on batches: 100%|███████████████████| 59/59 [00:04<00:00, 13.41it/s]
+Epoch: 314, trainset accuracy: 0.11236666666666667, trainset loss: 2.301201961517334
+Epoch: 316, progress on batches: 100%|███████████████████| 59/59 [00:04<00:00, 13.44it/s]
+Epoch: 315, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012076347351074
+Epoch: 317, progress on batches: 100%|███████████████████| 59/59 [00:04<00:00, 13.29it/s]
+Epoch: 316, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011937845865886
+Epoch: 318, progress on batches: 100%|███████████████████| 59/59 [00:04<00:00, 13.20it/s]
+Epoch: 317, trainset accuracy: 0.11236666666666667, trainset loss: 2.301199753697713
+Epoch: 319, progress on batches: 100%|███████████████████| 59/59 [00:04<00:00, 12.40it/s]
+Epoch: 318, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012034413655598
+Epoch: 320, progress on batches: 100%|███████████████████| 59/59 [00:04<00:00, 12.91it/s]
+Epoch: 319, trainset accuracy: 0.11236666666666667, trainset loss: 2.30119984181722
+Epoch: 321, progress on batches: 100%|███████████████████| 59/59 [00:04<00:00, 12.40it/s]
+Epoch: 320, trainset accuracy: 0.11236666666666667, trainset loss: 2.301209384028117
+Epoch: 322, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00, 11.80it/s]
+Epoch: 321, trainset accuracy: 0.11236666666666667, trainset loss: 2.30121103515625
+Epoch: 323, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00, 11.80it/s]
+Epoch: 322, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011986225128176
+Epoch: 324, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00, 11.78it/s]
+Epoch: 323, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011992771148684
+Epoch: 325, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00, 11.42it/s]
+Epoch: 324, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012005668640136
+Epoch: 326, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00, 11.60it/s]
+Epoch: 325, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012090259552003
+Epoch: 327, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00, 10.51it/s]
+Epoch: 326, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012056423187257
+Epoch: 328, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.39it/s]
+Epoch: 327, trainset accuracy: 0.11236666666666667, trainset loss: 2.301192558415731
+Epoch: 329, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00, 10.01it/s]
+Epoch: 328, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012120928446453
+Epoch: 330, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.38it/s]
+Epoch: 329, trainset accuracy: 0.11236666666666667, trainset loss: 2.30119969291687
+Epoch: 331, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00, 10.58it/s]
+Epoch: 330, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012114776611328
+Epoch: 332, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00, 10.11it/s]
+Epoch: 331, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012031155904134
+Epoch: 333, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00, 10.40it/s]
+Epoch: 332, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012083168029784
+Epoch: 334, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00, 10.86it/s]
+Epoch: 333, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012010447184243
+Epoch: 335, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00, 10.32it/s]
+Epoch: 334, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011939359029134
+Epoch: 336, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00, 10.24it/s]
+Epoch: 335, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011919918060304
+Epoch: 337, progress on batches: 100%|███████████████████| 59/59 [00:04<00:00, 11.95it/s]
+Epoch: 336, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012036490122476
+Epoch: 338, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00, 11.27it/s]
+Epoch: 337, trainset accuracy: 0.11236666666666667, trainset loss: 2.301193176905314
+Epoch: 339, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00, 11.13it/s]
+Epoch: 338, trainset accuracy: 0.11236666666666667, trainset loss: 2.301213385136922
+Epoch: 340, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00, 11.47it/s]
+Epoch: 339, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011984256744387
+Epoch: 341, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00, 11.39it/s]
+Epoch: 340, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012015537261963
+Epoch: 342, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00, 11.19it/s]
+Epoch: 341, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011999272664387
+Epoch: 343, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00, 11.21it/s]
+Epoch: 342, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012021305084227
+Epoch: 344, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00, 11.71it/s]
+Epoch: 343, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012092798868817
+Epoch: 345, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00, 10.93it/s]
+Epoch: 344, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012016971588136
+Epoch: 346, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00, 11.20it/s]
+Epoch: 345, trainset accuracy: 0.11236666666666667, trainset loss: 2.301199006907145
+Epoch: 347, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00, 11.24it/s]
+Epoch: 346, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011967164357503
+Epoch: 348, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00, 10.54it/s]
+Epoch: 347, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012036719004314
+Epoch: 349, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00, 11.57it/s]
+Epoch: 348, trainset accuracy: 0.11236666666666667, trainset loss: 2.301206531778971
+Epoch: 350, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00, 10.90it/s]
+Epoch: 349, trainset accuracy: 0.11236666666666667, trainset loss: 2.301206118774414
+Epoch: 351, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00, 10.97it/s]
+Epoch: 350, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011970569610596
+Epoch: 352, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00, 11.76it/s]
+Epoch: 351, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011967282613117
+Epoch: 353, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00, 11.28it/s]
+Epoch: 352, trainset accuracy: 0.11236666666666667, trainset loss: 2.301197859064738
+Epoch: 354, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00, 11.65it/s]
+Epoch: 353, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012151626586914
+Epoch: 355, progress on batches: 100%|███████████████████| 59/59 [00:04<00:00, 12.68it/s]
+Epoch: 354, trainset accuracy: 0.11236666666666667, trainset loss: 2.301199691772461
+Epoch: 356, progress on batches: 100%|███████████████████| 59/59 [00:04<00:00, 13.66it/s]
+Epoch: 355, trainset accuracy: 0.11236666666666667, trainset loss: 2.301196539433797
+Epoch: 357, progress on batches: 100%|███████████████████| 59/59 [00:04<00:00, 13.50it/s]
+Epoch: 356, trainset accuracy: 0.11236666666666667, trainset loss: 2.30119614982605
+Epoch: 358, progress on batches: 100%|███████████████████| 59/59 [00:04<00:00, 13.23it/s]
+Epoch: 357, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011900014241538
+Epoch: 359, progress on batches: 100%|███████████████████| 59/59 [00:04<00:00, 13.17it/s]
+Epoch: 358, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012003770192466
+Epoch: 360, progress on batches: 100%|███████████████████| 59/59 [00:04<00:00, 12.98it/s]
+Epoch: 359, trainset accuracy: 0.11236666666666667, trainset loss: 2.301207469685872
+Epoch: 361, progress on batches: 100%|███████████████████| 59/59 [00:04<00:00, 12.79it/s]
+Epoch: 360, trainset accuracy: 0.11236666666666667, trainset loss: 2.301189788309733
+Epoch: 362, progress on batches: 100%|███████████████████| 59/59 [00:04<00:00, 12.09it/s]
+Epoch: 361, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011994667053224
+Epoch: 363, progress on batches: 100%|███████████████████| 59/59 [00:04<00:00, 12.05it/s]
+Epoch: 362, trainset accuracy: 0.11236666666666667, trainset loss: 2.301190315882365
+Epoch: 364, progress on batches: 100%|███████████████████| 59/59 [00:04<00:00, 12.11it/s]
+Epoch: 363, trainset accuracy: 0.11236666666666667, trainset loss: 2.301214221572876
+Epoch: 365, progress on batches: 100%|███████████████████| 59/59 [00:04<00:00, 12.21it/s]
+Epoch: 364, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011996063232423
+Epoch: 366, progress on batches: 100%|███████████████████| 59/59 [00:04<00:00, 12.37it/s]
+Epoch: 365, trainset accuracy: 0.11236666666666667, trainset loss: 2.301204052225749
+Epoch: 367, progress on batches: 100%|███████████████████| 59/59 [00:04<00:00, 12.49it/s]
+Epoch: 366, trainset accuracy: 0.11236666666666667, trainset loss: 2.301208397293091
+Epoch: 368, progress on batches: 100%|███████████████████| 59/59 [00:04<00:00, 12.39it/s]
+Epoch: 367, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012010807037355
+Epoch: 369, progress on batches: 100%|███████████████████| 59/59 [00:04<00:00, 12.11it/s]
+Epoch: 368, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012049940745034
+Epoch: 370, progress on batches: 100%|███████████████████| 59/59 [00:04<00:00, 12.12it/s]
+Epoch: 369, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012034673055015
+Epoch: 371, progress on batches: 100%|███████████████████| 59/59 [00:04<00:00, 12.10it/s]
+Epoch: 370, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011961151123046
+Epoch: 372, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00, 10.01it/s]
+Epoch: 371, trainset accuracy: 0.11236666666666667, trainset loss: 2.30119756787618
+Epoch: 373, progress on batches: 100%|███████████████████| 59/59 [00:04<00:00, 12.80it/s]
+Epoch: 372, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011914358774823
+Epoch: 374, progress on batches: 100%|███████████████████| 59/59 [00:04<00:00, 14.23it/s]
+Epoch: 373, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012011136372883
+Epoch: 375, progress on batches: 100%|███████████████████| 59/59 [00:04<00:00, 14.53it/s]
+Epoch: 374, trainset accuracy: 0.11236666666666667, trainset loss: 2.30119491704305
+Epoch: 376, progress on batches: 100%|███████████████████| 59/59 [00:04<00:00, 13.35it/s]
+Epoch: 375, trainset accuracy: 0.11236666666666667, trainset loss: 2.301199283854167
+Epoch: 377, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00, 10.56it/s]
+Epoch: 376, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011998926798505
+Epoch: 378, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00, 10.43it/s]
+Epoch: 377, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012082487742105
+Epoch: 379, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00,  9.95it/s]
+Epoch: 378, trainset accuracy: 0.11236666666666667, trainset loss: 2.301202003097534
+Epoch: 380, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00,  9.86it/s]
+Epoch: 379, trainset accuracy: 0.11236666666666667, trainset loss: 2.30120395711263
+Epoch: 381, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00, 10.89it/s]
+Epoch: 380, trainset accuracy: 0.11236666666666667, trainset loss: 2.301198033777873
+Epoch: 382, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.82it/s]
+Epoch: 381, trainset accuracy: 0.11236666666666667, trainset loss: 2.301205430984497
+Epoch: 383, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00, 10.90it/s]
+Epoch: 382, trainset accuracy: 0.11236666666666667, trainset loss: 2.301196109263102
+Epoch: 384, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.82it/s]
+Epoch: 383, trainset accuracy: 0.11236666666666667, trainset loss: 2.30119215927124
+Epoch: 385, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00,  9.95it/s]
+Epoch: 384, trainset accuracy: 0.11236666666666667, trainset loss: 2.301197067260742
+Epoch: 386, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00, 10.51it/s]
+Epoch: 385, trainset accuracy: 0.11236666666666667, trainset loss: 2.301201834233602
+Epoch: 387, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.80it/s]
+Epoch: 386, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011928882598878
+Epoch: 388, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00, 11.58it/s]
+Epoch: 387, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012041655222575
+Epoch: 389, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00, 10.42it/s]
+Epoch: 388, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012064622243247
+Epoch: 390, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00, 10.46it/s]
+Epoch: 389, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012069864908855
+Epoch: 391, progress on batches: 100%|███████████████████| 59/59 [00:05<00:00, 11.04it/s]
+Epoch: 390, trainset accuracy: 0.11236666666666667, trainset loss: 2.301195448811849
+Epoch: 392, progress on batches: 100%|███████████████████| 59/59 [00:06<00:00,  9.80it/s]
+Epoch: 391, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012124731699624
+Epoch: 393, progress on batches: 100%|████████████████████████████████████| 59/59 [00:05<00:00, 10.57it/s]
+Epoch: 392, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011966096242267
+Epoch: 394, progress on batches: 100%|████████████████████████████████████| 59/59 [00:05<00:00,  9.92it/s]
+Epoch: 393, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012046230316163
+Epoch: 395, progress on batches: 100%|████████████████████████████████████| 59/59 [00:05<00:00, 10.01it/s]
+Epoch: 394, trainset accuracy: 0.11236666666666667, trainset loss: 2.301191682434082
+Epoch: 396, progress on batches: 100%|████████████████████████████████████| 59/59 [00:05<00:00, 10.00it/s]
+Epoch: 395, trainset accuracy: 0.11236666666666667, trainset loss: 2.301210039393107
+Epoch: 397, progress on batches: 100%|████████████████████████████████████| 59/59 [00:06<00:00,  9.56it/s]
+Epoch: 396, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011957635243734
+Epoch: 398, progress on batches: 100%|████████████████████████████████████| 59/59 [00:05<00:00, 10.88it/s]
+Epoch: 397, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011974173227947
+Epoch: 399, progress on batches: 100%|████████████████████████████████████| 59/59 [00:06<00:00,  9.77it/s]
+Epoch: 398, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012032405853273
+Epoch: 400, progress on batches: 100%|████████████████████████████████████| 59/59 [00:05<00:00, 10.23it/s]
+Epoch: 399, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012000551859537
+Epoch: 401, progress on batches: 100%|████████████████████████████████████| 59/59 [00:05<00:00, 10.33it/s]
+Epoch: 400, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011989279429117
+Epoch: 402, progress on batches: 100%|████████████████████████████████████| 59/59 [00:06<00:00,  9.69it/s]
+Epoch: 401, trainset accuracy: 0.11236666666666667, trainset loss: 2.301202360026042
+Epoch: 403, progress on batches: 100%|████████████████████████████████████| 59/59 [00:05<00:00, 10.44it/s]
+Epoch: 402, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012151228586832
+Epoch: 404, progress on batches: 100%|████████████████████████████████████| 59/59 [00:06<00:00,  9.68it/s]
+Epoch: 403, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011952212015787
+Epoch: 405, progress on batches: 100%|████████████████████████████████████| 59/59 [00:05<00:00, 11.18it/s]
+Epoch: 404, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011963773091635
+Epoch: 406, progress on batches: 100%|████████████████████████████████████| 59/59 [00:05<00:00, 10.55it/s]
+Epoch: 405, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011938320159913
+Epoch: 407, progress on batches: 100%|████████████████████████████████████| 59/59 [00:04<00:00, 12.02it/s]
+Epoch: 406, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011987606048585
+Epoch: 408, progress on batches: 100%|████████████████████████████████████| 59/59 [00:04<00:00, 12.19it/s]
+Epoch: 407, trainset accuracy: 0.11236666666666667, trainset loss: 2.301201393890381
+Epoch: 409, progress on batches: 100%|████████████████████████████████████| 59/59 [00:05<00:00, 10.38it/s]
+Epoch: 408, trainset accuracy: 0.11236666666666667, trainset loss: 2.301198230489095
+Epoch: 410, progress on batches: 100%|████████████████████████████████████| 59/59 [00:05<00:00, 11.38it/s]
+Epoch: 409, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012013458251954
+Epoch: 411, progress on batches: 100%|████████████████████████████████████| 59/59 [00:05<00:00, 10.84it/s]
+Epoch: 410, trainset accuracy: 0.11236666666666667, trainset loss: 2.301194943110148
+Epoch: 412, progress on batches: 100%|████████████████████████████████████| 59/59 [00:05<00:00, 11.74it/s]
+Epoch: 411, trainset accuracy: 0.11236666666666667, trainset loss: 2.301203892771403
+Epoch: 413, progress on batches: 100%|████████████████████████████████████| 59/59 [00:08<00:00,  7.27it/s]
+Epoch: 412, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011998647054037
+Epoch: 414, progress on batches: 100%|████████████████████████████████████| 59/59 [00:06<00:00,  9.09it/s]
+Epoch: 413, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012078713734945
+Epoch: 415, progress on batches: 100%|████████████████████████████████████| 59/59 [00:09<00:00,  6.54it/s]
+Epoch: 414, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012070353190106
+Epoch: 416, progress on batches: 100%|████████████████████████████████████| 59/59 [00:06<00:00,  9.64it/s]
+Epoch: 415, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012135977427164
+Epoch: 417, progress on batches: 100%|████████████████████████████████████| 59/59 [00:05<00:00, 10.16it/s]
+Epoch: 416, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012101362864175
+Epoch: 418, progress on batches: 100%|████████████████████████████████████| 59/59 [00:05<00:00, 10.68it/s]
+Epoch: 417, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011995290120444
+Epoch: 419, progress on batches: 100%|████████████████████████████████████| 59/59 [00:06<00:00,  9.64it/s]
+Epoch: 418, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012008702596027
+Epoch: 420, progress on batches: 100%|████████████████████████████████████| 59/59 [00:05<00:00, 10.60it/s]
+Epoch: 419, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012109661102294
+Epoch: 421, progress on batches: 100%|████████████████████████████████████| 59/59 [00:05<00:00, 10.14it/s]
+Epoch: 420, trainset accuracy: 0.11236666666666667, trainset loss: 2.301201590983073
+Epoch: 422, progress on batches: 100%|████████████████████████████████████| 59/59 [00:07<00:00,  8.12it/s]
+Epoch: 421, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012007077534995
+Epoch: 423, progress on batches: 100%|████████████████████████████████████| 59/59 [00:05<00:00, 10.31it/s]
+Epoch: 422, trainset accuracy: 0.11236666666666667, trainset loss: 2.30120593846639
+Epoch: 424, progress on batches: 100%|████████████████████████████████████| 59/59 [00:06<00:00,  9.78it/s]
+Epoch: 423, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012030768076577
+Epoch: 425, progress on batches: 100%|████████████████████████████████████| 59/59 [00:05<00:00, 11.01it/s]
+Epoch: 424, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012117317199707
+Epoch: 426, progress on batches: 100%|████████████████████████████████████| 59/59 [00:05<00:00, 10.16it/s]
+Epoch: 425, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011997467041017
+Epoch: 427, progress on batches: 100%|████████████████████████████████████| 59/59 [00:05<00:00, 10.37it/s]
+Epoch: 426, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011945095062254
+Epoch: 428, progress on batches: 100%|████████████████████████████████████| 59/59 [00:05<00:00, 10.82it/s]
+Epoch: 427, trainset accuracy: 0.11236666666666667, trainset loss: 2.30120208829244
+Epoch: 429, progress on batches: 100%|████████████████████████████████████| 59/59 [00:06<00:00,  9.82it/s]
+Epoch: 428, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012055735270183
+Epoch: 430, progress on batches: 100%|████████████████████████████████████| 59/59 [00:07<00:00,  8.15it/s]
+Epoch: 429, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011898639678954
+Epoch: 431, progress on batches: 100%|████████████████████████████████████| 59/59 [00:05<00:00,  9.84it/s]
+Epoch: 430, trainset accuracy: 0.11236666666666667, trainset loss: 2.301196708552043
+Epoch: 432, progress on batches: 100%|████████████████████████████████████| 59/59 [00:05<00:00, 10.50it/s]
+Epoch: 431, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012100551605226
+Epoch: 433, progress on batches: 100%|████████████████████████████████████| 59/59 [00:05<00:00,  9.99it/s]
+Epoch: 432, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012006228129067
+Epoch: 434, progress on batches: 100%|████████████████████████████████████| 59/59 [00:05<00:00,  9.84it/s]
+Epoch: 433, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012039235432944
+Epoch: 435, progress on batches: 100%|████████████████████████████████████| 59/59 [00:05<00:00, 11.17it/s]
+Epoch: 434, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012034885406494
+Epoch: 436, progress on batches: 100%|████████████████████████████████████| 59/59 [00:05<00:00, 10.59it/s]
+Epoch: 435, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012044647216796
+Epoch: 437, progress on batches: 100%|████████████████████████████████████| 59/59 [00:05<00:00, 11.44it/s]
+Epoch: 436, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012008272806805
+Epoch: 438, progress on batches: 100%|████████████████████████████████████| 59/59 [00:05<00:00, 10.59it/s]
+Epoch: 437, trainset accuracy: 0.11236666666666667, trainset loss: 2.301196459833781
+Epoch: 439, progress on batches: 100%|████████████████████████████████████| 59/59 [00:05<00:00, 10.99it/s]
+Epoch: 438, trainset accuracy: 0.11236666666666667, trainset loss: 2.301201703262329
+Epoch: 440, progress on batches: 100%|████████████████████████████████████| 59/59 [00:05<00:00, 10.71it/s]
+Epoch: 439, trainset accuracy: 0.11236666666666667, trainset loss: 2.301206775665283
+Epoch: 441, progress on batches: 100%|████████████████████████████████████| 59/59 [00:05<00:00, 10.61it/s]
+Epoch: 440, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012144676208495
+Epoch: 442, progress on batches: 100%|████████████████████████████████████| 59/59 [00:05<00:00, 11.02it/s]
+Epoch: 441, trainset accuracy: 0.11236666666666667, trainset loss: 2.301206358973185
+Epoch: 443, progress on batches: 100%|████████████████████████████████████| 59/59 [00:05<00:00, 10.05it/s]
+Epoch: 442, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011930452982585
+Epoch: 444, progress on batches: 100%|████████████████████████████████████| 59/59 [00:05<00:00, 11.11it/s]
+Epoch: 443, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012137736002605
+Epoch: 445, progress on batches: 100%|████████████████████████████████████| 59/59 [00:06<00:00,  9.83it/s]
+Epoch: 444, trainset accuracy: 0.11236666666666667, trainset loss: 2.301200122197469
+Epoch: 446, progress on batches: 100%|████████████████████████████████████| 59/59 [00:05<00:00, 10.37it/s]
+Epoch: 445, trainset accuracy: 0.11236666666666667, trainset loss: 2.301197168477376
+Epoch: 447, progress on batches: 100%|████████████████████████████████████| 59/59 [00:05<00:00, 10.02it/s]
+Epoch: 446, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012006771087647
+Epoch: 448, progress on batches: 100%|████████████████████████████████████| 59/59 [00:05<00:00, 10.38it/s]
+Epoch: 447, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012045131683347
+Epoch: 449, progress on batches: 100%|████████████████████████████████████| 59/59 [00:05<00:00, 10.64it/s]
+Epoch: 448, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011996026357013
+Epoch: 450, progress on batches: 100%|████████████████████████████████████| 59/59 [00:06<00:00,  9.77it/s]
+Epoch: 449, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012058698018394
+Epoch: 451, progress on batches: 100%|████████████████████████████████████| 59/59 [00:05<00:00, 10.68it/s]
+Epoch: 450, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011992705027264
+Epoch: 452, progress on batches: 100%|████████████████████████████████████| 59/59 [00:06<00:00,  9.19it/s]
+Epoch: 451, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012134147644043
+Epoch: 453, progress on batches: 100%|████████████████████████████████████| 59/59 [00:07<00:00,  7.62it/s]
+Epoch: 452, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011996047973633
+Epoch: 454, progress on batches: 100%|████████████████████████████████████| 59/59 [00:08<00:00,  7.28it/s]
+Epoch: 453, trainset accuracy: 0.11236666666666667, trainset loss: 2.301216057332357
+Epoch: 455, progress on batches: 100%|████████████████████████████████████| 59/59 [00:05<00:00,  9.84it/s]
+Epoch: 454, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011991018931073
+Epoch: 456, progress on batches: 100%|████████████████████████████████████| 59/59 [00:06<00:00,  9.81it/s]
+Epoch: 455, trainset accuracy: 0.11236666666666667, trainset loss: 2.301196729405721
+Epoch: 457, progress on batches: 100%|████████████████████████████████████| 59/59 [00:06<00:00,  9.55it/s]
+Epoch: 456, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011999731699624
+Epoch: 458, progress on batches: 100%|████████████████████████████████████| 59/59 [00:05<00:00, 11.21it/s]
+Epoch: 457, trainset accuracy: 0.11236666666666667, trainset loss: 2.301214094034831
+Epoch: 459, progress on batches: 100%|████████████████████████████████████| 59/59 [00:05<00:00, 10.28it/s]
+Epoch: 458, trainset accuracy: 0.11236666666666667, trainset loss: 2.301204851913452
+Epoch: 460, progress on batches: 100%|████████████████████████████████████| 59/59 [00:04<00:00, 11.95it/s]
+Epoch: 459, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011913979848226
+Epoch: 461, progress on batches: 100%|████████████████████████████████████| 59/59 [00:05<00:00, 10.33it/s]
+Epoch: 460, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011973485310873
+Epoch: 462, progress on batches: 100%|████████████████████████████████████| 59/59 [00:05<00:00, 10.32it/s]
+Epoch: 461, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012072007497153
+Epoch: 463, progress on batches: 100%|████████████████████████████████████| 59/59 [00:05<00:00,  9.92it/s]
+Epoch: 462, trainset accuracy: 0.11236666666666667, trainset loss: 2.301215270360311
+Epoch: 464, progress on batches: 100%|████████████████████████████████████| 59/59 [00:06<00:00,  9.72it/s]
+Epoch: 463, trainset accuracy: 0.11236666666666667, trainset loss: 2.301202956899007
+Epoch: 465, progress on batches: 100%|████████████████████████████████████| 59/59 [00:05<00:00, 11.07it/s]
+Epoch: 464, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012097862243652
+Epoch: 466, progress on batches: 100%|████████████████████████████████████| 59/59 [00:04<00:00, 12.58it/s]
+Epoch: 465, trainset accuracy: 0.11236666666666667, trainset loss: 2.30120398050944
+Epoch: 467, progress on batches: 100%|████████████████████████████████████| 59/59 [00:04<00:00, 14.11it/s]
+Epoch: 466, trainset accuracy: 0.11236666666666667, trainset loss: 2.301198237101237
+Epoch: 468, progress on batches: 100%|████████████████████████████████████| 59/59 [00:04<00:00, 12.35it/s]
+Epoch: 467, trainset accuracy: 0.11236666666666667, trainset loss: 2.301199765396118
+Epoch: 469, progress on batches: 100%|████████████████████████████████████| 59/59 [00:04<00:00, 12.98it/s]
+Epoch: 468, trainset accuracy: 0.11236666666666667, trainset loss: 2.301198221206665
+Epoch: 470, progress on batches: 100%|████████████████████████████████████| 59/59 [00:05<00:00, 10.26it/s]
+Epoch: 469, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012130171457925
+Epoch: 471, progress on batches: 100%|████████████████████████████████████| 59/59 [00:04<00:00, 12.35it/s]
+Epoch: 470, trainset accuracy: 0.11236666666666667, trainset loss: 2.301201858266195
+Epoch: 472, progress on batches: 100%|████████████████████████████████████| 59/59 [00:04<00:00, 14.17it/s]
+Epoch: 471, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011974254608156
+Epoch: 473, progress on batches: 100%|████████████████████████████████████| 59/59 [00:04<00:00, 12.39it/s]
+Epoch: 472, trainset accuracy: 0.11236666666666667, trainset loss: 2.301216416168213
+Epoch: 474, progress on batches: 100%|████████████████████████████████████| 59/59 [00:04<00:00, 13.43it/s]
+Epoch: 473, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012019990285237
+Epoch: 475, progress on batches: 100%|████████████████████████████████████| 59/59 [00:04<00:00, 12.79it/s]
+Epoch: 474, trainset accuracy: 0.11236666666666667, trainset loss: 2.301195947647095
+Epoch: 476, progress on batches: 100%|████████████████████████████████████| 59/59 [00:04<00:00, 12.44it/s]
+Epoch: 475, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012016362508136
+Epoch: 477, progress on batches: 100%|████████████████████████████████████| 59/59 [00:04<00:00, 14.23it/s]
+Epoch: 476, trainset accuracy: 0.11236666666666667, trainset loss: 2.301208623377482
+Epoch: 478, progress on batches: 100%|████████████████████████████████████| 59/59 [00:04<00:00, 12.34it/s]
+Epoch: 477, trainset accuracy: 0.11236666666666667, trainset loss: 2.3011984139760333
+Epoch: 479, progress on batches: 100%|████████████████████████████████████| 59/59 [00:04<00:00, 13.94it/s]
+Epoch: 478, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012154450734457
+Epoch: 480, progress on batches: 100%|████████████████████████████████████| 59/59 [00:04<00:00, 12.81it/s]
+Epoch: 479, trainset accuracy: 0.11236666666666667, trainset loss: 2.301201516342163
+Epoch: 481, progress on batches: 100%|████████████████████████████████████| 59/59 [00:04<00:00, 12.38it/s]
+Epoch: 480, trainset accuracy: 0.11236666666666667, trainset loss: 2.301195203781128
+Epoch: 482, progress on batches: 100%|████████████████████████████████████| 59/59 [00:03<00:00, 15.03it/s]
+Epoch: 481, trainset accuracy: 0.11236666666666667, trainset loss: 2.301191088740031
+Epoch: 483, progress on batches: 100%|████████████████████████████████████| 59/59 [00:04<00:00, 13.24it/s]
+Epoch: 482, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012057421366374
+Epoch: 484, progress on batches: 100%|████████████████████████████████████| 59/59 [00:04<00:00, 12.93it/s]
+Epoch: 483, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012010375976564
+Epoch: 485, progress on batches: 100%|████████████████████████████████████| 59/59 [00:04<00:00, 14.62it/s]
+Epoch: 484, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012032456715903
+Epoch: 486, progress on batches: 100%|████████████████████████████████████| 59/59 [00:04<00:00, 13.36it/s]
+Epoch: 485, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012038865407307
+Epoch: 487, progress on batches: 100%|████████████████████████████████████| 59/59 [00:04<00:00, 13.30it/s]
+Epoch: 486, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012010114034016
+Epoch: 488, progress on batches: 100%|████████████████████████████████████| 59/59 [00:04<00:00, 14.14it/s]
+Epoch: 487, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012095467885336
+Epoch: 489, progress on batches: 100%|████████████████████████████████████| 59/59 [00:05<00:00, 10.12it/s]
+Epoch: 488, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012055548350014
+Epoch: 490, progress on batches: 100%|████████████████████████████████████| 59/59 [00:05<00:00, 10.03it/s]
+Epoch: 489, trainset accuracy: 0.11236666666666667, trainset loss: 2.301197420374552
+Epoch: 491, progress on batches: 100%|████████████████████████████████████| 59/59 [00:05<00:00, 10.94it/s]
+Epoch: 490, trainset accuracy: 0.11236666666666667, trainset loss: 2.30120514755249
+Epoch: 492, progress on batches: 100%|████████████████████████████████████| 59/59 [00:05<00:00, 10.24it/s]
+Epoch: 491, trainset accuracy: 0.11236666666666667, trainset loss: 2.30120641708374
+Epoch: 493, progress on batches: 100%|████████████████████████████████████| 59/59 [00:05<00:00, 10.94it/s]
+Epoch: 492, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012011872609457
+Epoch: 494, progress on batches: 100%|████████████████████████████████████| 59/59 [00:05<00:00, 10.35it/s]
+Epoch: 493, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012090770721434
+Epoch: 495, progress on batches: 100%|████████████████████████████████████| 59/59 [00:05<00:00,  9.93it/s]
+Epoch: 494, trainset accuracy: 0.11236666666666667, trainset loss: 2.301195690027873
+Epoch: 496, progress on batches: 100%|████████████████████████████████████| 59/59 [00:04<00:00, 11.98it/s]
+Epoch: 495, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012005012512207
+Epoch: 497, progress on batches: 100%|████████████████████████████████████| 59/59 [00:05<00:00, 10.74it/s]
+Epoch: 496, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012052989959715
+Epoch: 498, progress on batches: 100%|████████████████████████████████████| 59/59 [00:04<00:00, 11.97it/s]
+Epoch: 497, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012007152557374
+Epoch: 499, progress on batches: 100%|████████████████████████████████████| 59/59 [00:03<00:00, 17.57it/s]
+Epoch: 498, trainset accuracy: 0.11236666666666667, trainset loss: 2.301201715596517
+Epoch: 100%|███████████████████████████████████████████| 500/500 [50:40<00:00,  6.08s/it]00:00, 24.66it/s]
+Epoch: 499, trainset accuracy: 0.11236666666666667, trainset loss: 2.3012242738087973

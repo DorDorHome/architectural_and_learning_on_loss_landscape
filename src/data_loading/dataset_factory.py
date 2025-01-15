@@ -110,7 +110,7 @@ def dataset_factory(config: DataConfig, transform, with_testset= False) -> Any:
         transform (Any): Transform pipeline for the dataset. 
         
     Returns:
-        Any: A dataset instance.
+        Any: A trainset and testset if with_testset is True, otherwise only a trainset.
     """
     if not config.data_path:
         raise ValueError("Data path not provided. Please specify 'data_path' in the configuration for reading from disk or downloading."
@@ -131,7 +131,7 @@ def dataset_factory(config: DataConfig, transform, with_testset= False) -> Any:
                 if len(test.classes) != config.num_classes:
                     raise ValueError(f"Number of classes in the test dataset ({len(testset.classes)}) does not match the number of classes specified in the configuration ({config.num_classes}).")
             except AttributeError:
-                raise AttributeError(f"Attribute .classes not found in the dataset. Make sure the dataset is loaded correctly.")
+                pass
             
             
         except AttributeError:
@@ -170,7 +170,7 @@ def dataset_factory(config: DataConfig, transform, with_testset= False) -> Any:
     if with_testset:
         return trainset, testset
     else:
-        return trainset
+        return trainset, None
         
 if __name__=="__main__":
     # test the dataset_factory function

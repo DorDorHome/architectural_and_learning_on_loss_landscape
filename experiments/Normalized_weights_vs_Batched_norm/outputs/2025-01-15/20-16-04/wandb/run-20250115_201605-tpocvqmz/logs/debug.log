@@ -1,0 +1,26 @@
+2025-01-15 20:16:05,457 INFO    MainThread:319304 [wandb_setup.py:_flush():77] Current SDK version is 0.18.1
+2025-01-15 20:16:05,457 INFO    MainThread:319304 [wandb_setup.py:_flush():77] Configure stats pid to 319304
+2025-01-15 20:16:05,457 INFO    MainThread:319304 [wandb_setup.py:_flush():77] Loading settings from /home/sfchan/.config/wandb/settings
+2025-01-15 20:16:05,457 INFO    MainThread:319304 [wandb_setup.py:_flush():77] Loading settings from /hdda/models/loss_landscape/experiments/Normalized_weights_vs_Batched_norm/outputs/2025-01-15/20-16-04/wandb/settings
+2025-01-15 20:16:05,457 INFO    MainThread:319304 [wandb_setup.py:_flush():77] Loading settings from environment variables: {}
+2025-01-15 20:16:05,457 INFO    MainThread:319304 [wandb_setup.py:_flush():77] Applying setup settings: {'mode': None, '_disable_service': None}
+2025-01-15 20:16:05,457 INFO    MainThread:319304 [wandb_setup.py:_flush():77] Inferring run settings from compute environment: {'program_relpath': 'experiments/Normalized_weights_vs_Batched_norm/single_run.py', 'program_abspath': '/hdda/models/loss_landscape/experiments/Normalized_weights_vs_Batched_norm/single_run.py', 'program': '/hdda/models/loss_landscape/experiments/Normalized_weights_vs_Batched_norm/single_run.py'}
+2025-01-15 20:16:05,457 INFO    MainThread:319304 [wandb_setup.py:_flush():77] Applying login settings: {}
+2025-01-15 20:16:05,457 INFO    MainThread:319304 [wandb_init.py:_log_setup():532] Logging user logs to /hdda/models/loss_landscape/experiments/Normalized_weights_vs_Batched_norm/outputs/2025-01-15/20-16-04/wandb/run-20250115_201605-tpocvqmz/logs/debug.log
+2025-01-15 20:16:05,457 INFO    MainThread:319304 [wandb_init.py:_log_setup():533] Logging internal logs to /hdda/models/loss_landscape/experiments/Normalized_weights_vs_Batched_norm/outputs/2025-01-15/20-16-04/wandb/run-20250115_201605-tpocvqmz/logs/debug-internal.log
+2025-01-15 20:16:05,457 INFO    MainThread:319304 [wandb_init.py:init():616] calling init triggers
+2025-01-15 20:16:05,457 INFO    MainThread:319304 [wandb_init.py:init():623] wandb.init called with sweep_config: {}
+config: {'runs': 1, 'run_id': 'None', 'seed': 42, 'device': 'cuda:0', 'epochs': 500, 'batch_size': 1024, 'use_wandb': True, 'use_json': False, 'log_freq_every_n_task': 1, 'wandb': {'project': 'Normalized_weights_vs_Batched_norm_FC', 'entity': ''}, 'data': {'dataset': 'MNIST', 'use_torchvision': True, 'data_path': '/hdda/datasets', 'num_classes': 10}, 'net': {'type': 'deep_ffnn_weight_norm_multi_channel_rescale', 'network_class': 'fc', 'netparams': {'input_size': 784, 'num_features': 2000, 'num_outputs': 10, 'num_hidden_layers': 2, 'act_type': 'relu', 'initialization': 'kaiming', 'alpha_for_EMA': 0.99}}, 'learner': {'type': 'backprop', 'device': 'cuda:0', 'opt': 'sgd', 'loss': 'cross_entropy', 'step_size': 0.01, 'beta_1': 0.95, 'beta_2': 0.999, 'weight_decay': 0.01, 'to_perturb': False, 'perturb_scale': 0.05, 'momentum': 0.9}, 'evaluation': {'use_testset': False, 'eval_freq_epoch': 1, 'eval_metrics': ['accuracy', 'loss']}}
+2025-01-15 20:16:05,457 INFO    MainThread:319304 [wandb_init.py:init():666] starting backend
+2025-01-15 20:16:05,457 INFO    MainThread:319304 [wandb_init.py:init():670] setting up manager
+2025-01-15 20:16:05,458 INFO    MainThread:319304 [backend.py:_multiprocessing_setup():105] multiprocessing start_methods=fork,spawn,forkserver, using: spawn
+2025-01-15 20:16:05,458 INFO    MainThread:319304 [wandb_init.py:init():678] backend started and connected
+2025-01-15 20:16:05,459 INFO    MainThread:319304 [wandb_init.py:init():773] updated telemetry
+2025-01-15 20:16:05,461 INFO    MainThread:319304 [wandb_init.py:init():806] communicating run to backend with 90.0 second timeout
+2025-01-15 20:16:05,752 INFO    MainThread:319304 [wandb_init.py:init():857] starting run threads in backend
+2025-01-15 20:16:05,776 INFO    MainThread:319304 [wandb_run.py:_console_start():2459] atexit reg
+2025-01-15 20:16:05,776 INFO    MainThread:319304 [wandb_run.py:_redirect():2307] redirect: wrap_raw
+2025-01-15 20:16:05,776 INFO    MainThread:319304 [wandb_run.py:_redirect():2372] Wrapping output streams.
+2025-01-15 20:16:05,776 INFO    MainThread:319304 [wandb_run.py:_redirect():2397] Redirects installed.
+2025-01-15 20:16:05,776 INFO    MainThread:319304 [wandb_init.py:init():900] run started, returning control to user process
+2025-01-15 20:29:35,155 WARNING MsgRouterThr:319304 [router.py:message_loop():77] message_loop has been closed

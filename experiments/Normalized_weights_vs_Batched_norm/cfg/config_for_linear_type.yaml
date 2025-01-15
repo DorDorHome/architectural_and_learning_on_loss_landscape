@@ -1,0 +1,76 @@
+# represent experiments config:
+runs: 1
+run_id: None
+seed: 42
+device: 'cuda:0'
+epochs: 500
+batch_size: 1024 #128
+
+# for logging and tracking the experiments
+use_wandb: True
+use_json: False
+log_freq_every_n_task: 1
+wandb:
+  project: 'Normalized_weights_vs_Batched_norm_FC'
+  entity: ''
+  # tags: ['shifting_tasks', 'Imagenet']
+  # notes: 'basic training on Imagenet with shifting tasks'
+
+
+
+#data to use
+data:
+  dataset: 'MNIST'  #'ImageNet' #options: 'MNIST' #'CIFAR10', to implement: 'CIFAR100'. 'ImageNet' not supported yet.
+  use_torchvision: True # if using Imagnet, set to False 
+  data_path: '/hdda/datasets'  #if specified, will override the dataset variable.
+  # for Imagnet, expected path is folder containing the downloaded Imagnet dataset, + '/data/classes/'
+  num_classes: 10 # should be consistent with the number of classes in the dataset
+
+
+
+
+# network architecture:
+net:
+  type: "deep_ffnn_weight_norm_multi_channel_rescale" #  #"ffnn_normal_BN" #"deep_ffnn_weight_norm_multi_channel_rescale" #"deep_ffnn_weight_batch_norm" # "deep_ffnn_weight_norm_single_rescale" # options: "deep_ffnn_weight_batch_norm" , "deep_ffnn_weight_norm" # "deep_ffnn" # "vgg_custom" #options: 'ConvNet', "vgg_custom" , "resnet_custom" 
+  network_class: "fc" # 'fc' for fully connected, 'conv' for convolutional
+  netparams:
+    #pretrained: False
+    input_size: 784 # need to match the dataset used. # 3072 # 224*224*3 for Imagenet, 784 for MNIST, 3072 for CIFAR10
+    num_features: 2000
+    num_outputs: ${data.num_classes} 
+    num_hidden_layers: 2
+    act_type: 'relu'
+    initialization: 'kaiming'
+    alpha_for_EMA: 0.9 # for EMA, only applicable for network that depends on EMA on batch
+
+# learning algorithm:
+learner:
+  type: 'backprop'  # Choices: 'backprop', 'cbp',# 'continual_backprop'
+  # needed only for cbp:
+  # neurons_replacement_rate: 0.001
+  # decay_rate_utility_track: 0.9
+  # maturity_threshold: 100
+  # util_type: 'contribution'
+  # init: 'kaiming'
+  # accumulate: False
+  # outgoing_random: False
+
+  # needed for continual backprop and cbp:
+  device: ${device}
+  opt:  'sgd' # Choices: 'sgd',  'adam'
+  loss: 'cross_entropy' # make sure output is logits, not softmax # Choices: 'cross_entropy', 'mse', for classification and regression respectively
+  step_size: 0.01 # for sgd try 0.01, adam try 
+  beta_1: 0.95
+  beta_2: 0.999
+  weight_decay: 0.01
+  to_perturb: false
+  perturb_scale: 0.05
+  momentum: 0.9
+
+# evaluation, for plotting and saving the results of the
+evaluation:
+  use_testset: True
+  eval_freq_epoch: 1
+  eval_metrics: ['accuracy', 'loss']
+  # save_dir: '/results/results_raw' # If not provided, will be created inside the experiment folder,assume root directory is the root of the experiments
+  # save_name: 'basic_training'
