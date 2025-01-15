@@ -2,7 +2,7 @@
 runs: 1
 run_id: 0
 seed: 42
-device: 'cuda:0'
+device: 'cuda:1'
 epochs: 250 #epoch per tasks
 batch_size: 256 #128
 test: False # for testing the model after training
@@ -38,21 +38,21 @@ data:
 # network architecture:
 # network architecture:
 net:
-  type: "deep_ffnn" #  #"ffnn_normal_BN" #"deep_ffnn_weight_norm_multi_channel_rescale" #"deep_ffnn_weight_batch_norm" # "deep_ffnn_weight_norm_single_rescale" # options: "deep_ffnn_weight_batch_norm" , "deep_ffnn_weight_norm" # "deep_ffnn" # "vgg_custom" #options: 'ConvNet', "vgg_custom" , "resnet_custom" 
+  type: "deep_ffnn_weight_norm_multi_channel_rescale" #  #"ffnn_normal_BN" #"deep_ffnn_weight_norm_multi_channel_rescale" #"deep_ffnn_weight_batch_norm" # "deep_ffnn_weight_norm_single_rescale" # options: "deep_ffnn_weight_batch_norm" , "deep_ffnn_weight_norm" # "deep_ffnn" #
   network_class: "fc" # 'fc' for fully connected, 'conv' for convolutional
   netparams:
     #pretrained: False
     input_size: 3072 # need to match the dataset used. # 3072 # 224*224*3 for Imagenet, 784 for MNIST, 3072 for CIFAR10
     num_features: 2000
     num_outputs: ${num_classes_per_task} #$data.num_classes} 
-    num_hidden_layers: 4 # 2 is enough for MNIST
+    num_hidden_layers: 2 # 2 is enough for MNIST
     act_type: 'relu'
     initialization: 'kaiming'
     alpha_for_EMA: 0.8 # for EMA, only applicable for network that depends on EMA on batch
 
 # learning algorithm:
 learner:
-  type: 'backprop' # Choices: 'backprop', 'cbp' 'continual_backprop'
+  type: 'cbp' # Choices: 'backprop', 'cbp' 'continual_backprop'
   
   # needed only for cbp:
   neurons_replacement_rate: 0.001
@@ -64,9 +64,9 @@ learner:
   outgoing_random: False
   
   device: ${device}
-  opt:  'sgd' # Choices: 'sgd',  'adam'
+  opt:  'adam' # Choices: 'sgd',  'adam'
   loss: 'cross_entropy' # Choices: 'cross_entropy', 'mse', for classification and regression respectively
-  step_size: 0.01 # for sgd try 0.01, adam try 
+  step_size: 0.001 # for sgd try 0.01, adam try 
   beta_1: 0.95
   beta_2: 0.999
   weight_decay: 0.01

@@ -84,7 +84,9 @@ def main(cfg :ExperimentConfig):
     if cfg.learner.type == 'cbp' and cfg.net.type == 'ConvNet':
         from src.algos.supervised.continuous_backprop_with_GnT import ContinuousBackprop_for_ConvNet
         learner = ContinuousBackprop_for_ConvNet(net, cfg.learner)
-    
+    if cfg.learner.type == 'cbp' and cfg.net.type == 'deep_ffnn_weight_norm_multi_channel_rescale':
+        from src.algos.supervised.continuous_backprop_with_GnT import ContinualBackprop_for_FC
+        learner = ContinualBackprop_for_FC(net, cfg.learner)
         
     class_order_path = os.path.join(cfg.data.data_path, cfg.data.dataset, 'data','class_order')
     # load the class order:

@@ -78,7 +78,7 @@ class ContinualBackprop_for_FC(object):
         if self.opt == 'sgd':
             self.opt = optim.SGD(self.net.parameters(), lr=self.step_size, momentum=self.momentum, weight_decay=self.weight_decay)
         elif self.opt == 'adam':
-            self.opt = AdamGnT(self.net.parameters(), lr=self.step_size, betas=(beta_1, beta_2), weight_decay=weight_decay)
+            self.opt = AdamGnT(self.net.parameters(), lr=self.step_size, betas=(self.beta_1, self.beta_2), weight_decay=self.weight_decay)
 
         # define the loss function
         self.loss_func = {'cross_entropy': F.cross_entropy, 'mse': F.mse_loss}[self.loss]
@@ -112,7 +112,7 @@ class ContinualBackprop_for_FC(object):
         :return: loss
         """
         # do a forward pass and get the hidden activations
-        output, features = self.net.predict(x=x)
+        output, features = self.net.predict(x)
         loss = self.loss_func(output, target)
         self.previous_features = features
 
@@ -123,7 +123,7 @@ class ContinualBackprop_for_FC(object):
 
         # take a generate-and-test step
         self.opt.zero_grad()
-        if type(self.gnt) is GnT:
+        if type(self.gnt) is GnT_for_FC: # original: GnT:
             self.gnt.gen_and_test(features=self.previous_features)
 
         if self.loss_func == F.cross_entropy:
