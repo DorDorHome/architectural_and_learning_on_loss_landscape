@@ -30,7 +30,7 @@ new_heads_for_new_task: True
 data:
   dataset: 'imagenet_for_plasticity' #options: 'MNIST' #'CIFAR10', to implement: 'CIFAR100'. 'ImageNet' not supported yet.
   use_torchvision: False # if using Imagnet, set to False 
-  data_path: '/hdda/datasets'  #if specified, will override the dataset variable.
+  data_path: '/home/sfchan/datasets' # '/home/sfchan/datasets' for 243, otherwise '/hdda/datasets'   #if specified, will override the dataset variable.
   # for Imagnet, expected path is folder containing the downloaded Imagnet dataset, + '/data/classes/'
   num_classes: 1000 # should be consistent with the number of classes in the dataset
 
