@@ -37,8 +37,8 @@ data:
 
 # network architecture:
 net:
-  type: 'ConvNet' # "vgg_custom" #options: 'ConvNet', vgg_custom, "resnet_custom"
-  network_class: "fc" # 'fc' for fully connected, 'conv' for convolutional
+  type: "resnet_custom" # "vgg_custom" #options: 'ConvNet', vgg_custom, "resnet_custom"
+  network_class: "conv" # 'fc' for fully connected, 'conv' for convolutional
   device: ${device}
   netparams:
     pretrained: False
@@ -46,7 +46,7 @@ net:
     initialization: 'kaiming'
 # learning algorithm:
 learner:
-  type: 'cbp' # Choices: 'backprop', 'cbp' 'continual_backprop'
+  type: "backprop" # Choices: 'backprop', 'cbp' 'continual_backprop'
   
   # needed only for cbp:
   neurons_replacement_rate: 0.001
@@ -60,7 +60,7 @@ learner:
   device: ${device}
   opt:  'sgd' # Choices: 'sgd',  'adam'
   loss: 'cross_entropy' # Choices: 'cross_entropy', 'mse', for classification and regression respectively
-  step_size: 0.01 # for sgd try 0.01, adam try 
+  step_size: 0.01 # for sgd try 0.01, adam try 0.001
   beta_1: 0.95
   beta_2: 0.999
   weight_decay: 0.01
