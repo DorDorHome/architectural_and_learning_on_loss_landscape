@@ -60,7 +60,7 @@ def compute_accuracy(output, target):
         total = target.size(0)
         return correct / total
 
-@hydra.main(config_path="cfg", config_name="shifting_tasks_linear_config.yaml")
+@hydra.main(config_path="cfg", config_name="shifting_tasks_config.yaml")# "shifting_tasks_linear_config.yaml"
 def main(cfg :ExperimentConfig):
     print(OmegaConf.to_yaml(cfg))
     
@@ -134,8 +134,13 @@ def main(cfg :ExperimentConfig):
         # put to device:        
         x_train, y_train, x_test, y_test = x_train.to(cfg.device), y_train.to(cfg.device), x_test.to(cfg.device), y_test.to(cfg.device)
         if cfg.new_heads_for_new_task:
-            nn.init.kaiming_normal_(net.layers[-1].weight)
-            net.layers[-1].bias.data *= 0
+            try:
+                nn.init.kaiming_normal_(net.layers[-1].weight)
+                net.layers[-1].bias.data *= 0
+            except:# handling cases where final layer is called fc
+                nn.init.kaiming_normal_(net.model.fc.weight)
+                with torch.no_grad():
+                    net.model.fc.bias *= 0
         
         # train the network on the task:
         for epoch in range(epochs_per_task):
