@@ -37,6 +37,12 @@ def model_factory(config: NetConfig) -> Any:
         if config.netparams is None:
             raise ValueError("config.params cannot be None for ConvNet")
         return ConvNet(config.netparams)
+    if model_type == "ConvNet_norm":
+        from src.models.conv_net_weights_normalized import ConvNet_normalized
+        if config.netparams is None:
+            raise ValueError("config.params cannot be None for ConvNet_norm")
+        return ConvNet_normalized(config.netparams)
+        
     
     if model_type == 'vgg_custom':
         from src.models.VGG16_custom import vgg_with_internal_performance_track_custom_classifier as VGG_custom

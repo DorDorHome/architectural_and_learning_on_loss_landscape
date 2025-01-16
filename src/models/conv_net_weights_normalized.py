@@ -1,18 +1,20 @@
-# identical to the conv_net implementation in loss of plasiticity paper, for easy comparison
-# notice the predict method is different from the usual forward method
+# comparable to the conv_net.ConvNet class,
+# except that the weights are normalized.
 
 
 import torch.nn as nn
 
 # original implementation:
-# from omegaconf import DictConfig
-
+from omegaconf import DictConfig
 # use NetParams dataclass from configurations.py:
 from configs.configurations import NetParams
 
-class ConvNet(nn.Module):
+from src.models.normalized_weights_conv_layer import NormConv2d
+from src.models.normalized_weights_FC import NormalizedWeightsLinear
+
+class ConvNet_normalized(nn.Module): 
     def __init__(self, config: NetParams ):
-        """
+        """'''
         Convolutional Neural Network with 3 convolutional layers followed by 3 fully connected layers
         """
         super().__init__()
@@ -20,14 +22,16 @@ class ConvNet(nn.Module):
         #in_channels, out_channels, kernel_size are not implemented
         
         
-        self.conv1 = nn.Conv2d(3, 32, 5)
-        self.conv2 = nn.Conv2d(32, 64, 3)
-        self.conv3 = nn.Conv2d(64, 128, 3)
+        self.conv1 = NormConv2d(3, 32, 5)
+        # self.conv1_to_skip_scalar = nn.Parameter(torch.ones(32))
+        
+        self.conv2 = NormConv2d(32, 64, 3)
+        self.conv3 = NormConv2d(64, 128, 3)
         self.last_filter_output = 2 * 2
         self.num_conv_outputs = 128 * self.last_filter_output
-        self.fc1 = nn.Linear(self.num_conv_outputs, 128)
-        self.fc2 = nn.Linear(128, 128)
-        self.fc3 = nn.Linear(128, num_classes)
+        self.fc1 = NormalizedWeightsLinear(self.num_conv_outputs, 128)
+        self.fc2 = NormalizedWeightsLinear(128, 128)
+        self.fc3 = NormalizedWeightsLinear(128, num_classes)
         self.pool = nn.MaxPool2d(2, 2)
 
         # architecture
