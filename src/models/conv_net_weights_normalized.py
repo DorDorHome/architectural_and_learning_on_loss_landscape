@@ -20,19 +20,31 @@ class ConvNet_normalized(nn.Module):
         super().__init__()
         num_classes = config.num_classes
         self.conv_layer_bias = config.conv_layer_bias
+        if config.weight_correction_scale == "relu_output_correction": 
+            self.weight_correction_scale = 2**0.5
+        else: 
+            self.weight_correction_scale = config.weight_correction_scale
+        self.fan_in_correction = config.fan_in_correction
+        self.linear_layer_bias = config.linear_layer_bias
         #in_channels, out_channels, kernel_size are not implemented
         
         
-        self.conv1 = NormConv2d(3, 32, 5, bias=self.conv_layer_bias)
+        self.conv1 = NormConv2d(3, 32, 5, bias=self.conv_layer_bias, 
+                                weight_correction_scale= self.weight_correction_scale,
+                                fan_in_correction =self.fan_in_correction)
         # self.conv1_to_skip_scalar = nn.Parameter(torch.ones(32))
         
-        self.conv2 = NormConv2d(32, 64, 3, bias=self.conv_layer_bias)
-        self.conv3 = NormConv2d(64, 128, 3, bias=self.conv_layer_bias)
+        self.conv2 = NormConv2d(32, 64, 3, bias=self.conv_layer_bias ,
+                                weight_correction_scale= self.weight_correction_scale ,
+                                fan_in_correction =self.fan_in_correction)
+        self.conv3 = NormConv2d(64, 128, 3, bias=self.conv_layer_bias ,
+                                weight_correction_scale= self.weight_correction_scale,
+                                fan_in_correction =self.fan_in_correction) 
         self.last_filter_output = 2 * 2
         self.num_conv_outputs = 128 * self.last_filter_output
-        self.fc1 = NormalizedWeightsLinear(self.num_conv_outputs, 128)
-        self.fc2 = NormalizedWeightsLinear(128, 128)
-        self.fc3 = NormalizedWeightsLinear(128, num_classes)
+        self.fc1 = NormalizedWeightsLinear(self.num_conv_outputs, 128, bias = self.linear_layer_bias)
+        self.fc2 = NormalizedWeightsLinear(128, 128 , bias = self.linear_layer_bias)
+        self.fc3 = NormalizedWeightsLinear(128, num_classes, bias = self.linear_layer_bias)
         self.pool = nn.MaxPool2d(2, 2)
 
         # architecture

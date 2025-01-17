@@ -15,7 +15,9 @@ class NormConv2d(nn.Module):
         dilation=1,
         groups=1,
         bias=True,
-        padding_mode='zeros'
+        padding_mode='zeros',
+        weight_correction_scale: float = 2**0.5,
+        fan_in_correction: bool = True
         ):
         super(NormConv2d, self).__init__()
         self.in_channels = in_channels
@@ -30,6 +32,20 @@ class NormConv2d(nn.Module):
         self.dilation = dilation
         self.groups = groups
         self.padding_mode = padding_mode
+
+
+        
+        # for calculating correct weight correction scale:
+        # making sure self.kernel_size is a tuple of length 2:
+        assert len(self.kernel_size) == 2, "kernel_size must be a tuple of length 2"
+        if fan_in_correction:
+            self.in_fans = in_channels * self.kernel_size[0] * self.kernel_size[1]
+        else:
+            self.in_fans = 1
+        
+        self.weight_correction_scale_total = weight_correction_scale/ math.sqrt(self.in_fans)
+        
+        
 
         # Initialize raw weights
         self.weight = nn.Parameter(
@@ -68,7 +84,7 @@ class NormConv2d(nn.Module):
         weight_normalized = self.weight / norm.view(self.out_channels, 1, 1, 1)
         # Scale the normalized weights with the scalar parameter
         scalar = self.scalar.view(self.out_channels, 1, 1, 1)
-        weight_scaled = weight_normalized * scalar
+        weight_scaled = weight_normalized * scalar *self.weight_correction_scale_total
         # Perform the convolution operation
         if bias is False:
             out= F.conv2d(
