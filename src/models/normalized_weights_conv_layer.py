@@ -41,7 +41,9 @@ class NormConv2d(nn.Module):
         if bias:
             self.bias = nn.Parameter(torch.Tensor(out_channels))
         else:
-            self.register_parameter('bias', None)
+            self.bias = None
+            #first implementation:
+            #self.register_parameter('bias', None)
 
         self.reset_parameters()
 
@@ -57,7 +59,7 @@ class NormConv2d(nn.Module):
         #     bound = 1 / math.sqrt(fan_in) if fan_in > 0 else 0
         #     nn.init.uniform_(self.bias, -bound, bound)
 
-    def forward(self, x, bias = None):
+    def forward(self, x, bias: bool = True):
         # Flatten the weight to compute norms per output channel
         weight_flat = self.weight.view(self.out_channels, -1)  # Shape: [out_channels, ...]
         # Compute L2 norm for each output channel
@@ -68,7 +70,7 @@ class NormConv2d(nn.Module):
         scalar = self.scalar.view(self.out_channels, 1, 1, 1)
         weight_scaled = weight_normalized * scalar
         # Perform the convolution operation
-        if bias is None:
+        if bias is False:
             out= F.conv2d(
                 x,
                 weight_scaled,
@@ -78,7 +80,7 @@ class NormConv2d(nn.Module):
                 self.dilation,
                 self.groups
             )
-        elif bias:
+        elif bias is True:
             out = F.conv2d(
                 x,
                 weight_scaled,
