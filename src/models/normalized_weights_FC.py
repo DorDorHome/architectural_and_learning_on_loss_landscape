@@ -1,5 +1,5 @@
 # this implements several versions of single layer of FC layer, with weights normalized by the input activations
-
+# to add: options not to use fan_in correction
 import torch.nn as nn
 import torch
 import math

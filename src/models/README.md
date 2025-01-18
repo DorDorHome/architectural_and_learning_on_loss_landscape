@@ -1,4 +1,7 @@
 # to-do
+### add:
+option not to use fan_in correction in svd_decomposed_FC.py and normalized weights_FC.py
+
 
 # suitability of different models to dataset:
 
