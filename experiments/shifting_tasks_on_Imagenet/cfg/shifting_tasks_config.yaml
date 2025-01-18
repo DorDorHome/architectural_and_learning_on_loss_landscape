@@ -51,7 +51,7 @@ net:
     fan_in_correction: True # previously false for "ConvNet_norm"
     # for ConvNet_SVD:
     SVD_only_stride_1: False #always set to False
-    allow_svd_values_negative: False # experiment this with True
+    allow_svd_values_negative: True # experiment this with True
 
 # learning algorithm:
 learner:
