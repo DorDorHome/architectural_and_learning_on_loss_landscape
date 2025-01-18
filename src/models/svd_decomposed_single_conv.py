@@ -92,15 +92,7 @@ class SVD_Conv2d(torch.nn.Module):
                 self.bias = torch.nn.Parameter(torch.empty(output_channel))
                 # self.register_parameter('bias',self.bias)
                 torch.nn.init.constant_(self.bias,0.0)
-            # self.register_parameter('N',self.N)
-            # self.register_parameter('C',self.C)
-            # self.register_parameter('Sigma',self.Sigma)
-            
-            # original code:
-            # torch.nn.init.kaiming_normal_(self.N)
-            # torch.nn.init.kaiming_normal_(self.C)
-            # torch.nn.init.normal_(self.Sigma)
-            
+ 
             nn.init.orthogonal_(self.N)#, self.N.size(0), self.N.size(1))
             nn.init.orthogonal_(self.C)#, self.C.size(0), self.C.size(1))
             
@@ -158,13 +150,13 @@ class SVD_Conv2d(torch.nn.Module):
             
             conv_filter_scaled = conv_filter * self.weight_correction_scale_total
   
-            out = torch.nn.functional.conv2d(input = x,
-                                         weight = conv_filter_scaled,
-                                         bias = self.bias,
-                                         stride = self.stride,
-                                         padding = self.padding,
-                                         dilation = self.dilation,
-                                         groups = self.groups)
+            out = F.conv2d(input = x,
+                            weight = conv_filter_scaled.view(self.output_channel, self.input_channel, self.kernel_size[0], self.kernel_size[1]),
+                            bias = self.bias,
+                            stride = self.stride,
+                            padding = self.padding,
+                            dilation = self.dilation,
+                            groups = self.groups)
 
         else:
             out = self.conv2d(x)
@@ -199,31 +191,56 @@ def conv3x3(in_planes, out_planes, stride=1,SVD_only_stride_1 = False,decompose_
 
 if __name__ == "__main__":
     # Define input tensor of shape [batch_size, in_channels, height, width]
-    x = torch.randn(8, 3, 32, 32)  # Example input
+    # x = torch.randn(8, 3, 32, 32)  # Example input
 
-    # Create the custom SVD decomposed convolutional layer
-    svd_conv = SVD_Conv2d(
-        input_channel=3,
-        output_channel=16,
-        kernel_size=3,
-        stride=1,
-        padding=1,
-        bias=False
-    )
+    # # Create the custom SVD decomposed convolutional layer
+    # svd_conv = SVD_Conv2d(
+    #     input_channel=3,
+    #     output_channel=16,
+    #     kernel_size=3,
+    #     stride=1,
+    #     padding=1,
+    #     bias=False
+    # )
     
-    # check that svd_conv.N is orthogonal:
-    print(torch.mm(svd_conv.N,svd_conv.N.t()).shape)
-    print(torch.mm(svd_conv.N.t(),svd_conv.N).shape)
+    # # check that svd_conv.N is orthogonal:
+    # print(torch.mm(svd_conv.N,svd_conv.N.t()).shape)
+    # print(torch.mm(svd_conv.N.t(),svd_conv.N).shape)
     
     
-    # check that svd_conv.C is orthogonal:
-    print(torch.mm(svd_conv.C,svd_conv.C.t()).shape)
+    # # check that svd_conv.C is orthogonal:
+    # print(torch.mm(svd_conv.C,svd_conv.C.t()).shape)
     
-    print(svd_conv.r)
-    y = svd_conv(x)
-    print(y.size())
+    # print(svd_conv.r)
+    # y = svd_conv(x)
+    # print(y.size())
     
-    # set to eval mode
-    svd_conv.eval()
-    y2 = svd_conv(x)
-    print(y2.size())
+    # # set to eval mode
+    # svd_conv.eval()
+    # y2 = svd_conv(x)
+    # print(y2.size())
+    
+    
+        # Standard Conv2d
+    standard_conv = nn.Conv2d(input_channel, output_channel, kernel_size, stride, padding, bias=bias)
+    standard_conv.weight.data = reconstructed_W.clone() / self.weight_correction_scale_total
+    if bias:
+        standard_conv.bias.data = self.bias.clone()
+
+    # SVD_Conv2d
+    svd_conv = SVD_Conv2d(...)
+    svd_conv.N.data = self.N.clone()
+    svd_conv.C.data = self.C.clone()
+    svd_conv.Sigma.data = self.Sigma.clone()
+    if bias:
+        svd_conv.bias.data = self.bias.clone()
+
+    # Input Tensor
+    x = torch.randn(batch_size, input_channel, height, width)
+
+    # Outputs
+    out_standard = standard_conv(x)
+    out_svd = svd_conv(x)
+
+    # Comparison
+    assert torch.allclose(out_standard, out_svd, atol=1e-6), "Outputs do not match!"
