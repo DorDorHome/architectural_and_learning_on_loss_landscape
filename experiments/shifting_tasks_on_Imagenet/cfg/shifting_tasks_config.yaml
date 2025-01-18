@@ -30,24 +30,24 @@ new_heads_for_new_task: True
 data:
   dataset: 'imagenet_for_plasticity' #options: 'MNIST' #'CIFAR10', to implement: 'CIFAR100'. 'ImageNet' not supported yet.
   use_torchvision: False # if using Imagnet, set to False 
-  data_path: '/home/sfchan/datasets'   # '/home/sfchan/datasets' for 243, otherwise '/hdda/datasets'   #if specified, will override the dataset variable.
+  data_path: '/hdda/datasets'   # '/home/sfchan/datasets' for 243, otherwise '/hdda/datasets'   #if specified, will override the dataset variable.
   # for Imagnet, expected path is folder containing the downloaded Imagnet dataset, + '/data/classes/'
   num_classes: 1000 # should be consistent with the number of classes in the dataset
 
 
 # network architecture:
 net:
-  type: "ConvNet_norm" # "vgg_custom" #options: 'ConvNet', vgg_custom, "resnet_custom"
+  type: "resnet_custom" #"ConvNet_norm" "vgg_custom" #options: 'ConvNet', vgg_custom, "resnet_custom"
   network_class: "conv" # 'fc' for fully connected, 'conv' for convolutional
   device: ${device}
   netparams:
     pretrained: False
     num_classes: ${num_classes_per_task}
     initialization: 'kaiming'
-    conv_layer_bias: False # previously false
-    weight_correction_scale: "relu_output_correction"  # "relu_output_correction" #previously 1.0#previously 1.0
-    fan_in_correction: True # previously false
-    linear_layer_bias: True
+    conv_layer_bias: False # previously false # only for "ConvNet_norm"
+    weight_correction_scale: "relu_output_correction"  # "relu_output_correction" #previously 1.0#previously 1.0 for "ConvNet_norm"
+    fan_in_correction: True # previously false for "ConvNet_norm"
+    linear_layer_bias: True #for "ConvNet_norm"
 
 # learning algorithm:
 learner:
@@ -63,7 +63,7 @@ learner:
   outgoing_random: False
   
   device: ${device}
-  opt:  'adam' # Choices: 'sgd',  'adam'
+  opt:  'sgd' # Choices: 'sgd',  'adam'
   loss: 'cross_entropy' # Choices: 'cross_entropy', 'mse', for classification and regression respectively
   step_size: 0.001 # for sgd try 0.01, adam try 0.001
   beta_1: 0.95
