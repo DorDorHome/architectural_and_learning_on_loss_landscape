@@ -60,7 +60,7 @@ def compute_accuracy(output, target):
         total = target.size(0)
         return correct / total
 
-@hydra.main(config_path="cfg", config_name="shifting_tasks_config.yaml")# "shifting_tasks_linear_config.yaml"
+@hydra.main(config_path="cfg", config_name="shifting_tasks_config.yaml") #"shifting_tasks_config.yaml" or  "shifting_tasks_linear_config.yaml"
 def main(cfg :ExperimentConfig):
     print(OmegaConf.to_yaml(cfg))
     
