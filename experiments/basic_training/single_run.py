@@ -83,7 +83,7 @@ def main(cfg :ExperimentConfig):
     transform = transform_factory(cfg.data.dataset, cfg.net.type)
 
     #trainset with the transform:
-    trainset = dataset_factory(cfg.data, transform )
+    trainset, _ = dataset_factory(cfg.data, transform )
 
     trainloader = torch.utils.data.DataLoader(trainset, batch_size= cfg.batch_size, shuffle=True, num_workers=2, pin_memory = True)
     
@@ -157,6 +157,10 @@ def main(cfg :ExperimentConfig):
 
         
         for input, label in tqdm(trainloader, desc=f"Epoch: {epoch}, progress on batches", leave =True):
+            if input is None or label is None:
+                print("Found None in the data loader batch")
+                continue
+            
             input, label = input.to(cfg.device), label.to(cfg.device)
             
             # print(label.dtype)  # Should be torch.long for CrossEntropyLoss

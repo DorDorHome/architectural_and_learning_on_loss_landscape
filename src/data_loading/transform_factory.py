@@ -28,7 +28,7 @@ def transform_factory(dataset_name: str, model_name: str):
         torchvision.transforms.Compose: A transform pipeline.
     """
     if dataset_name == "CIFAR10":
-        if model_name == "ResNet18" or model_name == "resnet_custom":
+        if model_name == "ResNet18" or model_name == "resnet_custom" or model_name == "full_rank_resnet_custom":
             # ResNet18 expects normalized inputs
             return transforms.Compose([
                 transforms.RandomCrop(32, padding=4),
@@ -36,7 +36,7 @@ def transform_factory(dataset_name: str, model_name: str):
                 transforms.ToTensor(),
                 transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
             ])
-        elif model_name == "VGG16" or model_name == "vgg_custom":
+        elif model_name == "VGG16" or model_name == "vgg_custom" or model_name == "vgg_custom_norm":
             # VGG16 may expect slightly different preprocessing
             return transforms.Compose([
                 transforms.Resize(224),  # Resize to match VGG input size

@@ -5,17 +5,19 @@
     "version": "0.2.0",
     "configurations": [
 
+
         {
             "name": "Python Debugger: Current File",
             "type": "debugpy",
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
+            "justMyCode": false,
             "env": {
                 "PYTHONPATH": "${workspaceFolder}",
                 "CONDA_DEFAULT_ENV": "loss_landscap
               },
-              "pythonPath":"/home/sfchan/mambaforge/envs/pytorch_latest/bin/python"
+              "pythonPath":"/home/sfchan/anaconda3/envs/loss_landscape/bin/python"
               
                //"/home/sfchan/mambaforge/envs/pytorch_latest/bin/python"
               // "/home/sfchan/anaconda3/envs/loss_landscape/bin/python"
