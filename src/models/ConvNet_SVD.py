@@ -8,6 +8,16 @@ from configs.configurations import NetParams
 from src.models.svd_decomposed_single_conv import SVD_Conv2d
 from src.models.svd_decomposed_FC import SVD_Linear 
 
+activation_dict = {
+    # 'relu': F.relu,
+    # 'sigmoid': torch.sigmoid,
+    # 'tanh': torch.tanh,
+    # # Add more activations as needed
+    'sigmoid': nn.Sigmoid, 'tanh': nn.Tanh, 'relu': nn.ReLU, 'selu': nn.SELU,
+    'swish': nn.SiLU, 'leaky_relu': nn.LeakyReLU, 'elu': nn.ELU}
+
+
+
 class ConvNet_SVD(nn.Module):
     def __init__(self, config: NetParams ):
     
@@ -21,6 +31,10 @@ class ConvNet_SVD(nn.Module):
             self.weight_correction_scale = config.weight_correction_scale
         self.fan_in_correction = config.fan_in_correction
         self.linear_layer_bias = config.linear_layer_bias
+        
+        
+        # activation_function:
+        self.activation = config.activation
         
         # unique parameters for SVD options:
         self.SVD_only_stride_1 = config.SVD_only_stride_1
@@ -57,22 +71,26 @@ class ConvNet_SVD(nn.Module):
                             allow_svd_values_negative = self.allow_svd_values_negative)
         self.pool = nn.MaxPool2d(2, 2)
 
+
+        self.act_type = self.activation
+        self.activation = activation_dict.get(self.activation, None)
         
+    
                 # architecture
         self.layers = nn.ModuleList()
         self.layers.append(self.conv1)
-        self.layers.append(nn.ReLU())
+        self.layers.append(self.activation())
         self.layers.append(self.conv2)
-        self.layers.append(nn.ReLU())
+        self.layers.append(self.activation())
         self.layers.append(self.conv3)
-        self.layers.append(nn.ReLU())
+        self.layers.append(self.activation())
         self.layers.append(self.fc1)
-        self.layers.append(nn.ReLU())
+        self.layers.append(self.activation())
         self.layers.append(self.fc2)
-        self.layers.append(nn.ReLU())
+        self.layers.append(self.activation())
         self.layers.append(self.fc3)
 
-        self.act_type = 'relu'
+        
         
     def predict(self, x):
         x1 = self.pool(self.layers[1](self.layers[0](x)))

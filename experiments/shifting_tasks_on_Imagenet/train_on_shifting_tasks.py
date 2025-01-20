@@ -237,7 +237,7 @@ def main(cfg :ExperimentConfig):
                             'task_train_accuracy_after_all_epochs': acc,\
                             #'task_train_accuracy_2_after_all_epochs': acc_2,
                             'task_train_loss_after_all_epochs': loss,
-                            'task_train_loss_by_batch_after_all_epochs': loss_by_batch,
+                            'task_train_loss_by_batch_aftesr_all_epochs': loss_by_batch,
                             'task_test_accuracy_after_all_epochs': acc_on_test,
                             #'task_test_accuracy_2_after_all_epochs': acc_on_test_2,}
                             }

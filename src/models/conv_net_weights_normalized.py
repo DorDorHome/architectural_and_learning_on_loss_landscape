@@ -47,21 +47,25 @@ class ConvNet_normalized(nn.Module):
         self.fc3 = NormalizedWeightsLinear(128, num_classes, bias = self.linear_layer_bias)
         self.pool = nn.MaxPool2d(2, 2)
 
+        self.act_type = self.activation
+        self.activation = activation_dict.get(self.activation, None)
+        
+    
+
         # architecture
         self.layers = nn.ModuleList()
         self.layers.append(self.conv1)
-        self.layers.append(nn.ReLU())
+        self.layers.append(self.activation)
         self.layers.append(self.conv2)
-        self.layers.append(nn.ReLU())
+        self.layers.append(self.activation)
         self.layers.append(self.conv3)
-        self.layers.append(nn.ReLU())
+        self.layers.append(self.activation)
         self.layers.append(self.fc1)
-        self.layers.append(nn.ReLU())
+        self.layers.append(self.activation)
         self.layers.append(self.fc2)
-        self.layers.append(nn.ReLU())
+        self.layers.append(self.activation)
         self.layers.append(self.fc3)
 
-        self.act_type = 'relu'
 
     def predict(self, x):
         x1 = self.pool(self.layers[1](self.layers[0](x)))
