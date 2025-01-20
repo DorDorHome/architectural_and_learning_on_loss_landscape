@@ -8,20 +8,24 @@ import torch.nn.functional as F
 import torch.nn as nn
 from torch import optim
 from abc import ABC, abstractmethod
-
+from typing import Callable
 from torch.optim import optimizer
 from omegaconf import DictConfig
-
+from configs.configurations import *
+from src.loss_for_regularization.regularized_loss_for_svd_conv import RegularizedLoss_SVD_conv
 
 class Learner(ABC):
     """
     abstract base class for different learning algorithms
     """
 
-    def __init__(self, net: nn.Module, config: DictConfig):
+    def __init__(self, net: nn.Module, config: BaseLearnerConfig, netconfig: Optional[Union[NetParams, None]] = None):
 
         """handle the setup of networks(agents), optimizer, and loss function."""
         # network/agent:
+        self.config = config
+        self.netconfig = netconfig
+        
         self.device = config.device
         self.net = net.to(self.device)
 
@@ -36,8 +40,10 @@ class Learner(ABC):
         
         # for algorithms that need to keep track of previous gradients
         self.latest_gradients = None
+        
+        
 
-    def _init_optimizer(self, config: DictConfig):
+    def _init_optimizer(self, config: BaseLearnerConfig):
         
         opt = config.opt# need to override with the optimizer of choice
         
@@ -45,7 +51,7 @@ class Learner(ABC):
         beta_1 = config.beta_1
         beta_2 = config.beta_2
         weight_decay = config.weight_decay
-        momentum = config.get('momentum', 0.0)
+        momentum = config.momentum if hasattr(config, 'momentum') else 0.0
         
 
         # initialize loss function was moved to the __init__ method
@@ -67,16 +73,30 @@ class Learner(ABC):
         
         return optimizer
     
-    def _init_loss(self, loss: str):
-        loss_funcs = {
+    def _init_loss(self, loss: str) -> Callable[[torch.Tensor, torch.Tensor], torch.Tensor]:
+        loss_funcs: dict[str,  Callable[[torch.Tensor, torch.Tensor], torch.Tensor]] = {
             'cross_entropy': F.cross_entropy,
             'mse': F.mse_loss
         }
         
         if loss not in loss_funcs:
             raise ValueError(f"Unsupported loss type: {loss}")
+        
+        # Check if regularization is enabled
+        main_loss_func = loss_funcs[loss]
+                
+        if self.config.get('additional_regularization', False):
+            lambda_orth = self.config.get('lambda_orth', 1e-4)
+            return RegularizedLoss_SVD_conv(
+                main_loss_func=main_loss_func,
+                model=self.net,
+                lambda_orth=lambda_orth,
+                allow_svd_values_negative=self.netconfig.netparams.allow_svd_values_negative
+            )
+        else:
+            return main_loss_func
 
-        return loss_funcs[loss]
+
 
     @abstractmethod
     def learn(self, x: torch.Tensor, target: torch.Tensor):

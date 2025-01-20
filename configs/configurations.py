@@ -43,7 +43,7 @@ class LinearNetParams:
 @dataclass
 class NetConfig:
     type: str
-    params: Optional[Union[None, NetParams,LinearNetParams ]] = None
+    netparams: Optional[Union[None, NetParams,LinearNetParams ]] = None
     class Config:
         version_base = "1.1"
 
@@ -58,6 +58,11 @@ class BaseLearnerConfig:
     weight_decay: float = 0.0
     momentum: Optional[float] = 0.0
     loss: str = 'cross_entropy'
+    # for more complicated implementations that need to keep track of previous features
+    # or for specialized regularization such as orthogonality regularization for SVD_Conv2d layers
+    additional_regularization: Optional[Union[None, str]] = None
+    lambda_orth: Optional[Union[None, float]] = None
+    
     to_perturb: Optional[bool] = False
     perturb_scale: Optional[float] = 0.1
     # previous_features: Optional[Union[None, torch.Tensor]] = None

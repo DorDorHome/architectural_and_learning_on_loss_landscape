@@ -36,7 +36,7 @@ class SVD_Linear(nn.Module):
         # unique parameters for SVD options:
         self.allow_svd_values_negative = allow_svd_values_negative
         
-        self.weight_correction_scale = weight_correction_scale/(in_dim**0.5)# check
+
         
         self.debug = debug
         
@@ -52,8 +52,8 @@ class SVD_Linear(nn.Module):
             self.bias = None
             
         # should add fan_in correction here:
-    
-        self.weight_correction_scale = weight_correction_scale/(in_dim**0.5)
+        #self.weight_correction_scale = weight_correction_scale/(in_dim**0.5)# 
+        self.weight_correction_scale = weight_correction_scale#*self.out_dim/self.in_dim #weight_correction_scale/(in_dim**0.5)
         
         if (activation is not None) and (activation != 'linear'):
             self.activation = activation_dict.get(activation, None)   
@@ -66,7 +66,7 @@ class SVD_Linear(nn.Module):
         nn.init.orthogonal_(self.N)#, self.N.size(0), self.N.size(1))
         nn.init.orthogonal_(self.C)#, self.C.size(0), self.C.size(1))
             
-        nn.init.normal_(self.Sigma, mean=0, std=1)
+        nn.init.normal_(self.Sigma, mean=1, std=0.1)
         
         #check orthogonality of N and C:
         with torch.no_grad():

@@ -80,7 +80,7 @@ def main(cfg :ExperimentConfig):
     # optimizer is setup in the learner
     # loss function is setup in the learner
     if cfg.learner.type == 'backprop':
-        learner = Backprop(net, cfg.learner)
+        learner = Backprop(net, cfg.learner, cfg.net)
     if cfg.learner.type == 'cbp' and cfg.net.type == 'ConvNet':
         from src.algos.supervised.continuous_backprop_with_GnT import ContinuousBackprop_for_ConvNet
         learner = ContinuousBackprop_for_ConvNet(net, cfg.learner)
@@ -155,7 +155,7 @@ def main(cfg :ExperimentConfig):
             
             # for accuracy
             number_of_correct = 0
-            number_of_correct_2 = 0
+            #number_of_correct_2 = 0
             total = 0
 
 
@@ -173,17 +173,21 @@ def main(cfg :ExperimentConfig):
                     total += y_batch.size(0)
                     number_of_correct += predicted.eq(y_batch).sum().cpu().item()
                     acc_batch = compute_accuracy(output, y_batch)
-                    number_of_correct_2 += acc_batch * y_batch.size(0)
+                    #number_of_correct_2 += acc_batch * y_batch.size(0)
                     
                     
             
             if epoch % cfg.evaluation.eval_freq_epoch == 0:
                 acc = number_of_correct/total
-                acc_2 = number_of_correct_2/total
+                #acc_2 = number_of_correct_2/total
                 loss = running_loss/total
                 loss_by_batch = batch_running_loss/(train_examples_per_epoch/cfg.batch_size)
 
-                data = {'task_idx*epochs_per_task + epoch': task_idx*epochs_per_task + epoch, 'train_accuracy': acc, 'train_accuracy_2': acc_2, 'train_loss': loss, 'train_loss_by_batch': loss_by_batch}
+                data = {'task_idx*epochs_per_task + epoch': task_idx*epochs_per_task + epoch,
+                        'train_accuracy': acc, 
+                        #'train_accuracy_2': acc_2,
+                        'train_loss': loss, 
+                        'train_loss_by_batch': loss_by_batch}
                 # log to wandb:
                 if cfg.use_wandb:
                     wandb.log(data)
@@ -193,7 +197,7 @@ def main(cfg :ExperimentConfig):
                     with torch.no_grad():
                 
                         number_of_correct_on_test = 0.0
-                        number_of_correct_on_test_by_batch = 0.0
+                        # number_of_correct_on_test_by_batch = 0.0
                         # test_running_loss = 0.0 
                         # test_running_loss_batch = 0.0
                         total = x_test.size(0)
@@ -212,26 +216,31 @@ def main(cfg :ExperimentConfig):
                             _, predicted = test_output.max(1)
                             number_of_correct_on_test += predicted.eq(y_test_batch).sum().cpu().item()
                             # another way to keep track of number of correct predictions:
-                            acc_batch_on_test = compute_accuracy(test_output, y_test_batch)
-                            number_of_correct_on_test_by_batch += acc_batch_on_test * y_test_batch.size(0)
+                            #acc_batch_on_test = compute_accuracy(test_output, y_test_batch)
+                            # number_of_correct_on_test_by_batch += acc_batch_on_test * y_test_batch.size(0)
 
                         acc_on_test = number_of_correct_on_test/total
-                        acc_on_test_2 = number_of_correct_on_test_by_batch/total
+                        #acc_on_test_2 = number_of_correct_on_test_by_batch/total
                     
-                        data_on_test = {'task_idx*epochs_per_task + epoch': task_idx*epochs_per_task + epoch, 'test_accuracy': acc_on_test, 'test_accuracy_2': acc_on_test_2}
-                    print(f"task: {task_idx}, Epoch: {epoch}, Accuracy: {acc}, Accuracy_2: {acc_2}, Loss:,  {loss}, loss by batch: {loss_by_batch}")
-                    print(f"Test Accuracy: {acc_on_test}, Test Accuracy_2: {acc_on_test_2}")
+                        data_on_test = {'task_idx*epochs_per_task + epoch': task_idx*epochs_per_task + epoch, 
+                                        'test_accuracy': acc_on_test, 
+                                        #'test_accuracy_2': acc_on_test_2
+                                    }
+                    print(f"task: {task_idx}, Epoch: {epoch}, Accuracy: {acc}, Loss: {loss}, loss by batch: {loss_by_batch}")
+                    print(f"Test Accuracy: {acc_on_test} ")
+                          #Test Accuracy_2: {acc_on_test_2}")
                     if cfg.use_wandb:
                         wandb.log(data_on_test)
                         
         if task_idx % cfg.log_freq_every_n_task == 0:
             data_on_task = {'task': task_idx,\
                             'task_train_accuracy_after_all_epochs': acc,\
-                            'task_train_accuracy_2_after_all_epochs': acc_2,
+                            #'task_train_accuracy_2_after_all_epochs': acc_2,
                             'task_train_loss_after_all_epochs': loss,
                             'task_train_loss_by_batch_after_all_epochs': loss_by_batch,
                             'task_test_accuracy_after_all_epochs': acc_on_test,
-                            'task_test_accuracy_2_after_all_epochs': acc_on_test_2,}
+                            #'task_test_accuracy_2_after_all_epochs': acc_on_test_2,}
+                            }
             
             if cfg.use_wandb:
                 wandb.log(data_on_task)

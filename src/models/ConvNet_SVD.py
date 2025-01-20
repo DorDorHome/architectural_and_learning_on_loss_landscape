@@ -1,5 +1,5 @@
 import torch.nn as nn
-
+import torch
 # original implementation:
 from omegaconf import DictConfig
 # use NetParams dataclass from configurations.py:
@@ -26,19 +26,22 @@ class ConvNet_SVD(nn.Module):
         self.SVD_only_stride_1 = config.SVD_only_stride_1
         self.allow_svd_values_negative = config.allow_svd_values_negative
 
-        self.conv1 = SVD_Conv2d(3, 32, 5, bias=self.conv_layer_bias, 
+        self.conv1 = SVD_Conv2d(3, 32, 5, 
+                                bias=self.conv_layer_bias, 
                                 weight_correction_scale= self.weight_correction_scale,
                                 fan_in_correction =self.fan_in_correction,
                                 SVD_only_stride_1 = self.SVD_only_stride_1,
                                 allow_svd_values_negative = self.allow_svd_values_negative)
         # self.conv1_to_skip_scalar = nn.Parameter(torch.ones(32))
         
-        self.conv2 = SVD_Conv2d(32, 64, 3, bias=self.conv_layer_bias ,
+        self.conv2 = SVD_Conv2d(32, 64, 3, 
+                                bias=self.conv_layer_bias ,
                                 weight_correction_scale= self.weight_correction_scale ,
                                 fan_in_correction =self.fan_in_correction,
                                 SVD_only_stride_1 = self.SVD_only_stride_1,
                                 allow_svd_values_negative = self.allow_svd_values_negative)
-        self.conv3 = SVD_Conv2d(64, 128, 3, bias=self.conv_layer_bias ,
+        self.conv3 = SVD_Conv2d(64, 128, 3, 
+                                bias=self.conv_layer_bias ,
                                 weight_correction_scale= self.weight_correction_scale,
                                 fan_in_correction =self.fan_in_correction,
                                 SVD_only_stride_1 = self.SVD_only_stride_1,

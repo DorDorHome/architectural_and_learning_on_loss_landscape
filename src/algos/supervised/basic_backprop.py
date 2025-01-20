@@ -1,6 +1,6 @@
 # a basic backpropagation algorithm, with the option to perturb
 from src.algos.supervised.base_learner import Learner
-
+from configs.configurations import BaseLearnerConfig,  BackpropConfig, NetParams
 import torch
 import torch.nn.functional as F
 import torch.nn as nn
@@ -9,6 +9,7 @@ from abc import ABC, abstractmethod
 
 from torch.optim import optimizer
 from omegaconf import DictConfig
+from typing import Optional, Union
 
 # import the BackpropConfig class from the config file in configs folder in the
 # parent directory of the project:
@@ -19,12 +20,12 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 
 
-
 class Backprop(Learner):
-    def __init__(self, net: nn.Module, config: DictConfig):
-        super().__init__(net, config)
+    def __init__(self, net: nn.Module, config: BackpropConfig, netconfig: Optional[Union[NetParams, None]] = None):
+        super().__init__(net, config, netconfig)
         self.to_perturb = config.to_perturb
         self.perturb_scale = config.perturb_scale
+        
         
     def learn(self, x: torch.Tensor, target: torch.Tensor):
         """implement the basic backpropagation algorithm"""

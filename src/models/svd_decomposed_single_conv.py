@@ -67,7 +67,7 @@ class SVD_Conv2d(torch.nn.Module):
         else:
             self.in_fans = 1
         
-        self.weight_correction_scale_total = weight_correction_scale/ math.sqrt(self.in_fans)
+        self.weight_correction_scale_total = weight_correction_scale*self.output_channel/(input_channel * self.kernel_size[0] * self.kernel_size[1]) # weight_correction_scale/ math.sqrt(self.in_fans)
         
         
     
@@ -142,6 +142,7 @@ class SVD_Conv2d(torch.nn.Module):
                     Sigma = self.Sigma[valid_idx].abs()
                 else:
                     Sigma = self.Sigma[valid_idx]
+                    
                 r = Sigma.size(0)
                 if self.decompose_type == 'channel':
                     conv_filter = torch.mm(torch.mm(N, torch.diag(Sigma)), C).view(self.output_channel, self.input_channel, self.kernel_size[0], self.kernel_size[1])
@@ -277,3 +278,11 @@ if __name__ == "__main__":
 
     # Comparison
     assert torch.allclose(out_standard, out_svd, atol=1e-6), "Outputs do not match!"
+    
+    
+    # check for .eval mode forward pass:
+    svd_conv.eval()
+    out_svd_eval = svd_conv(x)
+    assert torch.allclose(out_standard, out_svd_eval, atol=1e-6), "Outputs do not match in eval mode!"
+    
+    
