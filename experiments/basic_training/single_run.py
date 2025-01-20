@@ -83,7 +83,7 @@ def main(cfg :ExperimentConfig):
     transform = transform_factory(cfg.data.dataset, cfg.net.type)
 
     #trainset with the transform:
-    trainset = dataset_factory(cfg.data, transform )
+    trainset, _ = dataset_factory(cfg.data, transform )
 
     trainloader = torch.utils.data.DataLoader(trainset, batch_size= cfg.batch_size, shuffle=True, num_workers=2, pin_memory = True)
     
