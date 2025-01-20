@@ -1,0 +1,16 @@
+{"time":"2025-01-21T00:20:32.468399302+08:00","level":"INFO","msg":"using version","core version":"0.18.5"}
+{"time":"2025-01-21T00:20:32.468404075+08:00","level":"INFO","msg":"created symlink","path":"/home/sfchan/models/architectural_and_learning_on_loss_landscape/experiments/basic_training/outputs/2025-01-21/00-20-26/wandb/run-20250121_002032-p54hf37w/logs/debug-core.log"}
+{"time":"2025-01-21T00:20:32.571071592+08:00","level":"INFO","msg":"created new stream","id":"p54hf37w"}
+{"time":"2025-01-21T00:20:32.571091944+08:00","level":"INFO","msg":"stream: started","id":"p54hf37w"}
+{"time":"2025-01-21T00:20:32.571230546+08:00","level":"INFO","msg":"sender: started","stream_id":"p54hf37w"}
+{"time":"2025-01-21T00:20:32.571167076+08:00","level":"INFO","msg":"writer: Do: started","stream_id":{"value":"p54hf37w"}}
+{"time":"2025-01-21T00:20:32.571231189+08:00","level":"INFO","msg":"handler: started","stream_id":{"value":"p54hf37w"}}
+{"time":"2025-01-21T00:20:32.879623588+08:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2025-01-21T00:49:11.301067657+08:00","level":"INFO","msg":"stream: closing","id":"p54hf37w"}
+{"time":"2025-01-21T00:49:11.301086272+08:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2025-01-21T00:49:11.30146329+08:00","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2025-01-21T00:49:12.888819606+08:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2025-01-21T00:49:13.147951167+08:00","level":"INFO","msg":"handler: closed","stream_id":{"value":"p54hf37w"}}
+{"time":"2025-01-21T00:49:13.147978042+08:00","level":"INFO","msg":"writer: Close: closed","stream_id":{"value":"p54hf37w"}}
+{"time":"2025-01-21T00:49:13.147984277+08:00","level":"INFO","msg":"sender: closed","stream_id":"p54hf37w"}
+{"time":"2025-01-21T00:49:13.148017916+08:00","level":"INFO","msg":"stream: closed","id":"p54hf37w"}

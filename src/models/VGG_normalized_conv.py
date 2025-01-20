@@ -56,8 +56,8 @@ class vgg_normalized_custom(nn.Module):
         # if not specified, keep the original number of classes
         if num_classes is not None:
             self.model.classifier[6] = NormalizedWeightsLinear(4096, num_classes)
-        if initialization == "kaiming":
-            self.model.apply(initialize_weights)
+        # if initialization == "kaiming":
+        #     self.model.apply(initialize_weights)
         
         # setting attributes for genealogy:
         # self.parents = None

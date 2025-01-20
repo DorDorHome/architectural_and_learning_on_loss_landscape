@@ -1,0 +1,42 @@
+{
+  "os":  "Linux-6.8.0-51-generic-x86_64-with-glibc2.39",
+  "python":  "3.9.18",
+  "startedAt":  "2025-01-20T16:15:00.118202Z",
+  "program":  "/home/sfchan/models/architectural_and_learning_on_loss_landscape/experiments/basic_training/single_run.py",
+  "codePath":  "experiments/basic_training/single_run.py",
+  "git":  {
+    "remote":  "git@github.com:DorDorHome/architectural_and_learning_on_loss_landscape.git",
+    "commit":  "7ff3c09ff7bcc7d4721e67148b60a65f82657a67"
+  },
+  "email":  "shufaichan@gmail.com",
+  "root":  "/home/sfchan/models/architectural_and_learning_on_loss_landscape/experiments/basic_training/outputs/2025-01-21/00-14-54",
+  "host":  "lanz",
+  "username":  "sfchan",
+  "executable":  "/home/sfchan/anaconda3/envs/loss_landscape/bin/python",
+  "cpu_count":  24,
+  "cpu_count_logical":  32,
+  "gpu":  "NVIDIA GeForce RTX 4090",
+  "gpu_count":  1,
+  "disk":  {
+    "/":  {
+      "total":  "1967317549056",
+      "used":  "1442647482368"
+    }
+  },
+  "memory":  {
+    "total":  "134794354688"
+  },
+  "cpu":  {
+    "count":  24,
+    "countLogical":  32
+  },
+  "gpu_nvidia":  [
+    {
+      "name":  "NVIDIA GeForce RTX 4090",
+      "memoryTotal":  "25757220864",
+      "cudaCores":  16384,
+      "architecture":  "Ada"
+    }
+  ],
+  "cudaVersion":  "12.2"
+}

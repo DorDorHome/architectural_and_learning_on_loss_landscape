@@ -2,7 +2,7 @@
 runs: 1
 run_id: None
 seed: 42
-device: 'cuda:1'
+device: 'cuda:0'
 epochs: 1000
 batch_size: 256 #128
 
@@ -22,7 +22,7 @@ wandb:
 data:
   dataset: 'CIFAR10' #'ImageNet' #options: 'MNIST' #'CIFAR10', to implement: 'CIFAR100'. 'ImageNet' not supported yet.
   use_torchvision: True # if using Imagnet, set to False 
-  data_path: '/hdda/datasets'  #if specified, will override the dataset variable.
+  data_path: '/home/sfchan/datasets'   # '/home/sfchan/datasets' for 243, otherwise '/hdda/datasets'   #if specified, will override the dataset variable.
   # for Imagnet, expected path is folder containing the downloaded Imagnet dataset, + '/data/classes/'
   num_classes: 10 # should be consistent with the number of classes in the dataset
 
@@ -31,7 +31,7 @@ data:
 
 # network architecture:
 net:
-  type: 'vgg_custom_norm' #"full_rank_resnet_custom" # "vgg_custom" #options: 'ConvNet', "vgg_custom" , "resnet_custom" 
+  type: "resnet_custom" # "vgg_custom" #options: 'ConvNet', "vgg_custom" , "resnet_custom" 
   netparams:
     pretrained: False
     num_classes: ${data.num_classes} 
