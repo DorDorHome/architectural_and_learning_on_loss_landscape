@@ -15,7 +15,7 @@
                 "PYTHONPATH": "${workspaceFolder}",
                 "CONDA_DEFAULT_ENV": "loss_landscap
               },
-              "pythonPath":"/home/sfchan/mambaforge/envs/pytorch_latest/bin/python"
+              "pythonPath":"/home/sfchan/anaconda3/envs/loss_landscape/bin/python"
               
                //"/home/sfchan/mambaforge/envs/pytorch_latest/bin/python"
               // "/home/sfchan/anaconda3/envs/loss_landscape/bin/python"
