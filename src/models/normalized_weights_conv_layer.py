@@ -65,7 +65,7 @@ class NormConv2d(nn.Module):
 
     def reset_parameters(self):
         # Initialize weights similar to nn.Conv2d
-        nn.init.kaiming_uniform_(self.weight, a=math.sqrt(5))
+        nn.init.kaiming_uniform_(self.weight, mode='fan_out', nonlinearity='relu')
         # Initialize scalar parameters to 1
         nn.init.constant_(self.scalar, 1.0)
         if self.bias is not None:

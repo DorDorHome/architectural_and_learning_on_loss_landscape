@@ -56,11 +56,25 @@ def model_factory(config: NetConfig) -> Any:
             raise ValueError("config.params cannot be None for VGG16_custom")
         return VGG_custom(config.netparams)
         
+    if model_type == 'vgg_custom_norm':   
+        from src.models.VGG_normalized_conv import vgg_normalized_custom
+        if config.netparams is None:
+            raise ValueError("config.params cannot be None for vgg_custom_norm")
+        return vgg_normalized_custom(config.netparams)
+        
     if model_type == 'resnet_custom':
         from src.models.ResNet18_custom import ResNet18_with_custom_classifier as ResNet_custom
         if config.netparams is None:
             raise ValueError("config.params cannot be None for resnet_custom")
         return ResNet_custom(config.netparams)
+    
+    if model_type == 'full_rank_resnet_custom':
+        from src.models.full_rank_resnet import ResNet18_skip_to_last_with_custom_classifier as full_rank_ResNet_custom
+        if config.netparams is None:
+            raise ValueError("config.params cannot be None for resnet_custom")
+        return full_rank_ResNet_custom(config.netparams)
+     
+    
     if model_type == "deep_ffnn":
         from src.models.deep_ffnn import DeepFFNN
         if config.netparams is None:

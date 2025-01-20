@@ -70,7 +70,17 @@ class ResNet18_with_custom_classifier(nn.Module):
         """
         A method to return both the final output and the intermediate features
         """
-        return self.model(x), None
+        return self.forward(x), None
 
+if __name__ == "__main__":
+    # test the ResNet18_with_custom_classifier class
+    config = NetParams()
+    model = ResNet18_with_custom_classifier(config)
+    print(model)
+    x = torch.randn(1, 3, 224, 224)
+    output = model(x)
+    print(output)
+    print(output.shape)
+    print("Model loaded successfully")
             
     
