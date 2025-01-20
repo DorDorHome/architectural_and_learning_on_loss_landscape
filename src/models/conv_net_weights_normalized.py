@@ -12,6 +12,16 @@ from configs.configurations import NetParams
 from src.models.normalized_weights_conv_layer import NormConv2d
 from src.models.normalized_weights_FC import NormalizedWeightsLinear
 
+activation_dict = {
+    # 'relu': F.relu,
+    # 'sigmoid': torch.sigmoid,
+    # 'tanh': torch.tanh,
+    # # Add more activations as needed
+    'sigmoid': nn.Sigmoid, 'tanh': nn.Tanh, 'relu': nn.ReLU, 'selu': nn.SELU,
+    'swish': nn.SiLU, 'leaky_relu': nn.LeakyReLU, 'elu': nn.ELU}
+
+
+
 class ConvNet_normalized(nn.Module): 
     def __init__(self, config: NetParams ):
         """'''
@@ -28,6 +38,7 @@ class ConvNet_normalized(nn.Module):
         self.linear_layer_bias = config.linear_layer_bias
         #in_channels, out_channels, kernel_size are not implemented
         
+        self.activation = config.activation
         
         self.conv1 = NormConv2d(3, 32, 5, bias=self.conv_layer_bias, 
                                 weight_correction_scale= self.weight_correction_scale,
@@ -55,15 +66,15 @@ class ConvNet_normalized(nn.Module):
         # architecture
         self.layers = nn.ModuleList()
         self.layers.append(self.conv1)
-        self.layers.append(self.activation)
+        self.layers.append(self.activation())
         self.layers.append(self.conv2)
-        self.layers.append(self.activation)
+        self.layers.append(self.activation())
         self.layers.append(self.conv3)
-        self.layers.append(self.activation)
+        self.layers.append(self.activation())
         self.layers.append(self.fc1)
-        self.layers.append(self.activation)
+        self.layers.append(self.activation())
         self.layers.append(self.fc2)
-        self.layers.append(self.activation)
+        self.layers.append(self.activation())
         self.layers.append(self.fc3)
 
 
