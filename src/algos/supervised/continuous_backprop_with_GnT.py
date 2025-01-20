@@ -28,6 +28,9 @@ from src.algos.gnt import ConvGnT_for_ConvNet, GnT_for_FC
 from src.algos.AdamGnT import AdamGnT
 from configs.configurations import ContinuousBackpropConfig
 
+_all_loss_functions = {'cross_entropy': F.cross_entropy, 'mse': F.mse_loss}
+
+
 class ContinualBackprop_for_FC(object):
     """
     The Continual Backprop algorithm, used in https://arxiv.org/abs/2108.06325v3
@@ -81,7 +84,7 @@ class ContinualBackprop_for_FC(object):
             self.opt = AdamGnT(self.net.parameters(), lr=self.step_size, betas=(self.beta_1, self.beta_2), weight_decay=self.weight_decay)
 
         # define the loss function
-        self.loss_func = {'cross_entropy': F.cross_entropy, 'mse': F.mse_loss}[self.loss]
+        self.loss_func = _all_loss_functions[self.loss]
 
         # a placeholder
         self.previous_features = None
@@ -176,7 +179,8 @@ class ContinuousBackprop_for_ConvNet(object):
             self.opt = AdamGnT(self.net.parameters(), lr=self.step_size, betas=(self.beta_1, self.beta_2), weight_decay=self.weight_decay)
 
         # define the loss function
-        self.loss_func = {'cross_entropy': F.cross_entropy, 'mse': F.mse_loss}[self.loss]
+        self.loss_func = _all_loss_functions[self.loss]
+        #{'cross_entropy': F.cross_entropy, 'mse': F.mse_loss}[self.loss]
 
         # a placeholder
         self.previous_features = None

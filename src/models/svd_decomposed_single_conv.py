@@ -106,7 +106,7 @@ class SVD_Conv2d(torch.nn.Module):
                     assert torch.allclose(torch.matmul(self.C, self.C.t()), torch.eye(self.r).to(self.C.device), atol=1e-6), "C is not orthogonal"
                         
             
-            torch.nn.init.normal_(self.Sigma)       
+            torch.nn.init.normal_(self.Sigma, mean=1, std=0.3)       
             
         else:
             self.conv2d = nn.Conv2d(in_channels =input_channel,
@@ -220,23 +220,56 @@ if __name__ == "__main__":
     # y2 = svd_conv(x)
     # print(y2.size())
     
+    input_channel=3
+    output_channel=16
+    kernel_size=3
+    stride=1
+    padding=1
+    bias=False
     
-        # Standard Conv2d
-    standard_conv = nn.Conv2d(input_channel, output_channel, kernel_size, stride, padding, bias=bias)
-    standard_conv.weight.data = reconstructed_W.clone() / self.weight_correction_scale_total
-    if bias:
-        standard_conv.bias.data = self.bias.clone()
 
     # SVD_Conv2d
-    svd_conv = SVD_Conv2d(...)
-    svd_conv.N.data = self.N.clone()
-    svd_conv.C.data = self.C.clone()
-    svd_conv.Sigma.data = self.Sigma.clone()
-    if bias:
-        svd_conv.bias.data = self.bias.clone()
+    svd_conv = SVD_Conv2d(input_channel=input_channel,
+                output_channel=output_channel,
+                kernel_size=kernel_size,
+                stride=stride,
+                padding=padding,
+                dilation=1,
+                groups=1, 
+                bias=False,
+                SVD_only_stride_1=False,  # if true, means that, apply svd only when stride is 1
+                weight_correction_scale=1,
+                fan_in_correction=False,
+                allow_svd_values_negative=True,  # for svd only
+                decompose_type='channel')
+    # svd_conv.N.data = self.N.clone()
+    # svd_conv.C.data = self.C.clone()
+    # svd_conv.Sigma.data = self.Sigma.clone()
+    # if bias:
+    #     svd_conv.bias.data = self.bias.clone()
 
     # Input Tensor
-    x = torch.randn(batch_size, input_channel, height, width)
+    x = torch.randn(10, 3, 230, 230)
+
+    N_copy = svd_conv.N.clone()
+    C_copy = svd_conv.C.clone()
+    Sigma_copy = svd_conv.Sigma.clone()
+    
+    tensor_for_weight = torch.mm(torch.mm(N_copy, torch.diag(Sigma_copy)), C_copy).view(svd_conv.output_channel, svd_conv.input_channel, svd_conv.kernel_size[0], svd_conv.kernel_size[1])
+
+    # Standard Conv2d
+    standard_conv = nn.Conv2d(in_channels=input_channel,
+                out_channels=output_channel,
+                kernel_size=kernel_size,
+                stride=stride,
+                padding=padding,
+                dilation=1,
+                groups=1, 
+                bias=False)
+
+
+    # Copy weights
+    standard_conv.weight.data = tensor_for_weight.clone()
 
     # Outputs
     out_standard = standard_conv(x)
