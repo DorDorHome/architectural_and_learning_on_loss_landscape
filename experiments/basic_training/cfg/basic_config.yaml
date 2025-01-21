@@ -31,7 +31,7 @@ data:
 
 # network architecture:
 net:
-  type: 'vgg_custom_norm' # 'vgg_custom_norm', "vgg_custom" #options: 'ConvNet', "vgg_custom" , "resnet_custom" 
+  type: "resnet_custom" # "vgg_custom" #options: 'ConvNet', "vgg_custom" , "resnet_custom" 
   netparams:
     pretrained: False
     num_classes: ${data.num_classes} 

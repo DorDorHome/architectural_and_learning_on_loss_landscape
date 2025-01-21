@@ -28,7 +28,7 @@ def transform_factory(dataset_name: str, model_name: str):
         torchvision.transforms.Compose: A transform pipeline.
     """
     if dataset_name == "CIFAR10":
-        if model_name == "ResNet18" or model_name == "resnet_custom":
+        if model_name == "ResNet18" or model_name == "resnet_custom" or model_name == "full_rank_resnet_custom":
             # ResNet18 expects normalized inputs
             return transforms.Compose([
                 transforms.RandomCrop(32, padding=4),
