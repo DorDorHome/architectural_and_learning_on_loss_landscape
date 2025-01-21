@@ -1,0 +1,20 @@
+Epoch: 0, progress on batches: 100%|█| 196/196 [03:02<00:00,  1.07i
+Epoch: 1, progress on batches: 100%|█| 196/196 [03:02<00:00,  1.08i
+Epoch: 0, Accuracy: 0.0975, Accuracy_2: 0.0975, Loss:,  2.3028164234924318, loss by batch: 2.302813240459987
+Epoch: 2, progress on batches:   0%|       | 0/196 [00:01<?, ?it/s]
+Epoch: 1, Accuracy: 0.0992, Accuracy_2: 0.0992, Loss:,  2.302756075592041, loss by batch: 2.3027661369771373
+Epoch:   0%|                  | 2/1000 [06:05<50:43:50, 183.00s/it]
+Error executing job with overrides: []
+Traceback (most recent call last):
+  File "/hdda/models/loss_landscape/experiments/basic_training/single_run.py", line 164, in main
+    loss, output = learner.learn(input, label)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/hdda/models/loss_landscape/src/algos/supervised/basic_backprop.py", line 40, in learn
+    loss.backward()
+  File "/home/sfchan/mambaforge/envs/pytorch_latest/lib/python3.11/site-packages/torch/_tensor.py", line 487, in backward
+    torch.autograd.backward(
+  File "/home/sfchan/mambaforge/envs/pytorch_latest/lib/python3.11/site-packages/torch/autograd/__init__.py", line 200, in backward
+    Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+torch.cuda.OutOfMemoryError: CUDA out of memory. Tried to allocate 3.06 GiB (GPU 0; 23.64 GiB total capacity; 10.85 GiB already allocated; 1.96 GiB free; 20.40 GiB reserved in total by PyTorch) If reserved memory is >> allocated memory try setting max_split_size_mb to avoid fragmentation.  See documentation for Memory Management and PYTORCH_CUDA_ALLOC_CONF
+
+Set the environment variable HYDRA_FULL_ERROR=1 for a complete stack trace.
