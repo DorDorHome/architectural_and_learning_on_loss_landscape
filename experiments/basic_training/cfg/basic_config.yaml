@@ -31,11 +31,14 @@ data:
 
 # network architecture:
 net:
-  type: "resnet_custom" # "vgg_custom" #options: 'ConvNet', "vgg_custom" , "resnet_custom" 
+  type: "full_rank_resnet_custom" # "vgg_custom" #options: 'ConvNet', "vgg_custom" , "resnet_custom" , 'full_rank_resnet_custom'
   netparams:
     pretrained: False
     num_classes: ${data.num_classes} 
     initialization: 'kaiming'
+    activation: 'elu' # 'relu', 'leaky_relu' 'sigmoid' 'tanh' 'selu' 'swish' 'elu'
+
+
     
 # learning algorithm:
 learner:

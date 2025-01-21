@@ -6,6 +6,8 @@ import torch.optim as optim
 # from typing import List
 #from torchvision.models import resnet18 
 from src.models.resnet_normalized_conv import resnet18 as resnet18_norm
+from src.models.normalized_weights_conv_layer import NormConv2d
+from src.models.normalized_weights_FC import NormalizedWeightsLinear
 import numpy as np
 import os
 #import networkx as nx
@@ -26,7 +28,7 @@ def kaiming_init(model, nonlinearity='relu', mode='fan_out', a=0, gain=None):
     - gain (float, optional): An optional scaling factor. Default is calculated from `nonlinearity` and `a`.
     """
     for m in model.modules():
-        if isinstance(m, nn.Conv2d) or isinstance(m, nn.Linear):
+        if isinstance(m, NormConv2d) or isinstance(m, NormalizedWeightsLinear):
             nn.init.kaiming_normal_(m.weight, mode=mode, nonlinearity=nonlinearity)
             if m.bias is not None:
                 nn.init.constant_(m.bias, 0)
@@ -44,10 +46,13 @@ class ResNet18_skip_to_last_with_custom_classifier(nn.Module):
         initialization = getattr(config, 'initialization', "kaiming")
         loss_window_size = getattr(config, 'loss_window_size', 10)  
         track_performance_internally = getattr(config, 'track_performance_internally', False)
+        
+        self.activation = getattr(config, 'activation', 'relu')
+        
         super(ResNet18_skip_to_last_with_custom_classifier, self).__init__()
         
         # Load the ResNet18 model
-        self.model: nn.Module = resnet18_norm(pretrained=pretrained)
+        self.model: nn.Module = resnet18_norm(pretrained=pretrained, activation = self.activation)
         
         # change forward method:
         
@@ -63,9 +68,11 @@ class ResNet18_skip_to_last_with_custom_classifier(nn.Module):
         # Modify the classifier to match the number of classes
         # if not specified, keep the original number of classes
         if num_classes is not None:
-            self.model.fc = nn.Linear(512, num_classes)
+            self.model.fc = NormalizedWeightsLinear(512, num_classes)
         if initialization == "kaiming":
             self.model.apply(kaiming_init)
+            
+        
     
     
     
@@ -96,7 +103,9 @@ class ResNet18_skip_to_last_with_custom_classifier(nn.Module):
 
 if __name__ == "__main__":
     # test the model:
-    net = ResNet18_skip_to_last_with_custom_classifier(NetParams())
+    netparams = NetParams()
+    netparams.activation = 'leaky_relu'
+    net = ResNet18_skip_to_last_with_custom_classifier(netparams)
     print(net)
     # test the forward method:
     x = torch.randn(1, 3, 332, 332)
