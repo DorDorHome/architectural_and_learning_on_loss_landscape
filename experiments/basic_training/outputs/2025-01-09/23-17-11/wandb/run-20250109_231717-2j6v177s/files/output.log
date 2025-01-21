@@ -1,9 +1,0 @@
-Epoch: 0, progress on batches:   0%|   | 0/391 [00:03<?, ?it/s]
-Epoch:   0%|                            | 0/50 [00:03<?, ?it/s]
-Error executing job with overrides: []
-Traceback (most recent call last):
-  File "/hdda/models/my_own_models/architectural_and_learning_on_loss_landscape/experiments/basic_training/single_loss_gradient_expr.py", line 134, in main
-    number_of_correct_2 += acc_batch * label.size(0)
-UnboundLocalError: local variable 'number_of_correct_2' referenced before assignment
-
-Set the environment variable HYDRA_FULL_ERROR=1 for a complete stack trace.
