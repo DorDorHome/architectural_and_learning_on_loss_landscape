@@ -4,7 +4,7 @@ run_id: None
 seed: 42
 device: 'cuda:0'
 epochs: 1000
-batch_size: 256 #128
+batch_size: 64 #128
 
 # for logging and tracking the experiments
 use_wandb: True
@@ -40,6 +40,7 @@ net:
 # learning algorithm:
 learner:
   type: 'backprop'  # Choices: 'backprop', 'cbp',# 'continual_backprop'
+  init: 'kaiming' # might not work for 'vgg_custom_norm'
   # needed only for cbp:
   # neurons_replacement_rate: 0.001
   # decay_rate_utility_track: 0.9
@@ -51,9 +52,9 @@ learner:
 
   # needed for continual backprop and cbp:
   device: ${device}
-  opt:  'sgd' # Choices: 'sgd',  'adam'
+  opt:  'adam' # Choices: 'sgd',  'adam'
   loss: 'cross_entropy' # Choices: 'cross_entropy', 'mse', for classification and regression respectively
-  step_size: 0.01 # for sgd try 0.01, adam try 
+  step_size: 0.001 # for sgd try 0.01, adam try 0.001
   beta_1: 0.95
   beta_2: 0.999
   weight_decay: 0.01
