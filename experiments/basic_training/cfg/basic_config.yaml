@@ -4,7 +4,7 @@ run_id: None
 seed: 42
 device: 'cuda:0'
 epochs: 1000
-batch_size: 64 #128
+batch_size: 256 #128
 
 # for logging and tracking the experiments
 use_wandb: True
@@ -22,7 +22,7 @@ wandb:
 data:
   dataset: 'CIFAR10' #'ImageNet' #options: 'MNIST' #'CIFAR10', to implement: 'CIFAR100'. 'ImageNet' not supported yet.
   use_torchvision: True # if using Imagnet, set to False 
-  data_path: '/home/sfchan/datasets'   # '/home/sfchan/datasets' for 243, otherwise '/hdda/datasets'   #if specified, will override the dataset variable.
+  data_path: '/hdda/datasets'    # '/home/sfchan/datasets' for 243, otherwise '/hdda/datasets'   #if specified, will override the dataset variable.
   # for Imagnet, expected path is folder containing the downloaded Imagnet dataset, + '/data/classes/'
   num_classes: 10 # should be consistent with the number of classes in the dataset
 
@@ -31,11 +31,14 @@ data:
 
 # network architecture:
 net:
-  type: 'vgg_custom_norm' # 'vgg_custom_norm', "vgg_custom" #options: 'ConvNet', "vgg_custom" , "resnet_custom" 
+  type: "full_rank_resnet_custom" # "vgg_custom" #options: 'ConvNet', "vgg_custom" , "resnet_custom" , 'full_rank_resnet_custom'
   netparams:
     pretrained: False
     num_classes: ${data.num_classes} 
     initialization: 'kaiming'
+    activation: 'elu' # 'relu', 'leaky_relu' 'sigmoid' 'tanh' 'selu' 'swish' 'elu'
+
+
     
 # learning algorithm:
 learner:
@@ -54,7 +57,7 @@ learner:
   device: ${device}
   opt:  'adam' # Choices: 'sgd',  'adam'
   loss: 'cross_entropy' # Choices: 'cross_entropy', 'mse', for classification and regression respectively
-  step_size: 0.001 # for sgd try 0.01, adam try 0.001
+  step_size: 0.01 # for sgd try 0.01, adam try 
   beta_1: 0.95
   beta_2: 0.999
   weight_decay: 0.01

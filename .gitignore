@@ -13,9 +13,7 @@ __pycache__/
 experiments/Normalized_weights_vs_Batched_norm/outputs/*
 experiments/Normalized_weights_vs_Batched_norm/outputs/*/*
 
-
 experiments/basic_training/outputs
 experiments/basic_training/outputs/*
 experiments/basic_training/outputs/*/*
-
 .vscode/launch.json

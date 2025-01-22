@@ -138,10 +138,10 @@ def dataset_factory(config: DataConfig, transform, with_testset= False) -> Any:
             raise AttributeError(f"dataset{config.dataset} not found in torchvision.datasets. Try setting use_torchvision to False.")
             
         
-        # # for CIFAR10:
-        # if config.dataset == 'CIFAR10':
-        #         # Define transformations for the training and test sets
-        #     trainset = torchvision.datasets.CIFAR10(root=dataset_path, train=True, download=True, transform=transform)
+        # for CIFAR10:
+        if config.dataset == 'CIFAR10':
+                # Define transformations for the training and test sets
+            trainset = torchvision.datasets.CIFAR10(root=dataset_path, train=True, download=True, transform=transform)
         
         # # for mnist:
         # elif config.dataset == 'MNIST':

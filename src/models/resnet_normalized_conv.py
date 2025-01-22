@@ -1,3 +1,5 @@
+# this is adapted from the pytorch source code for resnet
+
 import torch
 from torch import Tensor
 import torch.nn as nn
@@ -12,6 +14,15 @@ from typing import Type, Any, Callable, Union, List, Optional
 __all__ = ['ResNet', 'resnet18', 'resnet34', 'resnet50', 'resnet101',
            'resnet152', 'resnext50_32x4d', 'resnext101_32x8d',
            'wide_resnet50_2', 'wide_resnet101_2']
+
+activation_dict = {
+    # 'relu': F.relu,
+    # 'sigmoid': torch.sigmoid,
+    # 'tanh': torch.tanh,
+    # # Add more activations as needed
+    'sigmoid': nn.Sigmoid, 'tanh': nn.Tanh, 'relu': nn.ReLU, 'selu': nn.SELU,
+    'swish': nn.SiLU, 'leaky_relu': nn.LeakyReLU, 'elu': nn.ELU}
+
 
 
 model_urls = {
@@ -50,7 +61,9 @@ class BasicBlock(nn.Module):
         groups: int = 1,
         base_width: int = 64,
         dilation: int = 1,
-        norm_layer: Optional[Callable[..., nn.Module]] = None
+        norm_layer: Optional[Callable[..., nn.Module]] = None,
+        activation: Optional[Union[str, None]] = None
+        
     ) -> None:
         super(BasicBlock, self).__init__()
         if norm_layer is None:
@@ -62,7 +75,10 @@ class BasicBlock(nn.Module):
         # Both self.conv1 and self.downsample layers downsample the input when stride != 1
         self.conv1 = conv3x3(inplanes, planes, stride)
         self.bn1 = norm_layer(planes)
-        self.relu = nn.ReLU(inplace=True)
+        # self.relu = nn.ReLU(inplace=True)
+        self.activation = activation
+        self.activation_func = activation_dict.get(self.activation, nn.ReLU)
+        self.activation_func = self.activation_func()#in_place=True)
         self.conv2 = conv3x3(planes, planes)
         self.bn2 = norm_layer(planes)
         self.downsample = downsample
@@ -73,7 +89,7 @@ class BasicBlock(nn.Module):
 
         out = self.conv1(x)
         out = self.bn1(out)
-        out = self.relu(out)
+        out = self.activation_func(out)
 
         out = self.conv2(out)
         out = self.bn2(out)
@@ -82,7 +98,7 @@ class BasicBlock(nn.Module):
             identity = self.downsample(x)
 
         out += identity
-        out = self.relu(out)
+        out = self.activation_func(out)
 
         return out
 
@@ -105,7 +121,8 @@ class Bottleneck(nn.Module):
         groups: int = 1,
         base_width: int = 64,
         dilation: int = 1,
-        norm_layer: Optional[Callable[..., nn.Module]] = None
+        norm_layer: Optional[Callable[..., nn.Module]] = None,
+        activation: Optional[Union[None, str]] = None
     ) -> None:
         super(Bottleneck, self).__init__()
         if norm_layer is None:
@@ -118,7 +135,16 @@ class Bottleneck(nn.Module):
         self.bn2 = norm_layer(width)
         self.conv3 = conv1x1(width, planes * self.expansion)
         self.bn3 = norm_layer(planes * self.expansion)
-        self.relu = nn.ReLU(inplace=True)
+        
+        
+        # edited:
+        # self.relu = nn.ReLU(inplace=True)
+        self.activation = activation
+        self.activation_func = activation_dict.get(self.activation, nn.ReLU)
+        self.activation_func = self.activation_func()#in_place=True)
+        
+        
+        
         self.downsample = downsample
         self.stride = stride
 
@@ -127,11 +153,11 @@ class Bottleneck(nn.Module):
 
         out = self.conv1(x)
         out = self.bn1(out)
-        out = self.relu(out)
+        out = self.activation_func(out)
 
         out = self.conv2(out)
         out = self.bn2(out)
-        out = self.relu(out)
+        out = self.activation_func(out)
 
         out = self.conv3(out)
         out = self.bn3(out)
@@ -140,7 +166,7 @@ class Bottleneck(nn.Module):
             identity = self.downsample(x)
 
         out += identity
-        out = self.relu(out)
+        out = self.activation_func(out)
 
         return out
 
@@ -156,7 +182,8 @@ class ResNet(nn.Module):
         groups: int = 1,
         width_per_group: int = 64,
         replace_stride_with_dilation: Optional[List[bool]] = None,
-        norm_layer: Optional[Callable[..., nn.Module]] = None
+        norm_layer: Optional[Callable[..., nn.Module]] = None,
+        activation: Optional[Callable[..., nn.Module]] = None
     ) -> None:
         super(ResNet, self).__init__()
         if norm_layer is None:
@@ -176,16 +203,27 @@ class ResNet(nn.Module):
         self.base_width = width_per_group
         self.conv1 = NormConv2d(3, self.inplanes, kernel_size=7, stride=2, padding=3,
                                bias=False)
+        
+        #added:
+        self.activation = activation
+        
+        self.activation_func_class = activation_dict.get(self.activation, nn.ReLU)
+        
+        
         self.bn1 = norm_layer(self.inplanes)
-        self.relu = nn.ReLU(inplace=True)
+        self.activation_func = self.activation_func_class()#in_place=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
-        self.layer1 = self._make_layer(block, 64, layers[0])
+        self.layer1 = self._make_layer(block, 64, layers[0],
+                                       activation = self.activation)
         self.layer2 = self._make_layer(block, 128, layers[1], stride=2,
-                                       dilate=replace_stride_with_dilation[0])
+                                       dilate=replace_stride_with_dilation[0],
+                                       activation = self.activation)
         self.layer3 = self._make_layer(block, 256, layers[2], stride=2,
-                                       dilate=replace_stride_with_dilation[1])
+                                       dilate=replace_stride_with_dilation[1],
+                                       activation = self.activation)
         self.layer4 = self._make_layer(block, 512, layers[3], stride=2,
-                                       dilate=replace_stride_with_dilation[2])
+                                       dilate=replace_stride_with_dilation[2],
+                                       activation = self.activation)
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
         self.fc = NormalizedWeightsLinear(512 * block.expansion, num_classes)
 
@@ -207,7 +245,10 @@ class ResNet(nn.Module):
                     nn.init.constant_(m.bn2.weight, 0)  # type: ignore[arg-type]
 
     def _make_layer(self, block: Type[Union[BasicBlock, Bottleneck]], planes: int, blocks: int,
-                    stride: int = 1, dilate: bool = False) -> nn.Sequential:
+                    stride: int = 1, dilate: bool = False, 
+                    activation: Optional[Union[str, None]] = None
+                    
+                    ) -> nn.Sequential:
         norm_layer = self._norm_layer
         downsample = None
         previous_dilation = self.dilation
@@ -222,12 +263,12 @@ class ResNet(nn.Module):
 
         layers = []
         layers.append(block(self.inplanes, planes, stride, downsample, self.groups,
-                            self.base_width, previous_dilation, norm_layer))
+                            self.base_width, previous_dilation, norm_layer, activation))
         self.inplanes = planes * block.expansion
         for _ in range(1, blocks):
             layers.append(block(self.inplanes, planes, groups=self.groups,
                                 base_width=self.base_width, dilation=self.dilation,
-                                norm_layer=norm_layer))
+                                norm_layer=norm_layer, activation = activation))
 
         return nn.Sequential(*layers)
 
@@ -235,7 +276,7 @@ class ResNet(nn.Module):
         # See note [TorchScript super()]
         x = self.conv1(x)
         x = self.bn1(x)
-        x = self.relu(x)
+        x = self.activation_func(x)
         x = self.maxpool(x)
 
         x = self.layer1(x)
@@ -259,7 +300,8 @@ def _resnet(
     layers: List[int],
     pretrained: bool,
     progress: bool,
-    **kwargs: Any
+    #activation: Optional[Union[str, None]] = None
+    **kwargs: Any,
 ) -> ResNet:
     model = ResNet(block, layers, **kwargs)
     if pretrained:
