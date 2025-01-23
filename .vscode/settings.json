@@ -1,5 +1,6 @@
+
+
 {
-    "python.pythonPath": "/home/sfchan/anaconda3/envs/loss_landscape/bin/python"
-  }
-
-
+    "python.condaPath": "/home/sfchan/anaconda3/envs/loss_landscape/bin/python",
+    "python.envFile": "${workspaceFolder}/.env"
+}
