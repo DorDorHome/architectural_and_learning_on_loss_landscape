@@ -3,19 +3,21 @@ import torch.nn as nn
 import torch
 import math
 from torch.nn import functional as F
+# import the types:
+from typing import Tuple, List, Dict, Any, Union
 
 class NormConv2d(nn.Module):
     def __init__(
         self,
         in_channels: int,
         out_channels: int,
-        kernel_size: int or tuple,
-        stride=1,
-        padding=0,
-        dilation=1,
-        groups=1,
-        bias=True,
-        padding_mode='zeros',
+        kernel_size: Union[int, Tuple[int, int]],
+        stride: int = 1,
+        padding: int = 0,
+        dilation: int = 1,
+        groups: int = 1,
+        bias: bool = True,
+        padding_mode: str = 'zeros',
         weight_correction_scale: float = 2**0.5,
         fan_in_correction: bool = True
         ):
@@ -75,7 +77,7 @@ class NormConv2d(nn.Module):
         #     bound = 1 / math.sqrt(fan_in) if fan_in > 0 else 0
         #     nn.init.uniform_(self.bias, -bound, bound)
 
-    def forward(self, x, bias: bool = True):
+    def forward(self, x: torch.Tensor, bias: bool = True) -> torch.Tensor:
         # Flatten the weight to compute norms per output channel
         weight_flat = self.weight.view(self.out_channels, -1)  # Shape: [out_channels, ...]
         # Compute L2 norm for each output channel
@@ -108,6 +110,127 @@ class NormConv2d(nn.Module):
             )
             
         return out
+    
+    
+class Norm_output_Conv2d(nn.Module):
+    """
+    Instead of normalizing the weights, this layer normalizes the output of the convolutional layer.
+    
+    
+    """
+    def __init__(self,
+                in_channels: int,
+                out_channels: int,
+                kernel_size: int or tuple,
+                stride=1,
+                padding=0,
+                dilation=1,
+                groups=1,
+                bias=True,
+                padding_mode='zeros',
+                
+                # not required:
+                # weight_correction_scale: float = 2**0.5,
+                # fan_in_correction: bool = True,
+                
+                #unique for this class:
+                norm_pre_activation: bool = True# control whether to normalize before or after activation
+                weight_decay_for_norm: float = 0.0 # weight decay for the normalization parameters
+                ):
+        
+        super(Norm_output_Conv2d, self).__init__()
+        self.in_channels = in_channels
+        self.out_channels = out_channels
+        # Handle kernel_size being int or tuple
+        if isinstance(kernel_size, int):
+            self.kernel_size = (kernel_size, kernel_size)
+        else:
+            self.kernel_size = kernel_size
+        self.stride = stride
+        self.padding = padding
+        self.dilation = dilation
+        self.groups = groups
+        self.padding_mode = padding_mode
+        
+        # hyperparameters for the normalization:
+        self.norm_pre_activation = norm_pre_activation
+        self.weight_decay_for_norm = weight_decay_for_norm
+        
+        # weight correction is not needed. 
+        # correction is done by acculumating the weight decay in the normalization parameters.
+        
+        # Initialize raw weights
+        self.weight = nn.Parameter(
+            torch.Tensor(out_channels, in_channels // groups, *self.kernel_size)
+        )
+        
+        if bias:
+            self.bias = nn.Parameter(torch.Tensor(out_channels))
+        else:
+            self.bias = None
+            #first implementation:
+            #self.register_parameter('bias', None)
+            
+        # Initialize scalar parameters (one per output channel)
+        self.scalar_parameter = nn.Parameter(torch.ones(out_channels))
+        
+        # weight decay factor for the normalization parameters:
+        self.weight_decay_for_norm = weight_decay_for_norm
+        
+        self.norm_moving_average = torch.ones(out_channels)
+        
+        self.last_output_norm = 1.0
+        
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        
+        # update final scalar_to_use, to represent the norm 
+        self.norm_moving_average =  self.weight_decay_for_norm* self.last_output_norm +
+                        (1 -self.weight_decay_for_norm) * self.norm_moving_average 
+        
+        weight_to_use = self.weight/ self.norm_moving_average.view(self.out_channels, 1, 1, 1)
+        
+        
+        # Perform the convolution operation
+        out = F.conv2d(
+            x,
+            weight_to_use
+            self.bias,
+            self.stride,
+            self.padding,
+            self.dilation,
+            self.groups
+        )
+        
+        # update the last output norm:
+        self.last_oupout_norm = out.norm(p=2, dim=1, keepdim=True) + 1e-8
+        
+        
+        # normalize the output:
+        if self.norm_pre_activation:
+            # normalize before activation
+            norm = out.norm(p=2, dim=1, keepdim=True) + 1e-8
+            out = out / norm
+        else:
+            # normalize after activation
+            norm = out.norm(p=2, dim=1, keepdim=True) + 1e-8
+            out = out / norm
+        
+        # scale output by the scalar parameter:
+        out = out * self.scalar_to_use.view(self.out_channels, 1, 1, 1)
+        
+        
+        
+        
+
+
+        
+        
+        
+        
+        
+                 
+    
+    
             
 # Example Usage
 if __name__ == "__main__":

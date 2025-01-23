@@ -1,5 +1,9 @@
 {
-    "python.pythonPath": "/home/sfchan/anaconda3/envs/loss_landscape/bin/python"
-  }
-
-
+    "python.pythonPath": "/home/sfchan/anaconda3/envs/loss_landscape/bin/python",
+    "terminal.integrated.env.linux": {
+      "CONDA_DEFAULT_ENV": "loss_landscape",
+      "PATH": "/home/sfchan/mambaforge/envs/pytorch_latest/bin/${env:PATH}"
+          "PATH": "/home/sfchan/mambaforge/envs/pytorch_latest/bin:${env:PATH}"
+        },
+        "terminal.integrated.shellArgs.linux": ["-l"]
+    }
