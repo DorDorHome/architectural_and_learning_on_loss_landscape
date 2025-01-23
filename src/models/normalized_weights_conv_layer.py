@@ -134,7 +134,7 @@ class Norm_output_Conv2d(nn.Module):
                 # fan_in_correction: bool = True,
                 
                 #unique for this class:
-                norm_pre_activation: bool = True# control whether to normalize before or after activation
+                norm_pre_activation: bool = True, # control whether to normalize before or after activation
                 weight_decay_for_norm: float = 0.0 # weight decay for the normalization parameters
                 ):
         
