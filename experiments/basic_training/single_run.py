@@ -200,6 +200,10 @@ def main(cfg :ExperimentConfig):
     
 
 if __name__ == "__main__":
+    # clear cached memory:
+    torch.cuda.empty_cache()
+    
+    
     main()
     
     

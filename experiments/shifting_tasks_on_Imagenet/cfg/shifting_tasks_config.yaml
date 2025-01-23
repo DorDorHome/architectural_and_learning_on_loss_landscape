@@ -47,7 +47,7 @@ net:
     initialization: 'kaiming' #for ConvNet_SVD, will be overriden
     conv_layer_bias: True # previously false # only for "ConvNet_norm"
     linear_layer_bias: True #for "ConvNet_norm"
-    activation: 'relu'
+    activation: 'leaky_relu' 
     # activation: 'leaky_relu' #for "ConvNet_norm" and "ConvNet_SVD",  'sigmoid', 'tanh',  'relu', 'selu','swish' 'leaky_relu', 'elu'
 
     # for both ConvNet_norm and ConvNet_SVD:

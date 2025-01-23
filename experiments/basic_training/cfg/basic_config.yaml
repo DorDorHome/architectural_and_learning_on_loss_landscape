@@ -4,7 +4,7 @@ run_id: None
 seed: 42
 device: 'cuda:0'
 epochs: 1000
-batch_size: 128 #128
+batch_size: 256 #128
 
 # for logging and tracking the experiments
 use_wandb: True
@@ -43,6 +43,7 @@ net:
 # learning algorithm:
 learner:
   type: 'backprop'  # Choices: 'backprop', 'cbp',# 'continual_backprop'
+  init: 'kaiming' # might not work for 'vgg_custom_norm'
   # needed only for cbp:
   # neurons_replacement_rate: 0.001
   # decay_rate_utility_track: 0.9
