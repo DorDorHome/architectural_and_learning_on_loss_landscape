@@ -212,3 +212,10 @@ def compute_abs_approximate_rank(sv: torch.Tensor, prop=0.99):
         cumulative_ns_sv_sum += normed_sqrd_sv[approximate_rank]
         approximate_rank += 1
     return torch.tensor(approximate_rank, dtype=torch.int32)
+
+
+# trying out the above functions
+if __name__ == '__main__':
+    m = torch.randn(100, 100)
+    rank, effective_rank, approximate_rank, approximate_rank_abs = compute_matrix_rank_summaries(m)
+    print(rank, effective_rank, approximate_rank, approximate_rank_abs)

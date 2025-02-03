@@ -16,9 +16,11 @@
             "env": {
                 "PYTHONPATH": "${workspaceFolder}",
                 "CONDA_DEFAULT_ENV": "loss_landscap
-              },
-              "pythonPath":"/home/sfchan/anaconda3/envs/loss_landscape/bin/python"
               
+              "pythonPath":"Users/shufaichan/anaconda3/envs/pytorch_basic/bin/python"
+            },
+
+            ///"Users/shufaichan/anaconda3/envs/pytorch_basic/bin/python"
                //"/home/sfchan/mambaforge/envs/pytorch_latest/bin/python"
               // "/home/sfchan/anaconda3/envs/loss_landscape/bin/python"
               // "/home/sfchan/mambaforge/envs/pytorch_latest/bin/python"

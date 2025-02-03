@@ -1,5 +1,5 @@
-# This file moves the VGG model to a separate file.
-# replacing all occurances of conv2d with normalized_conv2d
+# This file replicates the official pytorch VGG model as a separate file:
+# except that all occurances of conv2d are replaced with normalized_conv2d
 
 from src.models.normalized_weights_conv_layer import NormConv2d
 from src.models.normalized_weights_FC import NormalizedWeightsLinear
