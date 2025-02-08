@@ -1,6 +1,15 @@
 # architectural_and_learning_on_loss_landscape
 
 # to-do:
+### preliminary tests for rank tracking
+# in /basic_training_with_rank_tracking
+# build functions src.utils.forward_extraction_tools.compute_rank_for_list_of_features
+# check basic_training_with_rank_tracking/single_run.py
+# add support for partial jacabian rank.
+# add timer for rank computation to assess computational bottleneck.
+
+
+
 ### create flexible way to manage data logging for raw data
 ### manage experiments with many runs, one after another, save to different folders under different names
 ### create flexible way to plot from raw data
@@ -13,6 +22,7 @@
 - function for partial rank calculation
 - function for numerical rank
 - function for effective rank
+
 
 #### Refer to "How does batch normalization help optimization", 
 - subtask: mechanism/function for measure change in loss (Lipschitzness of loss function)

@@ -128,6 +128,7 @@ class ExperimentConfig:
     net: NetConfig = field(default_factory=lambda: NetConfig(type='ConvNet'))
     learner: Union[BackpropConfig, ContinuousBackpropConfig] = field(default_factory=BackpropConfig)
     evaluation: Union[EvaluationConfig, None] = field(default_factory=EvaluationConfig)
+    track_rank: bool = False
     
     def __post_init__(self):
         if self.net.params.num_classes != self.data.num_classes:

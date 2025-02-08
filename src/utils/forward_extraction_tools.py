@@ -16,6 +16,27 @@ from core.data import build_data_loader
 from core.models import build_model
 from core.utils.logger import Logger
 
+def compute_rank_for_list_of_features(
+    list_of_features:list = [],#a list of tensors
+    extraction_function = None # the callable function to use for rank extraction
+        ):
+    
+    # length of list_of_features:
+    num_layers_to_extract = len(list_of_features)
+    
+    rank_summary_list = []
+    
+    for layer_idx in range(num_layers_to_extract):
+        extraction_results = extraction_function(list_of_features[lay_idx])
+        rank_summary_list.append(extraction_results)
+        
+    assert len(rank_summary_list )== num_layers_to_extract,"failed to extract ranks for some layers. "
+    return rank_summary_list
+    
+    
+    
+
+
 def extract_patch(images: torch.Tensor,
                   config: DictConfig ,
                   method='zero_padding',
