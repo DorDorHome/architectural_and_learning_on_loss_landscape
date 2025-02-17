@@ -52,7 +52,7 @@ net:
 
     # for both ConvNet_norm and ConvNet_SVD:
     weight_correction_scale: "relu_output_correction" #"relu_output_correction"  # 1 or "relu_output_correction" #previously 1.0#previously 1.0 for "ConvNet_norm"
-    fan_in_correction: False # True # previously false for "ConvNet_norm"
+    fan_in_correction: True # True # previously false for "ConvNet_norm"
     # for ConvNet_SVD:
     SVD_only_stride_1: False #always set to False
     allow_svd_values_negative: True # experiment this with True
