@@ -12,9 +12,10 @@ import torch.nn.functional as functional
 from torch.autograd.functional import jacobian
 from omegaconf import DictConfig
 # from configs import get_args
-from core.data import build_data_loader
-from core.models import build_model
-from core.utils.logger import Logger
+# from core.data import build_data_loader
+# from core.models import build_model
+# from core.utils.logger import Logger
+from src.utils.miscellaneous import *
 
 def compute_rank_for_list_of_features(
     list_of_features:list = [],#a list of tensors
@@ -139,42 +140,44 @@ def main():
 if __name__=='__main__':
 
     # Init
-    # args = get_args()
-    use_cuda = True
+    # # args = get_args()
+    # use_cuda = True
 
-    # Data
-    data_loader = build_data_loader(args, args.data, args.imagenet_dir, shuffle=True,
-                                    batch_size=1, num_workers=args.num_workers)
-    if args.sample_idx is not None:
-        selected_sample_indices = [int(item) for item in args.sample_idx.split(',')]
-    else:
-        selected_sample_indices = [1, 10]
-        args.sample_idx = ','.join([str(i) for i in selected_sample_indices])
+    # # Data
+    # data_loader = build_data_loader(args, args.data, args.imagenet_dir, shuffle=True,
+    #                                 batch_size=1, num_workers=args.num_workers)
+    # if args.sample_idx is not None:
+    #     selected_sample_indices = [int(item) for item in args.sample_idx.split(',')]
+    # else:
+    #     selected_sample_indices = [1, 10]
+    #     args.sample_idx = ','.join([str(i) for i in selected_sample_indices])
 
-    # Model
-    net = build_model(args.model, args.method, no_epoch=args.epoch_num, use_cuda=use_cuda,
-                      pretrained=not args.wo_pretrained, args=args)
-    with torch.no_grad():
-        test_inputs = torch.rand(1, 3, 224, 224)
-        num_layers = len(net(test_inputs.cuda() if use_cuda else test_inputs))
-        layers = ['Layer{}'.format(i) for i in range(num_layers)]
-    ranks = [[] for i in range(num_layers)]
+    # # Model
+    # net = build_model(args.model, args.method, no_epoch=args.epoch_num, use_cuda=use_cuda,
+    #                   pretrained=not args.wo_pretrained, args=args)
+    # with torch.no_grad():
+    #     test_inputs = torch.rand(1, 3, 224, 224)
+    #     num_layers = len(net(test_inputs.cuda() if use_cuda else test_inputs))
+    #     layers = ['Layer{}'.format(i) for i in range(num_layers)]
+    # ranks = [[] for i in range(num_layers)]
 
-    # Logging
-    log_path = 'logs_jacob/{}_{}/{}-{}_16x16_jacob_rank.txt'.format(
-        str(args.data), args.model, args.model, args.sample_idx)
-    if args.wo_pretrained:
-        log_path = log_path.replace('.txt', '_wo_pretrained.txt')
-    log_print = Logger(log_path)
-    log_print.write('logger successful\n')
-    log_print.write(str(layers) + '\n')
+    # # Logging
+    # log_path = 'logs_jacob/{}_{}/{}-{}_16x16_jacob_rank.txt'.format(
+    #     str(args.data), args.model, args.model, args.sample_idx)
+    # if args.wo_pretrained:
+    #     log_path = log_path.replace('.txt', '_wo_pretrained.txt')
+    # log_print = Logger(log_path)
+    # log_print.write('logger successful\n')
+    # log_print.write(str(layers) + '\n')
 
-    # Main
-    main()
+    # # Main
+    # main()
 
-    log_print.write('n_samples is {}: '.format(len(ranks[0])) + ', '.join(
-        ['{:.2f}'.format(np.mean(rank)) for rank in ranks]) + '\n')
-    log_print.close()
+    # log_print.write('n_samples is {}: '.format(len(ranks[0])) + ', '.join(
+    #     ['{:.2f}'.format(np.mean(rank)) for rank in ranks]) + '\n')
+    # log_print.close()
+    
+    
     # # create a random image tensor
     # images = torch.randn(1, 3, 224, 224)
     # patch_size = 16
@@ -186,3 +189,8 @@ if __name__=='__main__':
     # print(f'patch.size: {patch.size()}')
     # print(f'preprocess: {preprocess}')
     # print(f'patch: {patch}')
+    
+    images = torch.randn(1, 3, 224, 224)
+    
+    
+    compute_rank_for_list_of_features

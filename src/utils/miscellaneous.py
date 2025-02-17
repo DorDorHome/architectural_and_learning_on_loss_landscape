@@ -148,7 +148,7 @@ def compute_matrix_rank_summaries(m: torch.Tensor, prop=0.99, use_scipy=False):
     :param prop: (float) proportion used for computing the approximate rank
     :param use_scipy: (bool) indicates whether to compute the singular values in the cpu, only matters when using
                                   a gpu
-    :return: (torch int32) rank, (torch float32) effective rank, (torch int32) approximate rank
+    :return: (torch int32) rank, (torch float32) effective rank, (torch int32) approximate rank, approximate_rank_abs
     """
     if use_scipy:
         np_m = m.cpu().numpy()
@@ -162,7 +162,7 @@ def compute_matrix_rank_summaries(m: torch.Tensor, prop=0.99, use_scipy=False):
     return rank, effective_rank, approximate_rank, approximate_rank_abs
 
 
-def compute_effective_rank(sv: torch.Tensor):
+def compute_effective_rank(sv: torch.Tensor, use_pytorch_entropy=True):
     """
     Computes the effective rank as defined in this paper: https://ieeexplore.ieee.org/document/7098875/
     When computing the shannon entropy, 0 * log 0 is defined as 0
@@ -170,12 +170,19 @@ def compute_effective_rank(sv: torch.Tensor):
     :return: (float torch Tensor) the effective rank
     """
     norm_sv = sv / torch.sum(torch.abs(sv))
-    entropy = torch.tensor(0.0, dtype=torch.float32, device=sv.device)
-    for p in norm_sv:
-        if p > 0.0:
-            entropy -= p * torch.log(p)
+    if use_pytorch_entropy:
+        # usually more efficient
+        mask = norm_sv > 0.0
+        entropy = -torch.sum(norm_sv[mask] * torch.log(norm_sv[mask]))
+        effective_rank = torch.exp(entropy)
+    
+    else:
+        entropy = torch.tensor(0.0, dtype=torch.float32, device=sv.device)
+        for p in norm_sv:
+            if p > 0.0:
+                entropy -= p * torch.log(p)
 
-    effective_rank = torch.tensor(np.e) ** entropy
+        effective_rank = torch.tensor(np.e) ** entropy
     return effective_rank.to(torch.float32)
 
 
