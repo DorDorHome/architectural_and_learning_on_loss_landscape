@@ -184,7 +184,7 @@ class Norm_output_Conv2d(nn.Module):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         
         # update final scalar_to_use, to represent the norm 
-        self.norm_moving_average =  self.weight_decay_for_norm* self.last_output_norm +
+        self.norm_moving_average =  self.weight_decay_for_norm* self.last_output_norm +\
                         (1 -self.weight_decay_for_norm) * self.norm_moving_average 
         
         weight_to_use = self.weight/ self.norm_moving_average.view(self.out_channels, 1, 1, 1)
@@ -193,7 +193,7 @@ class Norm_output_Conv2d(nn.Module):
         # Perform the convolution operation
         out = F.conv2d(
             x,
-            weight_to_use
+            weight_to_use,
             self.bias,
             self.stride,
             self.padding,
