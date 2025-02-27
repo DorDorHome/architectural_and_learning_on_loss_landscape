@@ -33,7 +33,7 @@ from src.utils.miscellaneous import nll_accuracy
 
 # rank tracking:
 from src.utils.miscellaneous import compute_matrix_rank_summaries
-from src.utils.forward_extraction_tools import compute_rank_for_list_of_features
+from src.utils.forward_extraction_tools_source import compute_rank_for_list_of_features
 
 import torchvision.transforms as transforms
 import torchvision

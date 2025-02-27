@@ -5,6 +5,9 @@
 /outputs/*
 /configs/__pycache__/
 
+/experiments/comparison_of_different_measures_of_rank/results_plots
+/experiments/comparison_of_different_measures_of_rank/results_raw
+
 __pycache__/
 *.pyc
 /experiments/shifting_tasks_on_Imagenet/outputs/

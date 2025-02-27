@@ -1,0 +1,172 @@
+import numpy as np
+import time
+import tracemalloc
+from functools import partial
+import pandas as pd
+import matplotlib.pyplot as plt
+import torch
+from tqdm import tqdm
+import os
+
+from typing import Any
+import sys
+import pathlib
+# sys.path.append("../..")
+# sys.path.append("../../..")
+PROJECT_ROOT = pathlib.Path(__file__).resolve().parent.parent.parent
+print(PROJECT_ROOT)
+sys.path.append(str(PROJECT_ROOT))
+from src.utils.zeroth_order_features import compute_effective_rank
+
+
+def assess_efficiency_and_memory_of_rank_measures(measure_func, matrix, compute_svd_externally = False, num_runs = 5):
+    '''
+    assess the execution time and memory usage of a rank measure function
+    
+    '''
+    device = matrix.device
+    times = []
+    memories = []
+    list_average_values_over_batch = []
+
+    for _ in tqdm(range(num_runs), desc="Running..."):
+        if device.type == 'cuda':
+            torch.cuda.reset_peak_memory_stats(device)
+            torch.cuda.synchronize(device)
+        else:
+            tracemalloc.start()
+
+        start_time = time.perf_counter()
+        
+        # running the function:
+        batch_values = measure_func(input = matrix, input_is_svd = compute_svd_externally)
+        average_value_over_batch = batch_values.sum()/batch_size
+        if device.type == 'cuda':
+            torch.cuda.synchronize(device)
+            peak_memory = torch.cuda.max_memory_allocated(device)
+        else:
+            _, peak_memory = tracemalloc.get_traced_memory()
+            tracemalloc.stop()
+
+        end_time = time.perf_counter()
+        times.append(end_time - start_time)
+        memories.append(peak_memory)
+        list_average_values_over_batch.append(average_value_over_batch)
+
+    avg_time = sum(times) / num_runs
+    avg_memory = sum(memories) / num_runs
+    average_value_over_batch_and_run = sum(list_average_values_over_batch) / num_runs
+    return average_value_over_batch_and_run , avg_time, avg_memory
+
+    
+if __name__ == '__main__':
+
+    # statistical hyperparameters:
+    num_runs = 30
+    
+    # channel size to test on:
+    channel_sizes = [10, 50, 100]
+    
+    # feature size to test on:
+    feature_sizes = [10, 50, 100, 500, 1000, 5000]
+    
+    # placeholder for results:
+    results = []
+    
+    # device to test on:
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    
+    
+    batch_size = 1000
+    # feature_dim = 1000, 512  # Typical layer output size
+    # height, width = 28, 28  # Typical image size
+
+
+    # List of measures to evaluate
+    measures = [
+        # ("Stable Rank", stable_rank),
+        ("Effective Rank", compute_effective_rank),
+        # ("Approximate Rank", lambda x: approximate_rank(x, epsilon=1e-6)),
+        # ("Numerical Rank", numerical_rank),
+        # ("Nuclear Norm", nuclear_norm),
+    ]
+    
+    
+    for (channel_size, feature_size) in zip(channel_sizes, feature_sizes):
+        # Generate a random matrix
+        matrix = torch.rand(batch_size, channel_size, feature_size, device=device)
+        for name, func in measures:
+            average_value_over_batch_and_run, avg_time, avg_memory = assess_efficiency_and_memory_of_rank_measures(func, matrix, compute_svd_externally= False, num_runs=num_runs)
+            
+            memory_unit = "bytes" if device.type == 'cuda' else "bytes (CPU)"
+            results.append({
+                "batch_size": batch_size,
+                
+                "feature Size": feature_size,
+                "channel_size": channel_size,
+                "Matrix Size": channel_size * feature_size,
+                "Measure": name,
+                "Value_averaged_over_batch_and_run": average_value_over_batch_and_run,
+                "Time (s)": avg_time,
+                "Memory (bytes)": round(avg_memory, -2)  # Round to the nearest hundred
+            })
+ 
+        
+            print(f"{name}:")
+            print('  batch_size:', batch_size)
+            print('  feature Size:', feature_size)
+            print('  channel_size:', channel_size)
+            print(f"  Matrix Size: {channel_size * feature_size}")
+            print(f"  Value_averaged_over_batch_and_run: {average_value_over_batch_and_run:.4f}")
+            print(f"  Average Time: {avg_time:.6f} seconds")
+            print(f"  Peak Memory: {avg_memory:.2f} {memory_unit}")
+            print()
+    
+    # Convert results to a DataFrame
+    df = pd.DataFrame(results)
+    print(df)
+    # save the df in the results folder:
+    path_to_save_df = os.path.join(PROJECT_ROOT, 'experiments','comparison_of_different_measures_of_rank', 'results_raw','comparison_of_rank_measures_raw.csv')
+    df.to_csv(path_to_save_df)
+
+    # Step 5: Visualize the comparison
+    plt.figure(figsize=(10, 6))
+
+    # Plot time vs. matrix size for each measure
+    for name in df["Measure"].unique():
+        subset = df[df["Measure"] == name]
+        plt.plot(subset["Matrix Size"], subset["Time (s)"], label=f"{name} Time", marker="o")
+
+    plt.xlabel("Matrix Size")
+    plt.ylabel("Time (s)")
+    plt.title("Computational Efficiency of Proxy Measures")
+    plt.legend()
+    plt.grid(True)
+    #plt.show()
+    path_to_save_time_plot = os.path.join(PROJECT_ROOT, 'experiments',
+                                          'comparison_of_different_measures_of_rank',
+                                          'results_plots',
+                                          'comparison_of_rank_measures_time_plot.png')
+    plt.savefig(path_to_save_time_plot)
+
+    # Plot memory vs. feature size for each measure
+    plt.figure(figsize=(10, 6))
+
+    for name in df["Measure"].unique():
+        subset = df[df["Measure"] == name]
+        plt.plot(subset["Matrix Size"], subset["Memory (bytes)"], label=f"{name} Memory", marker="o")
+
+    plt.xlabel("Matrix Size")
+    plt.ylabel("Memory (bytes)")
+    plt.title("Memory Requirements of Proxy Measures")
+    plt.legend()
+    plt.grid(True)
+    path_to_save_memory_plot = os.path.join(PROJECT_ROOT, 'experiments',
+                                          'comparison_of_different_measures_of_rank',
+                                          'results_plots', 'comparison_of_rank_measures_memory_plot.png')
+    plt.savefig(path_to_save_memory_plot)
+    #plt.show()
+    
+    # plot 
+
+
