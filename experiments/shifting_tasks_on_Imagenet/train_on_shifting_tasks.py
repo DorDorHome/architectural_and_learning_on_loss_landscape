@@ -44,6 +44,12 @@ import torch
 import torch.nn as nn
 import os
 
+# for handling 
+import faulthandler
+faulthandler.enable()
+
+
+
 # Function to initialize model weights
 def initialize_weights(model):
     for m in model.modules():
