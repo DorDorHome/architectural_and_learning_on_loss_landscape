@@ -2,7 +2,7 @@
 runs: 1
 run_id: 0
 seed: 42
-device: 'cuda:0'
+device: 'cuda:1'
 epochs: 250 #epoch per tasks #250
 batch_size: 256 #128
 test: False # for testing the model after training
@@ -45,9 +45,9 @@ net:
     pretrained: False
     num_classes: ${num_classes_per_task}
     initialization: 'kaiming' #for ConvNet_SVD, will be overriden
-    conv_layer_bias: False # previously false # only for "ConvNet_norm"
+    conv_layer_bias: True # previously false # only for "ConvNet_norm"
     linear_layer_bias: True #for "ConvNet_norm"
-    activation: 'elu'
+    activation: 'selu'
     # activation: 'leaky_relu' #for "ConvNet_norm" and "ConvNet_SVD",  'sigmoid', 'tanh',  'relu', 'selu','swish' 'leaky_relu', 'elu'
 
     # for both ConvNet_norm and ConvNet_SVD:

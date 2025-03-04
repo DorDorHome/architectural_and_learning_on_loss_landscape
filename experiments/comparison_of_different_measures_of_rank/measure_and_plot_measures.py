@@ -16,10 +16,10 @@ import pathlib
 PROJECT_ROOT = pathlib.Path(__file__).resolve().parent.parent.parent
 print(PROJECT_ROOT)
 sys.path.append(str(PROJECT_ROOT))
-from src.utils.zeroth_order_features import compute_effective_rank, compute_approximate_rank, compute_l1_distribution_rank, compute_numerical_rank
+from src.utils.zeroth_order_features import compute_effective_rank, compute_approximate_rank, compute_l1_distribution_rank, compute_numerical_rank, compute_nuclear_norm
 
 
-def assess_efficiency_and_memory_of_rank_measures(measure_func, input:torch.Tensor , compute_svd_externally = False, num_runs = 5):
+def assess_efficiency_and_memory_of_rank_measures(measure_func, input:torch.Tensor , compute_svd_externally = False, use_randomized_svd: bool = False, q: int = 15,niter_for_randomized_svd:int = 2, num_runs = 5):
     '''
     assess the execution time and memory usage of a rank measure function
     
@@ -30,7 +30,7 @@ def assess_efficiency_and_memory_of_rank_measures(measure_func, input:torch.Tens
     
     elif not compute_svd_externally:
     # check the shape of input is 3d:
-        assert len(input.shape) == 3, "The input input should be 3d, first dimension is the batch size"
+        assert len(input.shape) == 3, "The input should be 3d, first dimension is the batch size"
     
     batch_size = input.shape[0]
     
@@ -49,7 +49,11 @@ def assess_efficiency_and_memory_of_rank_measures(measure_func, input:torch.Tens
         start_time = time.perf_counter()
         
         # running the function:
-        batch_values = measure_func(input = input, input_is_svd = compute_svd_externally)
+        batch_values = measure_func(input = input,
+                                    input_is_svd = compute_svd_externally,
+                                    use_randomized_svd = use_randomized_svd,
+                                    q = q,
+                                    niter = niter_for_randomized_svd)
         average_value_over_batch = batch_values.sum()/batch_size
         if device.type == 'cuda':
             torch.cuda.synchronize(device)
@@ -76,18 +80,23 @@ if __name__ == '__main__':
     # statistical hyperparameters:
     num_runs = 30
     
-    # channel size to test on:
-    channel_sizes = [3, 9, 27, 81]
+    # # channel size to test on:
+    # channel_sizes = [3, 64, 512] 
     
-    # feature size to test on:
-    feature_sizes = [10, 50, 100, 500, 1000, 5000]
+    # # # feature size to test on:
+    # feature_sizes = [ 1, 9, 49 ]
+    
+    
+    channel_feature_combinations = [(3, 9), (3, 49), (64, 1), (64, 9), (64, 49), (512, 1), (512, 9), (512, 49)]
+
     
     # placeholder for results:
     internal_svd_results = []
     external_svd_results = []
+    randomized_svd_results = []
     
     # device to test on:
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = torch.device('cuda:1' if torch.cuda.is_available() else 'cpu')
     
     
     batch_size = 1000
@@ -98,14 +107,184 @@ if __name__ == '__main__':
     # List of measures to evaluate
     measures = [
         # ("Stable Rank", stable_rank),
+        ("Nuclear Norm", compute_nuclear_norm),
         ("Effective Rank", compute_effective_rank),
         ("Approximate Rank", compute_approximate_rank),
         ("Numerical Rank", compute_numerical_rank),
-        ("L1 Distribution Rank", compute_l1_distribution_rank),
+        ("L1 Distribution Rank", compute_l1_distribution_rank)
+
     ]
     
+    # 1. rankomized svd:
+    # define number of q to use:
+    q = 15
     
-    for (channel_size, feature_size) in zip(channel_sizes, feature_sizes):
+    #for (channel_size, feature_size) in zip(channel_sizes, feature_sizes):
+    for (channel_size, feature_size) in channel_feature_combinations:
+        # Generate a random tensor of the appropriate size
+        input = torch.rand(batch_size, channel_size, feature_size, device=device)
+        for name, func in measures:
+            
+            # for external svd:
+            average_value_over_batch_and_run, avg_time, avg_memory = assess_efficiency_and_memory_of_rank_measures(
+                                                                                        measure_func=func, input = input,
+                                                                                        compute_svd_externally= False,
+                                                                                        use_randomized_svd= True,
+                                                                                        q = q,
+                                                                                        niter_for_randomized_svd = 2,
+                                                                                        num_runs=num_runs)
+            
+            memory_unit = "bytes" if device.type == 'cuda' else "bytes (CPU)"
+            randomized_svd_results.append({
+                "batch_size": batch_size,
+                "feature Size": feature_size,
+                "channel_size": channel_size,
+                "Input_size_without_batch": channel_size * feature_size,
+                "Input_Size": batch_size * channel_size * feature_size,
+                "Measure": name,
+                "Value_averaged_over_batch_and_run": average_value_over_batch_and_run,
+                "Time (s)": avg_time,
+                "Memory (bytes)": round(avg_memory, -2)  # Round to the nearest hundred
+            })
+        
+            print("randomized_svd_results:")
+            print(f"{name}:")
+            print('  batch_size:', batch_size)
+            print('  feature Size:', feature_size)
+            print('  channel_size:', channel_size)
+            print(f"  Input_Size: {batch_size * channel_size * feature_size}")
+            print(f"  Value_averaged_over_batch_and_run: {average_value_over_batch_and_run:.4f}")
+            print(f"  Average Time: {avg_time:.6f} seconds")
+            print(f"  Peak Memory: {avg_memory:.2f} {memory_unit}")
+            print()
+    
+    # Convert results to a DataFrame
+    df_randomized_svd = pd.DataFrame(randomized_svd_results)
+    
+    # save the df in the results folder:
+    path_to_save_df_randomized_svd = os.path.join(folder_for_raw_results, 'comparison_of_rank_measures_randomized_svd_raw.csv')
+    df_randomized_svd.to_csv(path_to_save_df_randomized_svd)
+    
+    # Step 5: Visualize the comparison
+    plt.figure(figsize=(10, 6))
+    
+    # Plot time vs. input size for each measure
+    for name in df_randomized_svd["Measure"].unique():
+        subset = df_randomized_svd[df_randomized_svd["Measure"] == name]
+        plt.plot(subset["Input_Size"], subset["Time (s)"], label=f"{name} Time", marker="o")
+    
+    plt.xlabel("Input_Size")
+    plt.ylabel("Time (s)")
+    plt.title("Computational Efficiency of Proxy Measures with randomized svd")
+    plt.legend()
+    plt.grid(True)
+    #plt.show()
+    path_to_save_time_plot = os.path.join(folder_for_plots, 'comparison_of_randomized_svd_rank_measures_time_plot.png')
+    plt.savefig(path_to_save_time_plot)
+    
+    # Plot memory vs. feature size for each measure
+    plt.figure(figsize=(10, 6))
+    
+    for name in df_randomized_svd["Measure"].unique():
+        subset = df_randomized_svd[df_randomized_svd["Measure"] == name]
+        plt.plot(subset["Input_Size"], subset["Memory (bytes)"], label=f"{name} Memory", marker="o")
+        
+    plt.xlabel("Input_Size")
+    plt.ylabel("Memory (bytes)")
+    plt.title("Memory Requirements of Proxy Measures with randomized svd")
+    plt.legend()
+    plt.grid(True)
+    path_to_save_memory_plot = os.path.join(folder_for_plots, 'comparison_of_randomized_svd_rank_measures_memory_plot.png')
+    plt.savefig(path_to_save_memory_plot)
+    
+    # delete the results:
+    del df_randomized_svd
+    del randomized_svd_results
+    
+    # 2. external svd:
+    #for (channel_size, feature_size) in zip(channel_sizes, feature_sizes):
+    for (channel_size, feature_size) in channel_feature_combinations:
+        # Generate a random tensor of the appropriate size
+        input = torch.rand(batch_size, channel_size, feature_size, device=device)
+        # for external svd:
+        svd_input = torch.linalg.svdvals(input)
+        
+        for name, func in measures:        
+            # for external svd:
+            average_value_over_batch_and_run, avg_time, avg_memory = assess_efficiency_and_memory_of_rank_measures(func, svd_input,
+                                                                                                                    compute_svd_externally= True,
+                                                                                                                    num_runs=num_runs)
+                
+            external_svd_results.append({
+            "batch_size": batch_size,
+            "feature Size": feature_size,
+            "channel_size": channel_size,
+            "Input_size_without_batch": channel_size * feature_size,
+            "Input_Size": batch_size * channel_size * feature_size,
+            "Measure": name,
+            "Value_averaged_over_batch_and_run": average_value_over_batch_and_run,
+            "Time (s)": avg_time,
+            "Memory (bytes)": round(avg_memory, -2)  # Round to the nearest hundred
+            })
+    
+            
+            print('external svd results:')
+            print(f"{name}:")
+            print('  batch_size:', batch_size)
+            print('  feature Size:', feature_size)
+            print('  channel_size:', channel_size)
+            print(f"  Input_Size: {batch_size * channel_size * feature_size}")
+            print(f"  Value_averaged_over_batch_and_run: {average_value_over_batch_and_run:.4f}")
+            print(f"  Average Time: {avg_time:.6f} seconds")
+            print(f"  Peak Memory: {avg_memory:.2f} {memory_unit}")
+            print()
+                
+
+    # Convert results to a DataFrame
+    df_external_svd = pd.DataFrame(external_svd_results)
+    print(df_external_svd)
+    # save the df in the results folder:
+    path_to_save_df_external_svd = os.path.join(folder_for_raw_results, 'comparison_of_rank_measures_external_svd_raw.csv')
+    df_external_svd.to_csv(path_to_save_df_external_svd)
+
+    # Step 5: Visualize the comparison
+    plt.figure(figsize=(10, 6))
+
+    # Plot time vs. input size for each measure
+    for name in df_external_svd["Measure"].unique():
+        subset = df_external_svd[df_external_svd["Measure"] == name]
+        plt.plot(subset["Input_Size"], subset["Time (s)"], label=f"{name} Time", marker="o")
+
+    plt.xlabel("Input_Size")
+    plt.ylabel("Time (s)")
+    plt.title("Computational Efficiency of Proxy Measures with external svd")
+    plt.legend()
+    plt.grid(True)
+    #plt.show()
+    path_to_save_time_plot = os.path.join(folder_for_plots,
+                                          'comparison_of_external_svd_rank_measures_time_plot.png')
+    plt.savefig(path_to_save_time_plot)
+
+    # Plot memory vs. feature size for each measure
+    plt.figure(figsize=(10, 6))
+
+    for name in df_external_svd["Measure"].unique():
+        subset = df_external_svd[df_external_svd["Measure"] == name]
+        plt.plot(subset["Input_Size"], subset["Memory (bytes)"], label=f"{name} Memory", marker="o")
+
+    plt.xlabel("Input_Size")
+    plt.ylabel("Memory (bytes)")
+    plt.title("Memory Requirements of Proxy Measures with external svd")
+    plt.legend()
+    plt.grid(True)
+    path_to_save_memory_plot = os.path.join(folder_for_plots, 'comparison_of_external_svd_rank_measures_memory_plot.png')
+    plt.savefig(path_to_save_memory_plot)
+
+    
+    
+    # 3. internal svd: 
+    #for (channel_size, feature_size) in zip(channel_sizes, feature_sizes):
+    for (channel_size, feature_size) in channel_feature_combintations:
         # Generate a random tensor of the appropriate size
         input = torch.rand(batch_size, channel_size, feature_size, device=device)
         for name, func in measures:
@@ -179,80 +358,4 @@ if __name__ == '__main__':
     plt.savefig(path_to_save_memory_plot)
     #plt.show()
     
-    # plot 
-    for (channel_size, feature_size) in zip(channel_sizes, feature_sizes):
-        # Generate a random tensor of the appropriate size
-        input = torch.rand(batch_size, channel_size, feature_size, device=device)
-        # for external svd:
-        svd_input = torch.linalg.svdvals(input)
-        
-        for name, func in measures:        
-            # for external svd:
-            average_value_over_batch_and_run, avg_time, avg_memory = assess_efficiency_and_memory_of_rank_measures(func, svd_input,
-                                                                                                                    compute_svd_externally= True,
-                                                                                                                    num_runs=num_runs)
-                
-            external_svd_results.append({
-            "batch_size": batch_size,
-            "feature Size": feature_size,
-            "channel_size": channel_size,
-            "Input_size_without_batch": channel_size * feature_size,
-            "Input_Size": batch_size * channel_size * feature_size,
-            "Measure": name,
-            "Value_averaged_over_batch_and_run": average_value_over_batch_and_run,
-            "Time (s)": avg_time,
-            "Memory (bytes)": round(avg_memory, -2)  # Round to the nearest hundred
-            })
     
-            
-            print(f"{name}:")
-            print('  batch_size:', batch_size)
-            print('  feature Size:', feature_size)
-            print('  channel_size:', channel_size)
-            print(f"  Input_Size: {batch_size * channel_size * feature_size}")
-            print(f"  Value_averaged_over_batch_and_run: {average_value_over_batch_and_run:.4f}")
-            print(f"  Average Time: {avg_time:.6f} seconds")
-            print(f"  Peak Memory: {avg_memory:.2f} {memory_unit}")
-            print()
-                
-
-    # Convert results to a DataFrame
-    df_external_svd = pd.DataFrame(external_svd_results)
-    print(df_external_svd)
-    # save the df in the results folder:
-    path_to_save_df_external_svd = os.path.join(folder_for_raw_results, 'comparison_of_rank_measures_external_svd_raw.csv')
-    df_external_svd.to_csv(path_to_save_df_external_svd)
-
-    # Step 5: Visualize the comparison
-    plt.figure(figsize=(10, 6))
-
-    # Plot time vs. input size for each measure
-    for name in df_external_svd["Measure"].unique():
-        subset = df_external_svd[df_external_svd["Measure"] == name]
-        plt.plot(subset["Input_Size"], subset["Time (s)"], label=f"{name} Time", marker="o")
-
-    plt.xlabel("Input_Size")
-    plt.ylabel("Time (s)")
-    plt.title("Computational Efficiency of Proxy Measures with external svd")
-    plt.legend()
-    plt.grid(True)
-    #plt.show()
-    path_to_save_time_plot = os.path.join(folder_for_plots,
-                                          'comparison_of_external_svd_rank_measures_time_plot.png')
-    plt.savefig(path_to_save_time_plot)
-
-    # Plot memory vs. feature size for each measure
-    plt.figure(figsize=(10, 6))
-
-    for name in df_external_svd["Measure"].unique():
-        subset = df_external_svd[df_external_svd["Measure"] == name]
-        plt.plot(subset["Input_Size"], subset["Memory (bytes)"], label=f"{name} Memory", marker="o")
-
-    plt.xlabel("Input_Size")
-    plt.ylabel("Memory (bytes)")
-    plt.title("Memory Requirements of Proxy Measures with external svd")
-    plt.legend()
-    plt.grid(True)
-    path_to_save_memory_plot = os.path.join(folder_for_plots, 'comparison_of_external_svd_rank_measures_memory_plot.png')
-    plt.savefig(path_to_save_memory_plot)
-
