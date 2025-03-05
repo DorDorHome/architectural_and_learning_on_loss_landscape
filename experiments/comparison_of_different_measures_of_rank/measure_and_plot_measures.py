@@ -171,6 +171,7 @@ if __name__ == '__main__':
     # Plot time vs. input size for each measure
     for name in df_randomized_svd["Measure"].unique():
         subset = df_randomized_svd[df_randomized_svd["Measure"] == name]
+        subset = subset.sort_values("Input_Size")
         plt.plot(subset["Input_Size"], subset["Time (s)"], label=f"{name} Time", marker="o")
     
     plt.xlabel("Input_Size")
@@ -187,6 +188,7 @@ if __name__ == '__main__':
     
     for name in df_randomized_svd["Measure"].unique():
         subset = df_randomized_svd[df_randomized_svd["Measure"] == name]
+        subset = subset.sort_values("Input_Size")
         plt.plot(subset["Input_Size"], subset["Memory (bytes)"], label=f"{name} Memory", marker="o")
         
     plt.xlabel("Input_Size")
@@ -253,6 +255,7 @@ if __name__ == '__main__':
     # Plot time vs. input size for each measure
     for name in df_external_svd["Measure"].unique():
         subset = df_external_svd[df_external_svd["Measure"] == name]
+        subset = subset.sort_values("Input_Size")
         plt.plot(subset["Input_Size"], subset["Time (s)"], label=f"{name} Time", marker="o")
 
     plt.xlabel("Input_Size")
@@ -270,6 +273,7 @@ if __name__ == '__main__':
 
     for name in df_external_svd["Measure"].unique():
         subset = df_external_svd[df_external_svd["Measure"] == name]
+        subset = subset.sort_values("Input_Size")
         plt.plot(subset["Input_Size"], subset["Memory (bytes)"], label=f"{name} Memory", marker="o")
 
     plt.xlabel("Input_Size")
@@ -284,7 +288,7 @@ if __name__ == '__main__':
     
     # 3. internal svd: 
     #for (channel_size, feature_size) in zip(channel_sizes, feature_sizes):
-    for (channel_size, feature_size) in channel_feature_combintations:
+    for (channel_size, feature_size) in channel_feature_combinations:
         # Generate a random tensor of the appropriate size
         input = torch.rand(batch_size, channel_size, feature_size, device=device)
         for name, func in measures:
@@ -330,6 +334,7 @@ if __name__ == '__main__':
     # Plot time vs. input size for each measure
     for name in df_internal_svd["Measure"].unique():
         subset = df_internal_svd[df_internal_svd["Measure"] == name]
+        subset = subset.sort_values("Input_Size")
         plt.plot(subset["Input_Size"], subset["Time (s)"], label=f"{name} Time", marker="o")
 
     plt.xlabel("Input_Size")
@@ -347,6 +352,7 @@ if __name__ == '__main__':
 
     for name in df_internal_svd["Measure"].unique():
         subset = df_internal_svd[df_internal_svd["Measure"] == name]
+        subset = subset.sort_values("Input_Size")
         plt.plot(subset["Input_Size"], subset["Memory (bytes)"], label=f"{name} Memory", marker="o")
 
     plt.xlabel("Input_Size")

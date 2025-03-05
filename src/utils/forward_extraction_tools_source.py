@@ -74,6 +74,7 @@ def extract_patch(images: torch.Tensor,
         elif method == 'zero_padding':
             # this method extract a patch of the image, starting from row_idx and col_idx:
             # to give a patch of size patch_size x patch_size. shape: (batch_size, channels, patch_size, patch_size)
+            assert row_idx + patch_size <= image_size and col_idx + patch_size <= image_size, "Patch exceeds image bounds"
             images = images[:, :, row_idx:row_idx + patch_size, col_idx:col_idx + patch_size]
             padding_size = [(image_size - patch_size) // 2 for _ in range(4)]
             
@@ -98,12 +99,7 @@ def compute_jacobian_rank(net, images, preprocess, sample_idx, save_jacob=False,
         Batch of input images.
     preprocess:
 
-    
-    
-    
-    
-    
-    
+
     """
     
     
