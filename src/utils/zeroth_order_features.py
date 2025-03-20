@@ -332,9 +332,14 @@ if __name__ == "__main__":
     
     batched_m = torch.randn(32, 100, 100)
     sv = torch.linalg.svdvals(m)
-    rank = torch.linalg.matrix_rank(m)
+    rank = torch.linalg.matrix_rank(batched_m)
     effective_rank = compute_effective_rank(input=batched_m)
     approximate_rank = compute_approximate_rank(batched_m)
     abs_approximate_rank = compute_l1_distribution_rank(batched_m)
     numerical_rank = compute_numerical_rank(batched_m, epsilon= 0.1)
-    print(rank, effective_rank, approximate_rank, abs_approximate_rank, numerical_rank)
+    print("Rank:", rank)
+    print("\nEffective Rank:", effective_rank)
+    print("\nApproximate Rank:", approximate_rank)
+    print("\nL1 Distribution Rank:", abs_approximate_rank)
+    print("\nNumerical Rank:", numerical_rank)
+  
