@@ -77,6 +77,13 @@ if __name__ == '__main__':
     
     folder_for_raw_results = os.path.join(PROJECT_ROOT, 'experiments','comparison_of_different_measures_of_rank', 'results_raw')
     folder_for_plots = os.path.join(PROJECT_ROOT, 'experiments','comparison_of_different_measures_of_rank', 'results_plots')
+    
+    #create the folders if they do not exist:
+    if not os.path.exists(folder_for_raw_results):
+        os.makedirs(folder_for_raw_results)
+    if not os.path.exists(folder_for_plots):
+        os.makedirs(folder_for_plots)
+    
     # statistical hyperparameters:
     num_runs = 30
     
@@ -96,7 +103,8 @@ if __name__ == '__main__':
     randomized_svd_results = []
     
     # device to test on:
-    device = torch.device('cuda:1' if torch.cuda.is_available() else 'cpu')
+    device = torch.device('cpu')
+    #device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     
     
     batch_size = 1000
