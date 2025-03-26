@@ -103,8 +103,8 @@ if __name__ == '__main__':
     randomized_svd_results = []
     
     # device to test on:
-    device = torch.device('cpu')
-    #device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    #device = torch.device('cpu')
+    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     
     
     batch_size = 1000
