@@ -20,3 +20,4 @@ experiments/basic_training/outputs
 experiments/basic_training/outputs/*
 experiments/basic_training/outputs/*/*
 .vscode/launch.json
+.vscode/settings.json
