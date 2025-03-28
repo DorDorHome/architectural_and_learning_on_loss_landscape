@@ -1,6 +1,7 @@
 """
-The basic experiment, with rank tracking.
-
+shift tasks, with rank tracking.
+Purpose:
+to see the correlation (if any) between the loss of plasticity and the rank of the features, rank of CNN filters, dead units, rank of CNN filters times zerod activation during the training process.
 
 """
 
@@ -20,6 +21,7 @@ import os
 # import numpy as np
 from tqdm import tqdm
 import hydra 
+import numpy as np #used in concatenating the data
 from omegaconf import OmegaConf # , DictConfig
 # import algorithm:
 from src.algos.supervised.basic_backprop import Backprop
@@ -33,7 +35,7 @@ from src.utils.miscellaneous import nll_accuracy
 
 # rank tracking:
 from src.utils.miscellaneous import compute_matrix_rank_summaries
-from src.utils.forward_extraction_tools_source import compute_rank_for_list_of_features
+from src.utils.partial_jacobian_source import compute_rank_for_list_of_features
 
 import torchvision.transforms as transforms
 import torchvision
@@ -41,15 +43,22 @@ import torch
 
 
 
-@hydra.main(config_path="cfg", config_name="rank_tracking_config")
+@hydra.main(config_path="cfg", config_name="rank_tracking_in_shifting_tasks_config")
 def main(cfg: ExperimentConfig):
     print(OmegaConf.to_yaml(cfg))
     
     #setup network architecture, 
     
     # net = ConvNet(cfg.net.netparams)
+    if cfg.net.network_class == 'fc':
+        assert cfg.net.netparams.num_outputs == cfg.num_classes_per_task
+    elif cfg.net.network_class == 'conv':
+        assert cfg.net.netparams.num_classes == cfg.num_classes_per_task
+    
     
     net = model_factory(cfg.net)
+    # set device for net
+    net.to(cfg.device)
 
     #verifty cfg.runs ==1:
     if cfg.runs != 1:
@@ -63,11 +72,36 @@ def main(cfg: ExperimentConfig):
     # optimizer is setup in the learner
     # loss function is setup in the learner
     if cfg.learner.type == 'backprop':
-        learner = Backprop(net, cfg.learner)
-    if cfg.learner.type == 'cbp' and cfg.net.type == 'conv_net':
-        from src.algos.supervised.continuous_backprop_with_GnT import ContinualBackprop_for_ConvNet
-        learner = ContinualBackprop_for_ConvNet(net, cfg.learner)
+        learner = Backprop(net, cfg.learner, cfg.net)
+    if cfg.learner.type == 'cbp' and cfg.net.type == 'ConvNet':
+        from src.algos.supervised.continuous_backprop_with_GnT import ContinuousBackprop_for_ConvNet
+        learner = ContinuousBackprop_for_ConvNet(net, cfg.learner)
+    if cfg.learner.type == 'cbp' and cfg.net.type == 'deep_ffnn_weight_norm_multi_channel_rescale':
+        from src.algos.supervised.continuous_backprop_with_GnT import ContinualBackprop_for_FC
+        learner = ContinualBackprop_for_FC(net, cfg.learner)
+        
+    class_order_path = os.path.join(cfg.data.data_path, cfg.data.dataset, 'data','class_order')
+    # load the class order:
+    with open(class_order_path, 'rb+') as f:
+        class_order = pickle.load(f)
+        # class order is a numpy array of shape (300, 14000), containing number from 0 to 999
     
+    # set class_order based on the run_id:
+    class_order = class_order[cfg.run_id]
+    
+    # for extending the class_order to cover the tasks required:
+    num_class_repetitions_required = int(cfg.num_classes_per_task*cfg.num_tasks /cfg.data.num_classes) + 1
+    class_order = np.concatenate([class_order]*num_class_repetitions_required)
+    
+    # setup data:
+    transform = None
+    Imagnet_dataset_generator = dataset_factory(cfg.data, transform)
+    
+    # for setting up batch:
+    train_examples_per_epoch = cfg.train_size_per_class*cfg.num_classes_per_task
+    
+    epochs_per_task = cfg.epochs
+        
     # setup data:
     # load the transfrom based on the dataset and model:
     # combination of dataset and model determines the transform

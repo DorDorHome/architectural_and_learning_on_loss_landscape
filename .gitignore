@@ -21,3 +21,6 @@ experiments/basic_training/outputs/*
 experiments/basic_training/outputs/*/*
 .vscode/launch.json
 .vscode/settings.json
+
+
+permuted_mnist_example.png

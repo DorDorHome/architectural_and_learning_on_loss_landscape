@@ -1,7 +1,18 @@
 # This file contains classes useful for shifting the dataset.
 
+import sys
+import pathlib
+PROJECT_ROOT = pathlib.Path(__file__).resolve().parent.parent.parent
+print(PROJECT_ROOT)
+sys.path.append(str(PROJECT_ROOT))
+# import dataset_factory:
+
+from src.data_loading.dataset_factory import dataset_factory
+
+
 import torch
 from torch.utils.data import Dataset
+
 
 class PermutedDataset(Dataset):
     def __init__(self, original_dataset, permutation=None, flatten=False, transform=None):
@@ -92,14 +103,43 @@ if __name__ == "__main__":
     from torchvision import datasets, transforms
     from PIL import Image
     import numpy as np
+    from configs.configurations import DataConfig
 
-    # Load MNIST dataset
-    mnist_train = datasets.MNIST(root="data", train=True, download=False, transform=transforms.ToTensor())
-    mnist_test = datasets.MNIST(root="data", train=False, download=False, transform=transforms.ToTensor())
+    #set DataConfig attributes:
+    data_config = DataConfig()
+    data_config.dataset = 'MNIST'
+    data_config.use_torchvision = True
+    data_config.data_path = '/hdda/datasets'
+    data_config.num_classes = 10
+    data_config.shuffle = False
+    data_config.transform = None
+    
+    
+    
+    test_dataconfig2 = DataConfig(dataset='CIFAR10',
+                                data_path= "/hdda/datasets",
+                                use_torchvision=True)
+
+    
+    
+    cifar_train, cifar_test = dataset_factory(test_dataconfig2, transform=None)
+
+    
+    # use dataset_factory to load the dataset:
+    mnist_train, mnist_test = dataset_factory(data_config, transform=transforms.ToTensor(), with_testset=True) 
+    
+    # print the shape of the dataset:
+    print(mnist_train[0][0].shape)  # Example shape of the first image
+    
+    
+    
+    
+
 
     # Define a permutation (e.g., random shuffle)
     np.random.seed(0)
-    permutation = np.random.permutation(28 * 28)  # Shuffle pixels
+    permutation = None
+    #= np.random.permutation(28 * 28)  # Shuffle pixels
 
     # Wrap MNIST dataset with permutation
     permuted_mnist_train = PermutedDataset(mnist_train, permutation=permutation, flatten=True)
