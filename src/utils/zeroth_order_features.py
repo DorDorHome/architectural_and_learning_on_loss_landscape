@@ -13,28 +13,29 @@ import torch
 def compute_effective_rank(input: torch.Tensor, input_is_svd: bool = False, use_pytorch_entropy: bool = True, 
                           use_randomized_svd: bool = True, q: int = 20, niter: int = 2) -> torch.Tensor:
     """
-    Computes the effective rank as defined in this paper: https://ieeexplore.ieee.org/document/7098875/
-    When computing the shannon entropy, 0 * log 0 is defined as 0
-    input : (float torch Tensor) an array of singular values or the tensor of shape (batch, m, n), batch of matrices.
-    input_is_svd : (bool) whether the input is the svd of the matrix    
-    use_pytorch_entropy (bool): Use vectorized entropy computation. Default: True.
-    use_randomized_svd (bool): Use randomized SVD (torch.svd_lowrank) instead of full SVD. Default: True.
-    q (int): Number of singular values to approximate with randomized SVD. Default: 20.
-    niter (int): Number of subspace iterations for randomized SVD. Default: 2.
+    Computes the effective rank as defined in: https://ieeexplore.ieee.org/document/7098875/
+    When computing the Shannon entropy, 0 * log 0 is defined as 0.
+
+    Args:
+        input (torch.Tensor):
+            - If input_is_svd=True: Singular values of shape (k,) for a single matrix.
+            - If input_is_svd=False: Single matrix of shape (m, n).
+        input_is_svd (bool): Whether the input is precomputed singular values. Default: False.
+        use_pytorch_entropy (bool): Use vectorized entropy computation. Default: True.
+        use_randomized_svd (bool): Use randomized SVD (torch.svd_lowrank) instead of full SVD. Default: True.
+        q (int): Number of singular values to approximate with randomized SVD. Default: 20.
+        niter (int): Number of subspace iterations for randomized SVD. Default: 2.
     
-    
-    return: 
-        torch Tensor:the effective rank (scalar for non-batched, 1D for batched).
+    Returns:
+        torch.Tensor: The effective rank (scalar tensor).
     """
     if input_is_svd:
-        assert input.dim() in [1,2], "Singular values must be 1d, or 2d for batch of singular values"
+        assert input.dim() == 1, "Singular values must be 1d for a single matrix"
         sv = input
     else:
-        assert input.dim() in [2, 3], "Input must be a matrix or a batch of matrices"
-        if input.dim() == 2:
-            m, n = input.shape
-        else:  # 3D: (batch, m, n)
-            _, m, n = input.shape
+        assert input.dim() ==2 , "Input must be a matrix"
+
+        m, n = input.shape
         q_adjusted = min(q, min(m, n))  # Cap q at min(m, n)        
         
     
@@ -42,39 +43,36 @@ def compute_effective_rank(input: torch.Tensor, input_is_svd: bool = False, use_
             _, S, _ = torch.svd_lowrank(input, q=q_adjusted, niter=niter)
             sv = S
         else:
-            sv = torch.linalg.svdvals(input)# shape: (batch, min(m, n)) or (min(m, n))
-    assert sv.dim() in [1, 2], "Singular values must be 1d, or 2d for batch of singular values"
+            sv = torch.linalg.svdvals(input)# shape: (min(m, n),)
+
+    # compute relative epsilon to avoid numerical issues
+    max_sv = torch.max(sv) if len(sv) > 0 else 0# largest singular value
     
-    # add batch dimension if not present:
-    if sv.dim() == 1:
-        sv = sv.unsqueeze(0)
+    # return the rank as zero if max_sv is zero:    
+    if max_sv == 0:
+        return torch.tensor(0, dtype=input.dtype)
     
-    sum_sv = torch.sum(sv, dim=-1, keepdim=True) + 1e-6
+    #epsilon for division by zero:
+    epsilon = max(1e-12, max_sv * 1e-8)  # avoid division by zero
+
+    sum_sv = torch.sum(sv) + epsilon  # sum of singular values
     norm_sv = sv / sum_sv
     
-    
-    
+
     if use_pytorch_entropy:
         # usually more efficient
-        entropy = -torch.sum(norm_sv * torch.log(norm_sv + 1e-10), dim=-1)
+        log_epsilon = epsilon / sum_sv
+        entropy = -torch.sum(norm_sv * torch.log(norm_sv + log_epsilon))
         effective_rank = torch.exp(entropy)
     
     else:
-        batch_size = sv.shape[0]
-        entropy = torch.zeros(batch_size, dtype=torch.float32, device=sv.device)
-        for i in range(batch_size):
-            for p in norm_sv[i]:
-                if p > 0.0:
-                    entropy[i] -= p * torch.log(p)
+        mask = norm_sv > 0.0
+        entropy = -torch.sum(norm_sv[mask] * torch.log(norm_sv[mask]))
+        effective_rank = torch.exp(entropy)
 
-        effective_rank = torch.tensor(np.e) ** entropy
-    
-    # Squeeze output for non-batched input
-    if input.dim() == 1 or (not input_is_svd and input.dim() == 2):
-        effective_rank = effective_rank.squeeze(0)  # Scalar
-        
-        
     return effective_rank.to(input.dtype)
+
+
 
 def compute_approximate_rank(input: torch.Tensor, input_is_svd: bool = False, prop: float = 0.99, 
                              use_randomized_svd: bool = True, q: int = 20, niter: int = 2) -> torch.Tensor:
@@ -82,60 +80,58 @@ def compute_approximate_rank(input: torch.Tensor, input_is_svd: bool = False, pr
     Computes the approximate rank as defined in this paper: https://arxiv.org/pdf/1909.12255.pdf
     
     
-    input: (torch.Tensor) an array of singular values or the tensor of shape (batch, m, n), batch of matrices.
-    input_is_svd : (bool) whether the input is the svd of the matrix
-    param prop: (float) proportion of the variance captured by the approximate rank
-    return: (torch.Tensor) integer tensor the approximate rank
-    
+    Args:
+        input (torch.Tensor):
+            - If input_is_svd=True: Singular values of shape (k,) for a single matrix.
+            - If input_is_svd=False: Single matrix of shape (m, n).
+        input_is_svd (bool): Whether the input is precomputed singular values. Default: False.
+        prop (float): Proportion of variance captured by the approximate rank. Default: 0.99.
+        use_randomized_svd (bool): Use randomized SVD. Default: True.
+        q (int): Number of singular values to approximate. Default: 20.
+        niter (int): Number of subspace iterations. Default: 2.
+
+    Returns:
+        torch.Tensor: Approximate rank (scalar integer tensor).
     """
+    
     assert 0 < prop <= 1, "prop must be between 0 and 1"
     if input_is_svd:
-        assert input.dim() in [1,2], "Singular values must be 1d, or 2d for batch of singular values"
+        assert input.dim() == 1, "Singular values must be 1d, or 2d for batch of singular values"
         sv = input
     else:
-        assert input.dim() in [2, 3], "Input must be a matrix or a batch of matrices"
-        if input.dim() == 2:
-            m, n = input.shape
-        else:  # 3D: (batch, m, n)
-            _, m, n = input.shape
+        assert input.dim() ==2, "Input must be a matrix or a batch of matrices"
+        # compute the svd of the input:
+        m, n = input.shape
         q_adjusted = min(q, min(m, n))  # Cap q at min(m, n)        
-        
         if use_randomized_svd:
             _, S, _ = torch.svd_lowrank(input, q=q_adjusted, niter=niter)
             sv = S
         else:
             sv = torch.linalg.svdvals(input)# shape: (batch, min(m, n)) or (min(m, n))
     
-    assert sv.dim() in [1, 2], "Singular values must be 1d, or 2d for batch of singular values"
-    if sv.dim() == 1:
-        sv = sv.unsqueeze(0)# shape: (1, min(m, n))
+
     
-    sqrd_sv = sv ** 2 # in batch form, shape (batch, min(m, n)) or (min(m, n))
+    sqrd_sv = sv ** 2
     
-    # normalization is done for each member in the batch.
+    # compute relative epsilon to avoid numerical issues
+    max_sqrd_sv = torch.max(sqrd_sv) if len(sqrd_sv) > 0 else 0# largest singular value
+    epsilon = max(1e-12, max_sqrd_sv * 1e-8)  # avoid division by zero
+    sum_sqrd_sv = torch.sum(sqrd_sv) + epsilon  # sum of singular values
     # this is different from the implementation in the implementation in https://github.com/shibhansh/loss-of-plasticity
-    normed_sqrd_sv = sqrd_sv / (torch.sum(sqrd_sv, dim=-1, keepdim=True) + 1e-8)
+
+    normed_sqrd_sv = sqrd_sv / sum_sqrd_sv  # normalize the singular values
+    
     sorted_normed_sqrd_sv = torch.sort(normed_sqrd_sv,
-                                dim= -1,
                                 descending=True)[0]  # descending order
     
-    
-    cumulative_sums = torch.cumsum(sorted_normed_sqrd_sv, dim=-1)  # Shape: (batch, k)
-    # Create a tensor of prop values matching the batch size
-    batch_size = cumulative_sums.shape[0]
-    prop_tensor = torch.full((batch_size, 1), prop, device=cumulative_sums.device, dtype=cumulative_sums.dtype)
-        
-    
-    approximate_rank = torch.searchsorted(cumulative_sums, prop_tensor, right=True) + 1
+    cumulative_sums = torch.cumsum(sorted_normed_sqrd_sv, dim=0)
+
+    approximate_rank = torch.searchsorted(cumulative_sums, prop, right=True) + 1
     # while cumulative_ns_sv_sum < prop:
     #     cumulative_ns_sv_sum += normed_sqrd_sv[approximate_rank]
     #     approximate_rank += 1
     
-    # Squeeze output for non-batched input
-    if input.dim() == 1 or (not input_is_svd and input.dim() == 2):
-        approximate_rank = approximate_rank.squeeze(0)  # integer
-        
-    return approximate_rank.to(torch.int32)
+    return approximate_rank.to(input.dtype)
  
  
 def compute_l1_distribution_rank(input: torch.Tensor, input_is_svd: bool = False, prop: float = 0.99,
@@ -143,8 +139,13 @@ def compute_l1_distribution_rank(input: torch.Tensor, input_is_svd: bool = False
 
     """
     Computes the l1_distribution_rank as inspired by this paper, but : https://arxiv.org/pdf/1909.12255.pdf
+    The difference is that we use the l1 norm of the singular values instead of the l2 norm when 
+    computing the number of singular values needed to capture a certain proportion of the total singular value sum.
+    
     Args:
-        input (torch.Tensor): Singular values (1D or 2D) if input_is_svd=True, or matrices (2D or 3D) otherwise.
+        input (torch.Tensor):
+            - If input_is_svd=True: Singular values of shape (k,) for a single matrix.
+            - If input_is_svd=False: Single matrix of shape (m, n).
         input_is_svd (bool): Whether input is precomputed singular values. Default: False.
         prop (float): Proportion of total singular value sum to capture. Default: 0.99.
         use_randomized_svd (bool): Use randomized SVD. Default: True.
@@ -156,14 +157,12 @@ def compute_l1_distribution_rank(input: torch.Tensor, input_is_svd: bool = False
     """
     assert 0 < prop <= 1, "prop must be between 0 and 1"
     if input_is_svd:
-        assert input.dim() in [1, 2], "Singular values must be 1d, or 2d for batch of singular values"
+        assert input.dim() ==1, "Singular values must be 1d"
         sv = input
     else:
-        assert input.dim() in [2, 3], "Input must be a matrix or a batch of matrices"
-        if input.dim() == 2:
-            m, n = input.shape
-        else:  # 3D: (batch, m, n)
-            _, m, n = input.shape
+        assert input.dim() == 2, "Input must be a matrix"
+        # compute the svd of the input:
+        m, n = input.shape
         q_adjusted = min(q, min(m, n))  # Cap q at min(m, n)              
         if use_randomized_svd:
             U, S, V = torch.svd_lowrank(input, q=q_adjusted, niter=niter)
@@ -171,34 +170,25 @@ def compute_l1_distribution_rank(input: torch.Tensor, input_is_svd: bool = False
         else:
             sv = torch.linalg.svdvals(input)# shape: (batch, min(m, n)) or (min(m, n))
     
-    assert sv.dim() in [1, 2], "Singular values must be 1d, or 2d for batch of singular values"
-    if sv.dim() == 1:
-        sv = sv.unsqueeze(0)# shape: (1, min(m, n))
+    # compute relative epsilon to avoid numerical issues
+    max_sv = torch.max(sv) if len(sv) > 0 else 0# largest singular value
+    epsilon = max(1e-12, max_sv * 1e-8)  # avoid division by zero
+    sum_sv = torch.sum(sv) + epsilon  # sum of singular values
     
-    abs_sv = sv  # in batch form, shape (batch, min(m, n)) or (min(m, n))
     
-    # normalization is done for each member in the batch.
+
     # this is different from the implementation in the implementation in https://github.com/shibhansh/loss-of-plasticity
-    normed_abs_sv = abs_sv / (torch.sum(abs_sv, dim=-1, keepdim=True) + 1e-8)
+    normed_sv = sv / sum_sv  # normalize the singular values
     
-    sorted_normed_abs_sv = torch.sort(normed_abs_sv,
-                                dim=-1,
+    sorted_normed_sv = torch.sort(normed_sv,
                                 descending=True)[0]  # descending order
     
-    cumulative_sums = torch.cumsum(sorted_normed_abs_sv, dim=-1)  # Shape: (batch, k)
-    # Create a tensor of prop values matching the batch size
-    batch_size = cumulative_sums.shape[0]
-    prop_tensor = torch.full((batch_size, 1), prop, device=cumulative_sums.device, dtype=cumulative_sums.dtype)
-        
-    
-    abs_approximate_rank = torch.searchsorted(cumulative_sums, prop_tensor, right=True) + 1
+    cumulative_sums = torch.cumsum(sorted_normed_sv, dim=0)
+
+    abs_approximate_rank = torch.searchsorted(cumulative_sums, prop, right=True) + 1
 
     
-    # Squeeze output for non-batched input
-    if input.dim() == 1 or (not input_is_svd and input.dim() == 2):
-        abs_approximate_rank = abs_approximate_rank.squeeze(0)  # integer
-        
-    return abs_approximate_rank.to(torch.int32)
+    return abs_approximate_rank.to(input.dtype)
 
 
 def compute_numerical_rank(input: torch.Tensor, input_is_svd: bool = False, epsilon: float = 1e-2, 
@@ -213,8 +203,8 @@ def compute_numerical_rank(input: torch.Tensor, input_is_svd: bool = False, epsi
 
     Args:
         input (torch.Tensor): 
-            - If input_is_svd=True: Singular values of shape (k,) for a single matrix or (batch, k) for a batch.
-            - If input_is_svd=False: Matrix of shape (m, n) or batch of matrices of shape (batch, m, n).
+            - If input_is_svd=True: Singular values of shape (k,) for a single matrix .
+            - If input_is_svd=False: Matrix of shape (m, n).
         input_is_svd (bool): 
             Whether the input is precomputed singular values (True) or a matrix/matrices (False). Default: False.
         epsilon (float): Tolerance parameter. Default: 1e-2.
@@ -223,10 +213,8 @@ def compute_numerical_rank(input: torch.Tensor, input_is_svd: bool = False, epsi
         niter (int): Number of subspace iterations. Default: 2.
 
     Returns:
-        torch.Tensor: 
-            Numerical rank(s) as an int32 tensor. Scalar for non-batched input (1D singular values or 2D matrix),
-            otherwise a 1D tensor of shape (batch,) for batched input.
-
+        torch.Tensor:
+            Numerical rank as an integer tensor, with the same dtype as the input. 
     Raises:
         AssertionError: If epsilon ≤ 0, or if input dimensions are invalid.
     """
@@ -236,15 +224,13 @@ def compute_numerical_rank(input: torch.Tensor, input_is_svd: bool = False, epsi
     # Handle input based on whether it's singular values or matrices
     if input_is_svd:
         # Input is singular values: must be 1D (single set) or 2D (batch)
-        assert input.dim() in [1, 2], "Singular values must be 1D or 2D"
-        sv = input
+        assert input.dim() ==1, "Singular values must be 1d"
+        sv = input#input is already the singular values
     else:
-        # Input is matrices: must be 2D (single matrix) or 3D (batch)
-        assert input.dim() in [2, 3], "Input must be 2D or 3D"
-        if input.dim() == 2:
-            m, n = input.shape
-        else:  # 3D: (batch, m, n)
-            _, m, n = input.shape
+        # Input is matrices: must be 2D
+        assert input.dim() ==2, "Input must be 2D"
+        m, n = input.shape
+
         q_adjusted = min(q, min(m, n))  # Cap q at min(m, n)        
         
         if use_randomized_svd:
@@ -253,29 +239,22 @@ def compute_numerical_rank(input: torch.Tensor, input_is_svd: bool = False, epsi
         else:
             sv = torch.linalg.svdvals(input)  # Compute singular values
 
-    # Ensure sv is 2D: (batch_size, k)
-    if sv.dim() == 1:
-        sv = sv.unsqueeze(0)  # Shape: (1, k)
 
-    # Compute spectral norm (largest singular value for each matrix)
-    # sv is sorted in descending order by svdvals, so first column is the largest
-    spectral_norm = sv[:, 0]  # Shape: (batch_size,)
+    # Compute spectral norm (largest singular value for the matrix)
+    # sv is sorted in descending order by svdvals, so first element is the largest
+    spectral_norm = sv[0]  # a scalar
 
     # Compute threshold: ε * ||W||₂
-    threshold = epsilon * spectral_norm  # Shape: (batch_size,)
+    threshold = epsilon * spectral_norm  # a scalar
 
     # Compare all singular values to the threshold (broadcasting)
-    mask = sv >= threshold.unsqueeze(1)  # Shape: (batch_size, k)
+    mask = (sv >= threshold)
 
     # Numerical rank is the count of singular values >= threshold per matrix
-    numerical_rank = torch.sum(mask, dim=1)  # Shape: (batch_size,)
-
-    # For non-batched input, return a scalar; otherwise keep as 1D tensor
-    if input.dim() == 1 or (not input_is_svd and input.dim() == 2):
-        numerical_rank = numerical_rank.squeeze(0)  # Scalar tensor
+    numerical_rank = torch.sum(mask) # A scalar
 
     # Return as int32 tensor for consistency
-    return numerical_rank.to(torch.int32)
+    return numerical_rank.to(input.dtype)
 
 
 
@@ -295,12 +274,11 @@ def compute_nuclear_norm(input: torch.Tensor, input_is_svd: bool = False,
         torch.Tensor: Nuclear norm (scalar or batched).
     """
     if input_is_svd:
+        assert input.dim() == 1, "Singular values must be 1d"
         sv = input
     else:
-        if input.dim() == 2:
-            m, n = input.shape
-        else:  # 3D: (batch, m, n)
-            _, m, n = input.shape
+        assert input.dim() == 2,  "Input must be a matrix (2D)"
+        m, n = input.shape
         q_adjusted = min(q, min(m, n))  # Cap q at min(m, n)        
         
         if use_randomized_svd:
@@ -309,7 +287,7 @@ def compute_nuclear_norm(input: torch.Tensor, input_is_svd: bool = False,
             sv = S
         else:
             sv = torch.linalg.svdvals(input)
-    return sv.sum(dim = -1)# Sum over singular values, preserving batch dimension if present
+    return sv.sum()# Sum over singular values, preserving batch dimension if present
 
 
 
@@ -319,7 +297,9 @@ def compute_nuclear_norm(input: torch.Tensor, input_is_svd: bool = False,
 
     
 if __name__ == "__main__":
-    m = torch.randn(100, 100)
+    m = torch.randn(32, 100)
+    # zero out the first row:
+    m[0, :] = 0
     sv = torch.linalg.svdvals(m)
     rank = torch.linalg.matrix_rank(m)
     effective_rank = compute_effective_rank(m)
@@ -330,16 +310,16 @@ if __name__ == "__main__":
     print(rank, effective_rank, approximate_rank, abs_approximate_rank, numerical_rank)
 
     
-    batched_m = torch.randn(32, 100, 100)
-    sv = torch.linalg.svdvals(m)
-    rank = torch.linalg.matrix_rank(batched_m)
-    effective_rank = compute_effective_rank(input=batched_m)
-    approximate_rank = compute_approximate_rank(batched_m)
-    abs_approximate_rank = compute_l1_distribution_rank(batched_m)
-    numerical_rank = compute_numerical_rank(batched_m, epsilon= 0.1)
-    print("Rank:", rank)
-    print("\nEffective Rank:", effective_rank)
-    print("\nApproximate Rank:", approximate_rank)
-    print("\nL1 Distribution Rank:", abs_approximate_rank)
-    print("\nNumerical Rank:", numerical_rank)
+    # batched_m = torch.randn(32, 100, 100)
+    # sv = torch.linalg.svdvals(batched_m)
+    # rank = torch.linalg.matrix_rank(batched_m)
+    # effective_rank = compute_effective_rank(input=batched_m)
+    # approximate_rank = compute_approximate_rank(batched_m)
+    # abs_approximate_rank = compute_l1_distribution_rank(batched_m)
+    # numerical_rank = compute_numerical_rank(batched_m, epsilon= 0.1)
+    # print("Rank:", rank)
+    # print("\nEffective Rank:", effective_rank)
+    # print("\nApproximate Rank:", approximate_rank)
+    # print("\nL1 Distribution Rank:", abs_approximate_rank)
+    # print("\nNumerical Rank:", numerical_rank)
   
