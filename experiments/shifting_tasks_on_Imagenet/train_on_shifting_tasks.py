@@ -178,7 +178,7 @@ def main(cfg :ExperimentConfig):
                     _, predicted = output.max(1)
                     total += y_batch.size(0)
                     number_of_correct += predicted.eq(y_batch).sum().cpu().item()
-                    acc_batch = compute_accuracy(output, y_batch)
+                    # acc_batch = compute_accuracy(output, y_batch)
                     #number_of_correct_2 += acc_batch * y_batch.size(0)
                     
                     

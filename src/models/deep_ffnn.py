@@ -3,7 +3,7 @@ import torch
 from configs.configurations import LinearNetParams
 
 class Layer(nn.Module):
-    def __init__(self, in_shape, out_shape, act_type='relu'):
+    def __init__(self, in_shape, out_shape, act_type='relu' , initialization = 'kaiming'):
         super(Layer, self).__init__()
         self.in_shape = in_shape
         self.out_shape = out_shape
@@ -26,8 +26,14 @@ class Layer(nn.Module):
         # Initialize the weights
         if bias:
             self.fc.bias.data.fill_(0.0)
-        nn.init.kaiming_uniform_(self.fc.weight, nonlinearity=self.act_type)
-
+        if initialization == "kaiming":
+            nn.init.kaiming_uniform_(self.fc.weight, nonlinearity=self.act_type)
+        # otherwise raise not supported initialization error:
+        else:
+            raise ValueError(f"Initialization {initialization} not supported")
+        
+        
+        
     def forward(self, x):
         x = self.fc(x)
         if self.act_layer is not None:
@@ -51,12 +57,14 @@ class DeepFFNN(nn.Module):
         self.num_outputs = config.num_outputs
         self.num_hidden_layers = config.num_hidden_layers
         self.act_type = config.act_type
+        self.initialization = config.initialization
+        
         self.layers_to_log = [-(i * 2 + 1) for i in range(self.num_hidden_layers + 1)]
 
         # define the architecture
         self.layers = nn.ModuleList()
 
-        self.in_layer = Layer(in_shape=self.input_size, out_shape=self.num_features, act_type=self.act_type)
+        self.in_layer = Layer(in_shape=self.input_size, out_shape=self.num_features, act_type=self.act_type, initialization=self.initialization)
         self.layers.extend(self.in_layer.layers)
 
         self.hidden_layers = []

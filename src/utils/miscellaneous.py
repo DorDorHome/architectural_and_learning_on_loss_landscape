@@ -9,6 +9,13 @@ import torch
 from scipy.linalg import svd
 
 
+def compute_accuracy(output, target):
+    with torch.no_grad():
+        _, predicted = torch.max(output, dim=1)
+        correct = predicted.eq(target).sum().item()
+        total = target.size(0)
+        return correct / total
+
 def net_init(net, orth=0, w_fac=1.0, b_fac=0.0):
     if orth:
         for module in net:

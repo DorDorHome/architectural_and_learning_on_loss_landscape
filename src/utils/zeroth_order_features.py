@@ -10,6 +10,73 @@ from math import sqrt
 from torch.nn import Conv2d, Linear
 import torch
 
+
+def compute_all_rank_measures_list(features: list[torch.Tensor], use_pytorch_entropy_for_effective_rank: bool = True, 
+                                   prop_for_approx_or_l1_rank: float = 0.99, numerical_rank_epsilon: float = 1e-2) -> list[dict]:
+    """
+    Computes rank measures for a list of feature matrices.
+    
+    Args:
+        features (list[torch.Tensor]): List of matrices, each [batch_size, feature_size].
+        use_pytorch_entropy (bool): Use PyTorch entropy for effective rank.
+        prop (float): Proportion for approximate and L1 ranks.
+        epsilon (float): Threshold for numerical rank.
+    
+    Returns:
+        list[dict]: List of rank measure dictionaries, one per matrix.
+    """
+    return [compute_all_rank_measures(f, use_pytorch_entropy_for_effective_rank, prop_for_approx_or_l1_rank, numerical_rank_epsilon) for f in features]
+
+
+
+
+def compute_all_rank_measures(input: torch.Tensor, use_pytorch_entropy: bool = True, 
+                              prop_for_approx_or_l1_rank: float = 0.99, numerical_rank_epsilon: float = 1e-2) -> dict:
+    """
+    Computes four rank measures for the input matrix using full SVD:
+    - Effective rank
+    - Approximate rank
+    - L1 distribution rank
+    - Numerical rank
+
+    The singular values are computed once using full SVD, then passed to each rank measure function.
+
+    Args:
+        input (torch.Tensor): Input matrix of shape (m, n). (expected usage: [batch_size, feature_dim])
+        use_pytorch_entropy (bool): Use PyTorch's vectorized entropy computation for effective rank. Default: True.
+        prop (float): Proportion of variance or sum to capture for approximate and L1 distribution ranks. Default: 0.99.
+        epsilon (float): Tolerance for numerical rank. Default: 1e-2.
+
+    Returns:
+        dict: A dictionary containing the four rank measures:
+            - "effective_rank": Effective rank (float tensor)
+            - "approximate_rank": Approximate rank (tensor with input.dtype)
+            - "l1_distribution_rank": L1 distribution rank (tensor with input.dtype)
+            - "numerical_rank": Numerical rank (tensor with input.dtype)
+
+    Raises:
+        AssertionError: If input is not a 2D matrix or if prop is not between 0 and 1.
+    """
+    # Validate input
+    assert input.dim() == 2, "Input must be a 2D matrix"
+    
+    # Compute full singular values once
+    sv = torch.linalg.svdvals(input)  # Shape: (min(m, n),)
+
+    # Compute each rank measure using the precomputed singular values
+    effective_rank = compute_effective_rank(sv, input_is_svd=True, use_pytorch_entropy=use_pytorch_entropy)
+    approximate_rank = compute_approximate_rank(sv, input_is_svd=True, prop=prop_for_approx_or_l1_rank)
+    l1_distribution_rank = compute_l1_distribution_rank(sv, input_is_svd=True, prop=prop_for_approx_or_l1_rank)
+    numerical_rank = compute_numerical_rank(sv, input_is_svd=True, epsilon=numerical_rank_epsilon)
+
+    # Return results in a dictionary
+    return {
+        "effective_rank": effective_rank,
+        "approximate_rank": approximate_rank,
+        "l1_distribution_rank": l1_distribution_rank,
+        "numerical_rank": numerical_rank
+    }
+
 def compute_effective_rank(input: torch.Tensor, input_is_svd: bool = False, use_pytorch_entropy: bool = True, 
                           use_randomized_svd: bool = True, q: int = 20, niter: int = 2) -> torch.Tensor:
     """
@@ -297,18 +364,60 @@ def compute_nuclear_norm(input: torch.Tensor, input_is_svd: bool = False,
 
     
 if __name__ == "__main__":
-    m = torch.randn(32, 100)
-    # zero out the first row:
-    m[0, :] = 0
-    sv = torch.linalg.svdvals(m)
-    rank = torch.linalg.matrix_rank(m)
-    effective_rank = compute_effective_rank(m)
-    approximate_rank = compute_approximate_rank(m)
-    abs_approximate_rank = compute_l1_distribution_rank(m)
-    numerical_rank = compute_numerical_rank(m, epsilon= 0.1)
+    # m = torch.randn(100, 100)
+    # # zero out the first row:
+    # m[0, :] = 0
+    # sv = torch.linalg.svdvals(m)
+    # rank = torch.linalg.matrix_rank(m)
+    # effective_rank = compute_effective_rank(m, input_is_svd=False, use_randomized_svd=False)
+    # approximate_rank = compute_approximate_rank(m, input_is_svd=False, use_randomized_svd=False)
+    # abs_approximate_rank = compute_l1_distribution_rank(m, input_is_svd=False, use_randomized_svd=False)
+    # numerical_rank = compute_numerical_rank(m, epsilon= 0.1, input_is_svd=False, use_randomized_svd=False)
     
-    print(rank, effective_rank, approximate_rank, abs_approximate_rank, numerical_rank)
+    # print(rank, effective_rank, approximate_rank, abs_approximate_rank, numerical_rank)
 
+    # # test the compute_all_rank_measures function:
+    # rank_measures = compute_all_rank_measures(m)
+    # #print results:
+    # print("Rank measures using computea_all_rank_measures function:")
+    # for key, value in rank_measures.items():
+    #     print(f"{key}: {value}")
+    # # test the compute_nuclear_norm function:
+    # nuclear_norm = compute_nuclear_norm(m)
+    # print("Nuclear norm:", nuclear_norm)
+    
+    
+    #test the compute_all_rank_measures_list function:
+    # create a list of matrices:
+    features = [torch.randn(100, 100) for _ in range(10)]
+    # compute the rank measures for each matrix:
+    rank_measures_list = compute_all_rank_measures_list(features)
+    #print results:
+    print('\n')
+
+    print('comparing results:')
+    m = features[0]
+    rank_measures = compute_all_rank_measures(m)
+    #print results:
+    print("Rank measures using compute_all_rank_measures function:")
+    for key, value in rank_measures.items():
+        print(f"{key}: {value}")
+    
+    effective_rank = compute_effective_rank(m, input_is_svd=False, use_randomized_svd=False)
+    approximate_rank = compute_approximate_rank(m, input_is_svd=False, use_randomized_svd=False)
+    abs_approximate_rank = compute_l1_distribution_rank(m, input_is_svd=False, use_randomized_svd=False)
+    numerical_rank = compute_numerical_rank(m, epsilon= 0.1, input_is_svd=False, use_randomized_svd=False)
+    
+    print( effective_rank, approximate_rank, abs_approximate_rank, numerical_rank)
+
+    
+    # print("Rank measures using compute_all_rank_measures_list function:")
+    # for i, rank_measures in enumerate(rank_measures_list):
+    #     print(f"Matrix {i}:")
+    #     for key, value in rank_measures.items():
+    #         print(f"{key}: {value}")
+
+    
     
     # batched_m = torch.randn(32, 100, 100)
     # sv = torch.linalg.svdvals(batched_m)

@@ -1,19 +1,30 @@
 # represent experiments config:
 runs: 1
-run_id: None
+run_id: 0
 seed: 42
 device: 'cuda:0'
-epochs: 1000
+epochs: 20 #epoch per task switch
 batch_size: 256 #128
+num_tasks: 1000 # number of tasks to train on. Each task will be trained on num_classes_per_task
+
+# debug:
+debug_mode: False # should be False for real experiments
 
 #rank tracking:
 track_rank: True
-rank_measure_freq_to_epoch: 1 #should agree with, or a multiple of evaluation.eval_freq_epoch
+rank_measure_freq_to_epoch: 2  #should agree with, or a multiple of evaluation.eval_freq_epoch
+use_pytorch_entropy_for_effective_rank: True # if False, will use numpy for effective rank
+prop_for_approx_or_l1_rank: 0.99 # for approximate rank, or 1 for l1 rank
+numerical_rank_epsilon: 0.01 # for numerical rank, or 0 for l1 rank
+
+# for test:
+track_actual_rank: True
+
 
 # for logging and tracking the experiments
 use_wandb: True
 use_json: False
-log_freq_every_n_task: 1
+#log_freq_every_n_task: 1
 wandb:
   project: 'basic_training_rank_tracking'
   entity: ''
@@ -24,7 +35,7 @@ wandb:
 
 #data to use
 data:
-  dataset: 'CIFAR10' #'ImageNet' #options: 'MNIST' #'CIFAR10', to implement: 'CIFAR100'. 'ImageNet' not supported yet.
+  dataset: 'MNIST' 
   use_torchvision: True # if using Imagnet, set to False 
   data_path: '/hdda/datasets'    # '/home/sfchan/datasets' for 243, otherwise '/hdda/datasets'   #if specified, will override the dataset variable.
   # for Imagnet, expected path is folder containing the downloaded Imagnet dataset, + '/data/classes/'
@@ -35,12 +46,19 @@ data:
 
 # network architecture:
 net:
-  type: "full_rank_resnet_custom" # "vgg_custom" #options: 'ConvNet', "vgg_custom" , "resnet_custom" , 'full_rank_resnet_custom'
+  # to replicate the results in the paper, "deep_ffnn"
+  type: "deep_ffnn" # "vgg_custom" #options: 'ConvNet', "vgg_custom" , "resnet_custom" , 'full_rank_resnet_custom'
+  network_class: "fc" # 'fc' for fully connected, 'conv' for convolutional
+  device: ${device}
   netparams:
     pretrained: False
-    num_classes: ${data.num_classes} 
+    input_size: 784 # need to match the dataset used. # 3072 # 224*224*3 for Imagenet, 784 for MNIST, 3072 for CIFAR10
+    num_features: 2000
+    num_outputs: ${data.num_classes} #$data.num_classes} 
+    num_hidden_layers: 2 # 2 is enough for MNIST
+    act_type: 'leaky_relu' #'selu' # 'leaky_relu', 'relu', 'tanh', 'sigmoid', 'selu', 'elu', 'swish'
     initialization: 'kaiming'
-    activation: 'elu' # 'relu', 'leaky_relu' 'sigmoid' 'tanh' 'selu' 'swish' 'elu'
+    #alpha_for_EMA: 0.8 # for EMA, only applicable for network that depends on EMA on batch
 
 
     
