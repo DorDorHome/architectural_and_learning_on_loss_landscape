@@ -22,5 +22,5 @@ experiments/basic_training/outputs/*/*
 .vscode/launch.json
 .vscode/settings.json
 
-
+experiments/rank_tracking_in_shifting_task/outputs/*
 permuted_mnist_example.png

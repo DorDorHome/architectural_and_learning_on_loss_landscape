@@ -3,9 +3,9 @@ runs: 1
 run_id: 0
 seed: 42
 device: 'cuda:0'
-epochs: 20 #epoch per task switch
-batch_size: 256 #128
-num_tasks: 1000 # number of tasks to train on. Each task will be trained on num_classes_per_task
+epochs: 200 #epoch per task switch
+batch_size: 256 
+num_tasks: 4000 # number of tasks to train on. Each task will be trained on num_classes_per_task
 
 # debug:
 debug_mode: False # should be False for real experiments
@@ -17,7 +17,15 @@ use_pytorch_entropy_for_effective_rank: True # if False, will use numpy for effe
 prop_for_approx_or_l1_rank: 0.99 # for approximate rank, or 1 for l1 rank
 numerical_rank_epsilon: 0.01 # for numerical rank, or 0 for l1 rank
 
-# for test:
+# deal units checking:
+track_dead_units: True
+# note that leaky_relu and 'swish' will always return 0 for dead units
+# selu always use a threshold of -1.7 for dead units
+# if other measures are desired, please set threshold internally
+threshold_for_non_saturating_act: 0.01 # for non-saturating activation functions, leaky relu, selu, elu, swish
+
+
+# for test, computationally expensive
 track_actual_rank: True
 
 
@@ -56,7 +64,7 @@ net:
     num_features: 2000
     num_outputs: ${data.num_classes} #$data.num_classes} 
     num_hidden_layers: 2 # 2 is enough for MNIST
-    act_type: 'leaky_relu' #'selu' # 'leaky_relu', 'relu', 'tanh', 'sigmoid', 'selu', 'elu', 'swish'
+    act_type: 'leaky_relu' # note that dead units won't show up in leaky_relu and swish #'selu' # 'leaky_relu', 'relu', 'tanh', 'sigmoid', 'selu', 'elu', 'swish'
     initialization: 'kaiming'
     #alpha_for_EMA: 0.8 # for EMA, only applicable for network that depends on EMA on batch
 

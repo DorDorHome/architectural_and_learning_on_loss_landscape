@@ -34,7 +34,7 @@ import torch.nn.functional as F
 from src.utils.miscellaneous import nll_accuracy
 from src.data_loading.shifting_dataset import PermutedDataset
 # rank tracking:
-from src.utils.zeroth_order_features import compute_all_rank_measures_list
+from src.utils.zeroth_order_features import compute_all_rank_measures_list, count_saturated_units_list
 #from src.utils.miscellaneous import compute_matrix_rank_summaries
 #from src.utils.partial_jacobian_source import compute_rank_for_list_of_features
 
@@ -92,20 +92,6 @@ def main(cfg: ExperimentConfig):
     # train_examples_per_epoch = cfg.train_size_per_class*cfg.num_classes_per_task
     
     epochs_per_task = cfg.epochs
-        
-    # setup data:
-
-
-    #trainloader = torch.utils.data.DataLoader(trainset, batch_size= cfg.batch_size, shuffle=True, num_workers=2, pin_memory = True)
-    
-    # load the data from the provided path:
-    # else: 
-    #     # raise an error if the data path is not provided
-    #     raise ValueError("Data path is not provided.")
-
-        # trainset = np.load(dataset_path)
-        # trainloader = torch.utils.data.DataLoader(trainset, batch_size = cfg.batch_size, shuffle=True, num_workers=2, pin_memory = True)
-        
 
 
     
@@ -196,15 +182,15 @@ def main(cfg: ExperimentConfig):
                 # print(label.dtype)  # Should be torch.long for CrossEntropyLoss
                 # print(label.min(), label.max())  # Should be within [0, num_classes - 1]
                 loss, output = learner.learn(input, label)
-                running_loss+= loss*input.size(0)
+                #running_loss+= loss*input.size(0)
                 batch_running_loss += loss
                 _, predicted = output.max(1)
                 total += label.size(0)
                 # predicted = predicted.cpu()
                 number_of_correct += predicted.eq(label).sum().cpu().item()
                 #torch.max(output.data, 1)
-                acc_batch = compute_accuracy(output, label)
-                number_of_correct_2 += acc_batch * label.size(0)
+                #acc_batch = compute_accuracy(output, label)
+                # number_of_correct_2 += acc_batch * label.size(0)
         
 
             # evaluate:
@@ -223,6 +209,21 @@ def main(cfg: ExperimentConfig):
                 
             # extrack rank:
             if epoch % cfg.rank_measure_freq_to_epoch == 0 and cfg.track_rank:
+                # calculate and log accurary and loss:
+                acc = number_of_correct/total
+                #acc_2 = number_of_correct_2/total
+                #loss = running_loss/total
+                loss_by_batch = batch_running_loss/len(permutated_train_loader)
+                
+                data = {
+                    'global_epoch': task_idx*epochs_per_task + epoch,
+                    'task_idx': task_idx,
+                    'accuracy': acc,
+                    #'accuracy_2': acc_2,
+                    #'loss': loss,
+                    'loss_by_batch': loss_by_batch
+                }               
+                
                 # features:
                 list_of_features_for_every_layers = learner.previous_features
                 
@@ -233,6 +234,7 @@ def main(cfg: ExperimentConfig):
                     prop_for_approx_or_l1_rank=cfg.prop_for_approx_or_l1_rank,
                     numerical_rank_epsilon = cfg.numerical_rank_epsilon)
 
+                # tracking actual rank:
                 if cfg.track_actual_rank:
                     actual_rank_list = []
                     for feature in list_of_features_for_every_layers:
@@ -240,26 +242,22 @@ def main(cfg: ExperimentConfig):
                         feature_actual_rank = torch.linalg.matrix_rank(feature)
                         actual_rank_list.append(feature_actual_rank)
                 
+                # tracking dead units:
+                if cfg.track_dead_units:
+                    dead_units_for_features = count_saturated_units_list(
+                        features_list=list_of_features_for_every_layers,
+                        activation_type=cfg.net.netparams.act_type,
+                        threshold=cfg.threshold_for_non_saturating_act)
+                    for layer_idx in range(len(list_of_features_for_every_layers)):
+                        data[f'layer_{layer_idx}_num_dead_units'] = dead_units_for_features[layer_idx]
+                
                 if cfg.debug_mode:
                     assert len(rank_summary_list) == len(list_of_features_for_every_layers), "The rank summary list and the list of features should have the same length"
                     assert len(actual_rank_list) == len(list_of_features_for_every_layers), "The rank summary list and the list of features should have the same length"
                     
                
                 
-                # calculate and log accurary and loss:
-                acc = number_of_correct/total
-                acc_2 = number_of_correct_2/total
-                loss = running_loss/total
-                loss_by_batch = batch_running_loss/len(permutated_train_loader)
-                
-                data = {
-                    'global_epoch': task_idx*epochs_per_task + epoch,
-                    'task_idx': task_idx,
-                    'accuracy': acc,
-                    'accuracy_2': acc_2,
-                    'loss': loss,
-                    'loss_by_batch': loss_by_batch
-                }
+
                 
                 
                 # calculate the effective rank, approximate rank, l1 distribution rank, numerical rank for each layer:
@@ -275,6 +273,8 @@ def main(cfg: ExperimentConfig):
                 if cfg.track_actual_rank:
                     for layer_idx in range(len(list_of_features_for_every_layers)):
                         data[f'layer_{layer_idx}_actual_rank'] = actual_rank_list[layer_idx]
+                
+                
                 
             # log to wandb:
             if cfg.use_wandb:

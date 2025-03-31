@@ -10,6 +10,66 @@ from math import sqrt
 from torch.nn import Conv2d, Linear
 import torch
 
+def count_saturated_units_list(features_list, activation_type, threshold = 0.01):
+    """
+    Counts the number of saturated units for each feature tensor in a list.
+    
+    Args:
+        features_list (list of np.ndarray): List of feature tensors, each of shape (batch_size, feature_dim)
+        activation_type (str): Type of activation ('relu', 'leaky_relu', 'tanh', 'sigmoid', 'selu', 'elu', 'swish')
+        
+    Returns:
+        list of int: Number of saturated units for each feature tensor
+    """
+    return [count_saturated_units(feature, activation_type, threshold = threshold) for feature in features_list]
+
+
+def count_saturated_units(feature, activation_type, threshold = 0.01):
+    """
+    Counts the number of saturated units in a feature tensor based on activation type.
+    A unit is saturated if all its outputs across the batch are in the saturation region.
+    
+    Args:
+        feature (np.ndarray): Feature tensor of shape (batch_size, feature_dim)
+        activation_type (str): Type of activation ('relu', 'sigmoid', 'tanh')
+        
+    Returns:
+        int: Number of saturated units
+    """
+    if activation_type == 'relu':
+        # Saturated when all outputs are 0
+        saturated = np.all(feature == 0, axis=0)
+    elif activation_type == 'sigmoid':
+        # Saturated when all outputs are < threshold or > 1-threshold
+        saturated = np.all((feature < threshold) | (feature > (1 - threshold)), axis=0)
+    elif activation_type == 'tanh':
+        # Saturated when all outputs are < -(1 - threshold) or > (1 - threshold)
+        saturated = np.all((feature < -1*(1-threshold)) | (feature > (1 -threshold)), axis=0)
+    elif activation_type == 'leaky_relu':
+    # For Leaky ReLU, no true saturation, but we can consider very small outputs
+    # Here, we might not define saturation or use a small threshold, e.g., |activation| < 1e-5
+    # For this example, we'll assume no saturation for simplicity
+        saturated = np.zeros(feature.shape[1], dtype=bool)
+    elif activation_type == 'selu':
+        # SELU approaches -λ*α ≈ -1.758 for large negative inputs
+        # Consider saturation when all outputs are < -1.7
+        saturated = np.all(feature < -1.7, axis=0)
+    elif activation_type == 'elu':
+        # ELU approaches -α for large negative inputs
+        # Assuming α=1, consider saturation when all outputs are < -0.99
+        saturated = np.all(feature < -1*(1-threshold), axis=0)
+    elif activation_type == 'swish':
+        # Swish: f(x) = x * sigmoid(x)
+        # For large |x|, swish(x) ≈ x if x>0, ≈0 if x<0
+        # Saturation might be considered for large positive x where gradient approaches 0, but it's not straightforward
+        # For simplicity, we might not define saturation or use a threshold for very large positive values
+        # Here, we'll assume no saturation for swish
+        saturated = np.zeros(feature.shape[1], dtype=bool)      
+    else:
+        raise ValueError("Unsupported activation type. Use 'relu', 'sigmoid', or 'tanh'.")
+    
+    return np.sum(saturated)
+
 
 def compute_all_rank_measures_list(features: list[torch.Tensor], use_pytorch_entropy_for_effective_rank: bool = True, 
                                    prop_for_approx_or_l1_rank: float = 0.99, numerical_rank_epsilon: float = 1e-2) -> list[dict]:
@@ -432,3 +492,24 @@ if __name__ == "__main__":
     # print("\nL1 Distribution Rank:", abs_approximate_rank)
     # print("\nNumerical Rank:", numerical_rank)
   
+    # test the count_saturated_units function:
+    # Example feature tensor (batch_size=3, feature_dim=4)
+    # Example feature tensor (batch_size=3, feature_dim=4)
+    feature = np.array([[0, 1, 0, 0],
+                        [0, 2, 0, 1],
+                        [0, 3, 0, 0]])
+
+    # For ReLU
+    print(count_saturated_units(feature, 'relu'))  # Output: 2 (columns 0 and 2 are all zeros)
+
+    # For sigmoid (assuming feature is between 0 and 1)
+    sigmoid_feature = np.array([[0.005, 0.5, 0.995, 0.002],
+                                [0.003, 0.6, 0.999, 0.001],
+                                [0.007, 0.4, 0.998, 0.004]])
+    print(count_saturated_units(sigmoid_feature, 'sigmoid'))  # Counts units all < 0.01 or all > 0.99
+
+    # For tanh (assuming feature is between -1 and 1)
+    tanh_feature = np.array([[-0.995, 0.5, 0.999, -0.8],
+                            [-0.999, -0.6, 0.995, 0.7],
+                            [-0.998, 0.4, 0.997, -0.9]])
+    print(count_saturated_units(tanh_feature, 'tanh'))  # Counts units all < -0.99 or all > 0.99
