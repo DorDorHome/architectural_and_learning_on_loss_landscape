@@ -3,7 +3,7 @@ runs: 1
 run_id: 0
 seed: 42
 device: 'cuda:0'
-epochs: 200 #epoch per task switch
+epochs: 50 #epoch per task switch
 batch_size: 256 
 num_tasks: 4000 # number of tasks to train on. Each task will be trained on num_classes_per_task
 
@@ -12,6 +12,8 @@ debug_mode: False # should be False for real experiments
 
 #rank tracking:
 track_rank: True
+track_rank_batch: "use_specified" # "last" or "use_specified" or "all"
+specified_batch_size: 1000 # for "specified" 
 rank_measure_freq_to_epoch: 2  #should agree with, or a multiple of evaluation.eval_freq_epoch
 use_pytorch_entropy_for_effective_rank: True # if False, will use numpy for effective rank
 prop_for_approx_or_l1_rank: 0.99 # for approximate rank, or 1 for l1 rank
@@ -63,7 +65,7 @@ net:
     input_size: 784 # need to match the dataset used. # 3072 # 224*224*3 for Imagenet, 784 for MNIST, 3072 for CIFAR10
     num_features: 2000
     num_outputs: ${data.num_classes} #$data.num_classes} 
-    num_hidden_layers: 2 # 2 is enough for MNIST
+    num_hidden_layers: 1 # 2 is enough for MNIST
     act_type: 'relu' # note that dead units won't show up in leaky_relu and swish #'selu' # 'leaky_relu', 'relu', 'tanh', 'sigmoid', 'selu', 'elu', 'swish'
     initialization: 'kaiming'
     #alpha_for_EMA: 0.8 # for EMA, only applicable for network that depends on EMA on batch
@@ -85,7 +87,7 @@ learner:
 
   # needed for continual backprop and cbp:
   device: ${device}
-  opt:  'sgd' # Choices: 'sgd',  'adam'
+  opt:  'adam' # Choices: 'sgd',  'adam'
   loss: 'cross_entropy' # Choices: 'cross_entropy', 'mse', for classification and regression respectively
   step_size: 0.01 # for sgd try 0.01, adam try 0.001
   beta_1: 0.95

@@ -168,7 +168,7 @@ def main(cfg: ExperimentConfig):
             
             # for accuracy
             number_of_correct = 0
-            number_of_correct_2 =0
+            #number_of_correct_2 =0
             total = 0
 
             
@@ -224,15 +224,34 @@ def main(cfg: ExperimentConfig):
                     'loss_by_batch': loss_by_batch
                 }               
                 
-                # features:
-                list_of_features_for_every_layers = learner.previous_features
+
                 
-                # a list of dictionaries, each dictionary contains rank proxies for each output layer:
-                rank_summary_list = compute_all_rank_measures_list(
-                    features=list_of_features_for_every_layers,
-                    use_pytorch_entropy_for_effective_rank=cfg.use_pytorch_entropy_for_effective_rank,
-                    prop_for_approx_or_l1_rank=cfg.prop_for_approx_or_l1_rank,
-                    numerical_rank_epsilon = cfg.numerical_rank_epsilon)
+                # tracking rank:
+                if cfg.track_rank:
+                    if cfg.track_rank_batch == "last":
+                    
+                        # get features of the last batch:
+                        list_of_features_for_every_layers = learner.previous_features    
+                        # a list of dictionaries, each dictionary contains rank proxies for each output layer:
+                    if cfg.track_rank_batch == "use_specified":
+                        # get features of the specified batch:
+                        extracted_list_of_data = [permutated_train_set[i] for i in range(min(cfg.specified_batch_size, len(permutated_train_set)))]
+                        extracted_inputs = [item[0] for item in extracted_list_of_data]  # Get the images
+                        # Stack the list of tensors into a single batched tensor
+                        extracted_inputs = torch.stack(extracted_inputs).to(cfg.device)
+                        
+                        _, list_of_features_for_every_layers = net.predict(extracted_inputs)
+                        
+                    if cfg.track_rank_batch == "all":
+                        # raise not implemented error:
+                        raise NotImplementedError("Tracking rank for all batches is not implemented yet.")
+                        
+
+                    rank_summary_list = compute_all_rank_measures_list(
+                        features=list_of_features_for_every_layers,
+                        use_pytorch_entropy_for_effective_rank=cfg.use_pytorch_entropy_for_effective_rank,
+                        prop_for_approx_or_l1_rank=cfg.prop_for_approx_or_l1_rank,
+                        numerical_rank_epsilon = cfg.numerical_rank_epsilon)
 
                 # tracking actual rank:
                 if cfg.track_actual_rank:
