@@ -240,6 +240,7 @@ def main(cfg: ExperimentConfig):
                         # Stack the list of tensors into a single batched tensor
                         extracted_inputs = torch.stack(extracted_inputs).to(cfg.device)
                         
+
                         _, list_of_features_for_every_layers = net.predict(extracted_inputs)
                         
                     if cfg.track_rank_batch == "all":

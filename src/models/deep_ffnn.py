@@ -27,7 +27,13 @@ class Layer(nn.Module):
         if bias:
             self.fc.bias.data.fill_(0.0)
         if initialization == "kaiming":
-            nn.init.kaiming_uniform_(self.fc.weight, nonlinearity=self.act_type)
+            if self.act_type == 'elu' or self.act_type == 'swish':
+                
+                nn.init.kaiming_uniform_(self.fc.weight, nonlinearity='relu')
+            
+            else:
+                nn.init.kaiming_uniform_(self.fc.weight, nonlinearity=self.act_type)
+            
         # otherwise raise not supported initialization error:
         else:
             raise ValueError(f"Initialization {initialization} not supported")
