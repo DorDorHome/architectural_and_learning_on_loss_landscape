@@ -2,7 +2,7 @@
 runs: 1
 run_id: 0
 seed: 42
-device: 'cuda:0'
+device: 'cuda:1'
 epochs: 50 #epoch per task switch
 batch_size: 256 
 num_tasks: 4000 # number of tasks to train on. Each task will be trained on num_classes_per_task
