@@ -64,6 +64,8 @@ net:
   network_class: "conv" # 'fc' for fully connected, 'conv' for convolutional
   device: ${device}
   netparams:
+    input_height: None
+    input_width: None
     pretrained: False
     input_size: 784 # need to match the dataset used. # 3072 # 224*224*3 for Imagenet, 784 for MNIST, 3072 for CIFAR10
     num_features: 2000

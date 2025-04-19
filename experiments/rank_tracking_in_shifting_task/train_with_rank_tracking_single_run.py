@@ -77,8 +77,8 @@ def main(cfg: ExperimentConfig):
         assert cfg.net.netparams.num_classes == cfg.data.num_classes
     
     #extract dataset parameters for setting up model:
-    cfg.net.input_height = train_set[0][0][1]
-    cfg.net.input_width = train_set[0][0][2]
+    cfg.net.netparams.input_height = train_set[0][0].shape[1]
+    cfg.net.netparams.input_width = train_set[0][0].shape[2]
     #setup network architecture
     net = model_factory(cfg.net)
     # set device for net
