@@ -2,7 +2,7 @@
 runs: 1
 run_id: 0
 seed: 42
-device: 'cuda:1'
+device: 'cuda:0'
 epochs: 50 #epoch per task switch
 batch_size: 256 
 num_tasks: 4000 # number of tasks to train on. Each task will be trained on num_classes_per_task
@@ -92,9 +92,9 @@ learner:
 
   # needed for continual backprop and cbp:
   device: ${device}
-  opt:  'sgd' # Choices: 'sgd',  'adam'
+  opt:  'adam' # Choices: 'sgd',  'adam'
   loss: 'cross_entropy' # Choices: 'cross_entropy', 'mse', for classification and regression respectively
-  step_size: 0.01 # for sgd try 0.01, adam try 0.001
+  step_size: 0.001 # for sgd try 0.01, adam try 0.001
   beta_1: 0.95
   beta_2: 0.999
   weight_decay: 0.01

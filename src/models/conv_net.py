@@ -23,6 +23,10 @@ class ConvNet(nn.Module):
         self.conv1 = nn.Conv2d(3, 32, 5)
         self.conv2 = nn.Conv2d(32, 64, 3)
         self.conv3 = nn.Conv2d(64, 128, 3)
+        
+        self.pool = nn.MaxPool2d(2, 2)
+
+        
         # self.last_filter_output = 2 * 2
         # self.num_conv_outputs = 128 * self.last_filter_output
             # Compute the size of the conv feature map.
@@ -37,7 +41,6 @@ class ConvNet(nn.Module):
         self.fc1 = nn.Linear(flattened_size, 128)
         self.fc2 = nn.Linear(128, 128)
         self.fc3 = nn.Linear(128, num_classes)
-        self.pool = nn.MaxPool2d(2, 2)
 
         # architecture
         self.layers = nn.ModuleList()

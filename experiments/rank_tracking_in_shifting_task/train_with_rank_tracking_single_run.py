@@ -244,6 +244,10 @@ def main(cfg: ExperimentConfig):
 
                         _, list_of_features_for_every_layers = net.predict(extracted_inputs)
                         
+                    # convert all the features into 2d, if they are not already:
+                    list_of_features_for_every_layers = [feature.view(feature.size(0), -1) for feature in list_of_features_for_every_layers]
+                    
+                    
                     if cfg.track_rank_batch == "all":
                         # raise not implemented error:
                         raise NotImplementedError("Tracking rank for all batches is not implemented yet.")
@@ -259,6 +263,7 @@ def main(cfg: ExperimentConfig):
                 if cfg.track_actual_rank:
                     actual_rank_list = []
                     for feature in list_of_features_for_every_layers:
+
                         feature = feature.cpu().detach()
                         feature_actual_rank = torch.linalg.matrix_rank(feature)
                         actual_rank_list.append(feature_actual_rank)
