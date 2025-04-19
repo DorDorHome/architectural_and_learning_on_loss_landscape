@@ -128,8 +128,8 @@ def dataset_factory(config: DataConfig, transform, with_testset= False) -> Any:
             try:
                 if len(trainset.classes) != config.num_classes:
                     raise ValueError(f"Number of classes in the train dataset ({len(trainset.classes)}) does not match the number of classes specified in the configuration ({config.num_classes}).")
-                if len(test.classes) != config.num_classes:
-                    raise ValueError(f"Number of classes in the test dataset ({len(testset.classes)}) does not match the number of classes specified in the configuration ({config.num_classes}).")
+                # if len(testset.classes) != config.num_classes:
+                #     raise ValueError(f"Number of classes in the test dataset ({len(testset.classes)}) does not match the number of classes specified in the configuration ({config.num_classes}).")
             except AttributeError:
                 pass
             

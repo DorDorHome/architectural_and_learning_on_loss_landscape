@@ -71,6 +71,7 @@ def transform_factory(dataset_name: str, model_name: str):
         if model_name == "ConvNet":
             # ConvNet expects normalized inputs
             return transforms.Compose([
+                transforms.Grayscale(num_output_channels=3),
                 transforms.ToTensor(),
                 transforms.Normalize((0.5,), (0.5,))
             ])

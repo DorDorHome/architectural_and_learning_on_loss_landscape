@@ -48,9 +48,24 @@ import torch
 
 from src.utils.miscellaneous import compute_accuracy
 
-@hydra.main(config_path="cfg", config_name="rank_tracking_in_shifting_tasks_config_linear")
+@hydra.main(config_path="cfg", config_name="rank_tracking_in_shifting_tasks_config_conv")
 def main(cfg: ExperimentConfig):
     print(OmegaConf.to_yaml(cfg))
+    # set up the transform being used for the dataset, given the model architecture and dataset
+    # expected cfg.data.dataset value is 'MNIST'
+    # expected cfg.net.type value is 'ConvNet'
+    transform = transform_factory(cfg.data.dataset, cfg.net.type)
+    
+    # setup data:
+    train_set, _ = dataset_factory(cfg.data, transform = transform, with_testset= False)
+    
+    # for setting up batch:
+    # train_examples_per_epoch = cfg.train_size_per_class*cfg.num_classes_per_task
+     
+    
+    
+    
+    
     # Convert "None" string to Python None
     if cfg.layers_identifier == "None":
         cfg.layers_identifier = None
@@ -61,6 +76,9 @@ def main(cfg: ExperimentConfig):
     elif cfg.net.network_class == 'conv':
         assert cfg.net.netparams.num_classes == cfg.data.num_classes
     
+    #extract dataset parameters for setting up model:
+    cfg.net.input_height = train_set[0][0][1]
+    cfg.net.input_width = train_set[0][0][2]
     #setup network architecture
     net = model_factory(cfg.net)
     # set device for net
@@ -86,17 +104,7 @@ def main(cfg: ExperimentConfig):
         from src.algos.supervised.continuous_backprop_with_GnT import ContinualBackprop_for_FC
         learner = ContinualBackprop_for_FC(net, cfg.learner)
 
-    # set up the transform being used for the dataset, given the model architecture and dataset
-    # expected cfg.data.dataset value is 'MNIST'
-    # expected cfg.net.type value is 'ConvNet'
-    transform = transform_factory(cfg.data.dataset, cfg.net.type)
-    
-    # setup data:
-    train_set, _ = dataset_factory(cfg.data, transform, with_testset= False)
-    
-    # for setting up batch:
-    # train_examples_per_epoch = cfg.train_size_per_class*cfg.num_classes_per_task
-    
+
     epochs_per_task = cfg.epochs
 
 
@@ -159,6 +167,9 @@ def main(cfg: ExperimentConfig):
         #  wrap the dataset with the permutation:
         if cfg.net.network_class == 'fc':
             flatten = True
+        if cfg.net.network_class == 'conv':
+            flatten = False     
+        
         permutated_train_set = PermutedDataset(train_set, permutation=pixel_permutation, flatten=flatten, transform=None)#note: transform was used when setting up the dataset, but not used here.
         
         permutated_train_loader = torch.utils.data.DataLoader(permutated_train_set, batch_size=cfg.batch_size, shuffle=True, num_workers=2, pin_memory=True)
@@ -195,24 +206,8 @@ def main(cfg: ExperimentConfig):
                 # predicted = predicted.cpu()
                 number_of_correct += predicted.eq(label).sum().cpu().item()
                 #torch.max(output.data, 1)
-                #acc_batch = compute_accuracy(output, label)
-                # number_of_correct_2 += acc_batch * label.size(0)
-        
 
-            # evaluate:
-            # if epoch % cfg.evaluation.eval_freq_epoch == 0:
-            #     acc = number_of_correct/total
-            #     acc_2 = number_of_correct_2/total
-            #     loss = running_loss/total
-            #     loss_by_batch = batch_running_loss/len(trainloader)
-            #     # with torch.no_grad():
-            #     #     y_pred, _ = net.predict(x)
-            #     #     acc = accuracy(y_pred, y)
-            #     #     loss = loss_func(y_pred, y)
-            #     print(f"Epoch: {epoch}, Accuracy: {acc}, Accuracy_2: {acc_2}, Loss:,  {loss}, loss by batch: {loss_by_batch}")
-                
-            #     performance_data = {'epoch': epoch, 'accuracy': acc, 'accuracy_2': acc_2, 'loss': loss, 'loss_by_batch': loss_by_batch}
-                
+
             # extrack rank:
             if epoch % cfg.rank_measure_freq_to_epoch == 0 and cfg.track_rank:
                 # calculate and log accurary and loss:
