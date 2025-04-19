@@ -38,6 +38,9 @@ from src.utils.zeroth_order_features import compute_all_rank_measures_list, coun
 #from src.utils.miscellaneous import compute_matrix_rank_summaries
 #from src.utils.partial_jacobian_source import compute_rank_for_list_of_features
 
+# weight magnitude tracking:
+from src.utils.track_weights_norm import track_weight_stats
+
 import torchvision.transforms as transforms
 import torchvision
 import torch
@@ -48,6 +51,9 @@ from src.utils.miscellaneous import compute_accuracy
 @hydra.main(config_path="cfg", config_name="rank_tracking_in_shifting_tasks_config_linear")
 def main(cfg: ExperimentConfig):
     print(OmegaConf.to_yaml(cfg))
+    # Convert "None" string to Python None
+    if cfg.layers_identifier == "None":
+        cfg.layers_identifier = None
     
     # making sure the number of classes of the dataset matches the number of classes in the network:
     if cfg.net.network_class == 'fc':
@@ -271,6 +277,8 @@ def main(cfg: ExperimentConfig):
                     for layer_idx in range(len(list_of_features_for_every_layers)):
                         data[f'layer_{layer_idx}_num_dead_units'] = dead_units_for_features[layer_idx]
                 
+
+                
                 if cfg.debug_mode:
                     assert len(rank_summary_list) == len(list_of_features_for_every_layers), "The rank summary list and the list of features should have the same length"
                     assert len(actual_rank_list) == len(list_of_features_for_every_layers), "The rank summary list and the list of features should have the same length"
@@ -294,7 +302,12 @@ def main(cfg: ExperimentConfig):
                     for layer_idx in range(len(list_of_features_for_every_layers)):
                         data[f'layer_{layer_idx}_actual_rank'] = actual_rank_list[layer_idx]
                 
-                
+                if cfg.track_weight_magnitude:
+                    weight_magnitude_stats = track_weight_stats(net, layer_identifiers=cfg.layers_identifier)
+                    # register the weight magnitude stats in the data:
+                    for name, stat in weight_magnitude_stats.items():
+                        data[name] = stat
+                    
                 
             # log to wandb:
             if cfg.use_wandb:

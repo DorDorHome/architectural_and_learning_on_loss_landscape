@@ -8,7 +8,7 @@ batch_size: 256
 num_tasks: 4000 # number of tasks to train on. Each task will be trained on num_classes_per_task
 
 # debug:
-debug_mode: False # should be False for real experiments
+debug_mode: True # should be False for real experiments
 
 #rank tracking:
 track_rank: True
@@ -30,6 +30,9 @@ threshold_for_non_saturating_act: 0.01 # for non-saturating activation functions
 # for test, computationally expensive
 track_actual_rank: True
 
+# for tracking average weight magnitude:
+track_weight_magnitude: True
+layers_identifier: None
 
 # for logging and tracking the experiments
 use_wandb: True
@@ -66,7 +69,7 @@ net:
     num_features: 2000
     num_outputs: ${data.num_classes} #$data.num_classes} 
     num_hidden_layers: 1 # 2 is enough for MNIST
-    act_type: 'swish' # note that dead units won't show up in leaky_relu and swish #'selu' # 'leaky_relu', 'relu', 'tanh', 'sigmoid', 'selu', 'elu', 'swish'
+    act_type: 'selu' # note that dead units won't show up in leaky_relu and swish #'selu' # 'leaky_relu', 'relu', 'tanh', 'sigmoid', 'selu', 'elu', 'swish'
     initialization: 'kaiming'
     #alpha_for_EMA: 0.8 # for EMA, only applicable for network that depends on EMA on batch
 
@@ -87,7 +90,7 @@ learner:
 
   # needed for continual backprop and cbp:
   device: ${device}
-  opt:  'adam' # Choices: 'sgd',  'adam'
+  opt:  'sgd' # Choices: 'sgd',  'adam'
   loss: 'cross_entropy' # Choices: 'cross_entropy', 'mse', for classification and regression respectively
   step_size: 0.01 # for sgd try 0.01, adam try 0.001
   beta_1: 0.95
