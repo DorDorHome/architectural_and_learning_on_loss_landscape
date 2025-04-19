@@ -8,7 +8,7 @@ batch_size: 256
 num_tasks: 4000 # number of tasks to train on. Each task will be trained on num_classes_per_task
 
 # debug:
-debug_mode: True # should be False for real experiments
+debug_mode: False # should be False for real experiments
 
 #rank tracking:
 track_rank: True
@@ -35,7 +35,7 @@ track_weight_magnitude: True
 layers_identifier: None
 
 # for logging and tracking the experiments
-use_wandb: False
+use_wandb: True
 use_json: False
 #log_freq_every_n_task: 1
 wandb:
@@ -92,9 +92,9 @@ learner:
 
   # needed for continual backprop and cbp:
   device: ${device}
-  opt:  'adam' # Choices: 'sgd',  'adam'
+  opt:  'sgd' # Choices: 'sgd',  'adam'
   loss: 'cross_entropy' # Choices: 'cross_entropy', 'mse', for classification and regression respectively
-  step_size: 0.001 # for sgd try 0.01, adam try 0.001
+  step_size: 0.01 # for sgd try 0.01, adam try 0.001
   beta_1: 0.95
   beta_2: 0.999
   weight_decay: 0.01
