@@ -120,6 +120,17 @@ def compute_all_rank_measures(input: torch.Tensor, use_pytorch_entropy: bool = T
     # Validate input
     assert input.dim() == 2, "Input must be a 2D matrix"
     
+    
+    # Check if the matrix is effectively zero
+    if torch.allclose(input, torch.zeros_like(input), atol=1e-8):
+        return {
+            "effective_rank": torch.tensor(0.0, dtype=input.dtype),
+            "approximate_rank": torch.tensor(0, dtype=input.dtype),
+            "l1_distribution_rank": torch.tensor(0, dtype=input.dtype),
+            "numerical_rank": torch.tensor(0, dtype=input.dtype)
+        }
+    
+    
     # Compute full singular values once
     sv = torch.linalg.svdvals(input)  # Shape: (min(m, n),)
 

@@ -2,7 +2,7 @@
 runs: 1
 run_id: 0
 seed: 42
-device: 'cuda:0'
+device: 'cuda:1'
 epochs: 50 #epoch per task switch
 batch_size: 256 
 num_tasks: 4000 # number of tasks to train on. Each task will be trained on num_classes_per_task
@@ -71,7 +71,7 @@ net:
     num_features: 2000
     num_classes: ${data.num_classes} #$data.num_classes} 
     num_hidden_layers: 1 # 2 is enough for MNIST
-    act_type: 'relu' # note that dead units won't show up in leaky_relu and swish #'selu' # 'leaky_relu', 'relu', 'tanh', 'sigmoid', 'selu', 'elu', 'swish'
+    act_type: 'leaky_relu' # note that dead units won't show up in leaky_relu and swish #'selu' # 'leaky_relu', 'relu', 'tanh', 'sigmoid', 'selu', 'elu', 'swish'
     initialization: 'kaiming'
     #alpha_for_EMA: 0.8 # for EMA, only applicable for network that depends on EMA on batch
 
