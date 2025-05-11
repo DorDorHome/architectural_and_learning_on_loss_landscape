@@ -16,6 +16,7 @@ sys.path.append(str(PROJECT_ROOT))
 from configs.configurations import ExperimentConfig
 # import json
 import os
+import random
 # import pickle
 # import argparse
 # import numpy as np
@@ -50,6 +51,24 @@ from src.utils.miscellaneous import compute_accuracy
 
 @hydra.main(config_path="cfg", config_name="rank_tracking_in_shifting_tasks_config_conv")
 def main(cfg: ExperimentConfig):
+    # Ensure reproducibility by setting the seed
+    if cfg.seed is None or not isinstance(cfg.seed, (int, float)):
+        cfg.seed = random.randint(0, 2**32 - 1)  # Generate a random seed if not provided
+
+    # Log the seed for reproducibility tracking
+    print(f"Using seed: {cfg.seed}")
+
+    # Set seed for Python, NumPy, and PyTorch
+    random.seed(cfg.seed)
+    np.random.seed(cfg.seed)
+    torch.manual_seed(cfg.seed)
+    torch.cuda.manual_seed(cfg.seed)
+    torch.cuda.manual_seed_all(cfg.seed)  # If using multi-GPU setups
+    torch.backends.cudnn.deterministic = True  # Ensure deterministic behavior
+    torch.backends.cudnn.benchmark = False  # Disable benchmark for reproducibility
+    
+    
+    
     print(OmegaConf.to_yaml(cfg))
     # set up the transform being used for the dataset, given the model architecture and dataset
     # expected cfg.data.dataset value is 'MNIST'
