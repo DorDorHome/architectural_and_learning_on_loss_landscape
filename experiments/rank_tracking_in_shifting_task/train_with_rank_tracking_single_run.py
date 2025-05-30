@@ -218,6 +218,12 @@ def main(cfg: ExperimentConfig):
                 # print(label.dtype)  # Should be torch.long for CrossEntropyLoss
                 # print(label.min(), label.max())  # Should be within [0, num_classes - 1]
                 loss, output = learner.learn(input, label)
+                
+                # added to check for non-finite loss:
+                if not torch.isfinite(loss):
+                    print(f"Non-finite loss at epoch {epoch}, batch {batch_idx}")
+                    break
+                
                 #running_loss+= loss*input.size(0)
                 batch_running_loss += loss
                 _, predicted = output.max(1)
