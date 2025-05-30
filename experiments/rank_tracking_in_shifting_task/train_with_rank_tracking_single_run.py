@@ -220,7 +220,7 @@ def main(cfg: ExperimentConfig):
                 loss, output = learner.learn(input, label)
                 
                 # added to check for non-finite loss:
-                if not torch.isfinite(loss):
+                if not torch.isfinite(torch.as_tensor(loss)):
                     print(f"Non-finite loss at epoch {epoch}, batch {batch_idx}")
                     break
                 
