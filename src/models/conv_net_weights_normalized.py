@@ -3,7 +3,7 @@
 
 
 import torch.nn as nn
-
+import torch
 # original implementation:
 from omegaconf import DictConfig
 # use NetParams dataclass from configurations.py:
@@ -51,12 +51,24 @@ class ConvNet_normalized(nn.Module):
         self.conv3 = NormConv2d(64, 128, 3, bias=self.conv_layer_bias ,
                                 weight_correction_scale= self.weight_correction_scale,
                                 fan_in_correction =self.fan_in_correction) 
-        self.last_filter_output = 2 * 2
-        self.num_conv_outputs = 128 * self.last_filter_output
+        
+        self.pool = nn.MaxPool2d(2, 2)
+
+        
+        # self.last_filter_output = 2 * 2
+        # self.num_conv_outputs = 128 * self.last_filter_output
+        dummy = torch.zeros(1, 3, config.input_height, config.input_width)
+        x = self.pool(nn.ReLU()(self.conv1(dummy)))
+        x = self.pool(nn.ReLU()(self.conv2(x)))
+        x = self.pool(nn.ReLU()(self.conv3(x)))
+        flattened_size = x.view(1, -1).shape[1]
+        
+        self.num_conv_outputs = flattened_size        
+        
+        
         self.fc1 = NormalizedWeightsLinear(self.num_conv_outputs, 128, bias = self.linear_layer_bias)
         self.fc2 = NormalizedWeightsLinear(128, 128 , bias = self.linear_layer_bias)
         self.fc3 = NormalizedWeightsLinear(128, num_classes, bias = self.linear_layer_bias)
-        self.pool = nn.MaxPool2d(2, 2)
 
         self.act_type = self.activation
         self.activation = activation_dict.get(self.activation, None)

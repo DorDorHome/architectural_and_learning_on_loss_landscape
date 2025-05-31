@@ -10,6 +10,18 @@ import torch
 # use NetParams dataclass from configurations.py:
 from configs.configurations import NetParams
 
+
+activation_dict = {
+    # 'relu': F.relu,
+    # 'sigmoid': torch.sigmoid,
+    # 'tanh': torch.tanh,
+    # # Add more activations as needed
+    'sigmoid': nn.Sigmoid, 'tanh': nn.Tanh, 'relu': nn.ReLU, 'selu': nn.SELU,
+    'swish': nn.SiLU, 'leaky_relu': nn.LeakyReLU, 'elu': nn.ELU}
+
+
+
+
 class ConvNet(nn.Module):
     def __init__(self, config: NetParams ):
         """
@@ -19,6 +31,7 @@ class ConvNet(nn.Module):
         num_classes = config.num_classes
         #in_channels, out_channels, kernel_size are not implemented
         
+        self.activation = config.activation
         
         self.conv1 = nn.Conv2d(3, 32, 5)
         self.conv2 = nn.Conv2d(32, 64, 3)
@@ -42,21 +55,25 @@ class ConvNet(nn.Module):
         self.fc2 = nn.Linear(128, 128)
         self.fc3 = nn.Linear(128, num_classes)
 
+        # self.act_type = self.activation
+        self.activation = activation_dict.get(self.activation, None)
+        
+
         # architecture
         self.layers = nn.ModuleList()
         self.layers.append(self.conv1)
-        self.layers.append(nn.ReLU())
+        self.layers.append(self.activation())
         self.layers.append(self.conv2)
-        self.layers.append(nn.ReLU())
+        self.layers.append(self.activation())
         self.layers.append(self.conv3)
-        self.layers.append(nn.ReLU())
+        self.layers.append(self.activation())
         self.layers.append(self.fc1)
-        self.layers.append(nn.ReLU())
+        self.layers.append(self.activation())
         self.layers.append(self.fc2)
-        self.layers.append(nn.ReLU())
+        self.layers.append(self.activation())
         self.layers.append(self.fc3)
 
-        self.act_type = 'relu'
+
 
     def predict(self, x):
         batch_size = x.size(0)

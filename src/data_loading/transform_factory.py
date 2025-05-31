@@ -68,7 +68,7 @@ def transform_factory(dataset_name: str, model_name: str):
                             ])
                             
     elif dataset_name == "MNIST":# this dataset has image size 28 x 28
-        if model_name == "ConvNet":
+        if model_name == "ConvNet" or model_name == "ConvNet_norm":
             # ConvNet expects normalized inputs
             return transforms.Compose([
                 transforms.Grayscale(num_output_channels=3),
