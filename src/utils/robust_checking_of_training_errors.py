@@ -36,7 +36,7 @@ def _log_and_raise_non_finite_error(task_idx, epoch,
     
     # check output from network
     if output_from_network is not None and torch.is_tensor(output_from_network):
-        print(f"Output from network stats: min={output_from_network.min().item()}, max={output_from_network.max().item()}, mean={output_from_network.mean().item()}, isfinite={torch.all(torch.isfinite(output_from_network))}, shape={output_from_network.shape}, dtype={output_from_network.dtype}")
+        print(f"Output from network stats: min={output_from_network.min().item()},max={output_from_network.max().item()},mean={output_from_network.mean().item()},isfinite={torch.all(torch.isfinite(output_from_network))},shape={output_from_network.shape}, dtype={output_from_network.dtype}")
     elif output_from_network is None:
         print("Output from network is None.")
     else:

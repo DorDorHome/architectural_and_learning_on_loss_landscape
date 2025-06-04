@@ -75,9 +75,26 @@ def transform_factory(dataset_name: str, model_name: str):
                 transforms.ToTensor(),
                 transforms.Normalize((0.5,), (0.5,))
             ])
-        if model_name in deep_ffnn_series:
+            
+        elif model_name == "ResNet18" or model_name == "resnet_custom":
+            # Standard transforms for MNIST to be ResNet compatible
+            # ResNets typically expect 3 channels and often a slightly larger input size
+            return transforms.Compose([
+                transforms.Grayscale(num_output_channels=3), # Convert 1-channel MNIST to 3-channel
+                transforms.Resize(32),  # Resize from 28x28 to 32x32 (common for smaller ResNets)
+                                        # For ImageNet-sized ResNets, use transforms.Resize(224)
+                transforms.ToTensor(),
+                # Normalize for 3 channels. (0.5, 0.5, 0.5) is common for training from scratch.
+                # If using an ImageNet pre-trained ResNet, use ImageNet stats:
+                # transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
+                transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+            ])
+            
+        elif model_name in deep_ffnn_series:
             transform = transforms.Compose([transforms.ToTensor()])
             return transform
+        else:
+            raise ValueError(f"Unsupported model {model_name} for dataset {dataset_name}")
     else:
         raise ValueError(f"Unsupported dataset {dataset_name}")
     
