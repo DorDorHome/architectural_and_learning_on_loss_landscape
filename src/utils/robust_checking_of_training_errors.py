@@ -1,7 +1,9 @@
+# during training, sometimes the loss can become non-finite (NaN or Inf).
+# This can happen due to various reasons, such as numerical instability, exploding gradients, or issues with the data.
+# This function is designed to log detailed information about the training state when a non-finite loss is detected.
+
 import torch
 
-
-    
 def _log_and_raise_non_finite_error(task_idx, epoch,
                                     batch_idx, loss_val,
                                     input_data, label_data,
