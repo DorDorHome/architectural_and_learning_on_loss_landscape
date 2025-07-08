@@ -12,10 +12,6 @@ from configs.configurations import NetParams
 
 
 activation_dict = {
-    # 'relu': F.relu,
-    # 'sigmoid': torch.sigmoid,
-    # 'tanh': torch.tanh,
-    # # Add more activations as needed
     'sigmoid': nn.Sigmoid, 'tanh': nn.Tanh, 'relu': nn.ReLU, 'selu': nn.SELU,
     'swish': nn.SiLU, 'leaky_relu': nn.LeakyReLU, 'elu': nn.ELU}
 
@@ -43,6 +39,8 @@ class ConvNet(nn.Module):
         # self.last_filter_output = 2 * 2
         # self.num_conv_outputs = 128 * self.last_filter_output
             # Compute the size of the conv feature map.
+            
+        # use a dummy input to compute the flattened size 
         dummy = torch.zeros(1, 3, config.input_height, config.input_width)
         x = self.pool(nn.ReLU()(self.conv1(dummy)))
         x = self.pool(nn.ReLU()(self.conv2(x)))
@@ -85,3 +83,11 @@ class ConvNet(nn.Module):
         x5 = self.layers[9](self.layers[8](x4))
         x6 = self.layers[10](x5)
         return x6, [x1, x2, x3, x4, x5]
+    
+    def get_layer_names(self):
+        """Return semantic names for the intermediate features."""
+        return ['conv1_pooled',
+                'conv2_pooled',
+                'conv3_flattened',
+                'fc1_output',
+                'fc2_output']

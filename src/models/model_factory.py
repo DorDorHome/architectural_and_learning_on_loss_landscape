@@ -48,6 +48,23 @@ def model_factory(config: NetConfig) -> Any:
             raise ValueError("config.params cannot be None for ConvNet_SVD")
         return ConvNet_SVD(config.netparams)
     
+    if model_type == "ConvNet_FC_layer_norm":
+        from src.models.layer_norm_conv_net import ConvNetWithFCLayerNorm
+        if config.netparams is None:
+            raise ValueError("config.params cannot be None for ConvNet_layer_norm")
+        return ConvNetWithFCLayerNorm(config.netparams)
+    
+    if model_type == "ConvNet_conv_and_FC_layer_norm":
+        from src.models.layer_norm_conv_net import ConvNet_conv_and_FC_LayerNorm
+        if config.netparams is None:
+            raise ValueError("config.params cannot be None for ConvNet_conv_and_FC_layer_norm")
+        return ConvNet_conv_and_FC_LayerNorm(config.netparams)
+        
+    if model_type == 'ConvNet_batch_norm':
+        from src.models.conv_net_batch_norm import ConvNetWithBatchNorm
+        if config.netparams is None:
+            raise ValueError("config.params cannot be None for ConvNet_batch_norm")
+        return ConvNetWithBatchNorm(config.netparams)
     
     if model_type == 'vgg_custom':
         from src.models.VGG16_custom import vgg_with_internal_performance_track_custom_classifier as VGG_custom
@@ -107,7 +124,8 @@ def model_factory(config: NetConfig) -> Any:
     #         raise ValueError("config.params cannot be None for VGG16_custom")
     #     return vgg_with_internal_performance_track_custom_classifier(config.params)
     
-@hydra.main(config_path=CONFIG_PATH, config_name="basic_config")
+config_name = "basic_config"
+@hydra.main(config_path=CONFIG_PATH, config_name=config_name)
 def main(cfg):
     print(OmegaConf.to_yaml(cfg))
     
@@ -122,5 +140,10 @@ def main(cfg):
 
 if __name__ == "__main__":
     
+    # changing the config path if needed:
+    
+    # experiments/rank_tracking_in_shifting_task/cfg/rank_tracking_in_shifting_tasks_config_conv.yaml
+    CONFIG_PATH = str(PROJECT_ROOT / "experiments/rank_tracking_in_shifting_task/cfg")
+    config_name = "rank_tracking_in_shifting_tasks_config_conv"
     main()
     

@@ -37,11 +37,8 @@ def extract_altered_input_patch_and_preprocessor(
         patch_size: Size of the square patch to extract (if applicable).
         row_idx, col_idx: Starting indices for patch extraction (if applicable).
     
-    
-    
     """
 
-    
     method: str = input_patch_config.get('method', 'zero_padding')
     B, C, H_orig, W_orig = original_images.shape
     

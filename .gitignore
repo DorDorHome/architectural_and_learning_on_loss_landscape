@@ -26,3 +26,8 @@ experiments/basic_training/outputs/*/*
 
 experiments/rank_tracking_in_shifting_task/outputs/*
 permuted_mnist_example.png
+
+
+
+FEATURE_CONTAINER_EXPLANATION.py
+FEATURE_ENHANCEMENT_PLAN.md

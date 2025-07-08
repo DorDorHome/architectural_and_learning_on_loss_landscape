@@ -1,0 +1,77 @@
+# Emergency stable config - use this to test if NaN issue is fixed
+runs: 1
+run_id: 0
+seed: 42
+device: 'cuda:1'
+epochs: 5  # Very short for testing
+batch_size: 64  # Small batch
+num_tasks: 1  # Single task for testing
+
+debug_mode: True
+
+#rank tracking - minimal for testing:
+track_rank: False  # Disable to reduce computation
+track_rank_batch: "last"
+specified_batch_size: 100
+rank_measure_freq_to_epoch: 10
+use_pytorch_entropy_for_effective_rank: True
+prop_for_approx_or_l1_rank: 0.99
+numerical_rank_epsilon: 0.01
+
+track_dead_units: False  # Disable for testing
+track_actual_rank: False  # Disable for testing
+track_weight_magnitude: False  # Disable for testing
+layers_identifier: None
+
+use_wandb: False  # Disable for testing
+use_json: False
+
+#data to use
+data:
+  dataset: 'MNIST' 
+  use_torchvision: True
+  data_path: '/hdda/datasets'
+  num_classes: 10
+
+# network architecture:
+net:
+  type: "ConvNet_norm"
+  network_class: "conv"
+  device: ${device}
+  netparams:
+    pretrained: False  
+    num_classes: ${data.num_classes}
+    initialization: 'kaiming'   
+    input_height: None
+    input_width: None
+    conv_layer_bias: True
+    linear_layer_bias: True
+    activation: 'relu'  # Changed from 'elu' - more stable
+
+    # Conservative normalization settings
+    weight_correction_scale: 1.0  # Reduced from 2**0.5
+    fan_in_correction: False
+    SVD_only_stride_1: False
+    allow_svd_values_negative: True
+    num_hidden_layers: 1
+    
+# learning algorithm:
+learner:
+  type: 'backprop'
+  init: 'kaiming'
+  device: ${device}
+  opt: 'sgd'
+  loss: 'cross_entropy'
+  step_size: 0.0001  # Very small learning rate
+  beta_1: 0.95
+  beta_2: 0.999
+  weight_decay: 0.01  # Higher weight decay for stability
+  to_perturb: false
+  perturb_scale: 0.0  # No perturbation for testing
+  momentum: 0.9
+
+# evaluation
+evaluation:
+  use_testset: False
+  eval_freq_epoch: 10
+  eval_metrics: ['accuracy', 'loss']

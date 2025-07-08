@@ -37,7 +37,7 @@ data:
 
 # network architecture:
 net:
-  type: 'ConvNet'    # "full_rank_resnet_custom" #"ConvNet_SVD", "ConvNet_norm" "vgg_custom" #options: 'ConvNet', vgg_custom, "resnet_custom"
+  type: "ConvNet_norm"   # "full_rank_resnet_custom" #"ConvNet_SVD", "ConvNet_norm" "vgg_custom" #options: 'ConvNet', vgg_custom, "resnet_custom"
   # "full_rank_resnet_custom" # "vgg_custom" #options: 'ConvNet', "vgg_custom" , "resnet_custom" , 'full_rank_resnet_custom'
   network_class: "conv" # 'fc' for fully connected, 'conv' for convolutional
   device: ${device}
@@ -45,6 +45,8 @@ net:
     pretrained: False
     num_classes: ${num_classes_per_task}
     initialization: 'kaiming' #for ConvNet_SVD, will be overriden
+    input_height: None # will be dynamically set based on the input data
+    input_width: None # will be dynamically set based on the input data
     conv_layer_bias: False # previously false # only for "ConvNet_norm"
     linear_layer_bias: True #for "ConvNet_norm"
     activation: 'relu'

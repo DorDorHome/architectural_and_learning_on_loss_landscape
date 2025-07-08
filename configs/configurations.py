@@ -1,5 +1,6 @@
 # dataclasses for configurations objects:
 
+from itsdangerous import NoneAlgorithm
 from torch._C import device
 from dataclasses import dataclass, field 
 from typing import Optional, Union
@@ -22,7 +23,15 @@ class DataConfig:
 class NetParams:
     pretrained: Optional[Union[None, bool]] = False
     num_classes: Optional[Union[None, int]] = 10
+    activation: Optional[Union[str, None]] = None  # Default value
     initialization: Optional[Union[None, str]] = 'kaiming'
+    
+    # for FC:
+    input_size: Optional[Union[None, int]] = None  # Default for MNIST
+    
+    #for conv nets
+    input_height: Optional[Union[None, int]] = None  # Default for MNIST
+    input_width: Optional[Union[None, int]] = None
     in_channels: Optional[Union[None, int]] = 1
     out_channels: Optional[Union[None, int]] = 10
     kernel_size: Optional[Union[None, int]] = 5

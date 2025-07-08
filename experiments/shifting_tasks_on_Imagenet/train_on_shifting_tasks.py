@@ -70,7 +70,46 @@ def compute_accuracy(output, target):
 def main(cfg :ExperimentConfig):
     print(OmegaConf.to_yaml(cfg))
     
+    # setup data:
+    transform = None
+    Imagnet_dataset_generator = dataset_factory(cfg.data, transform)
+    
+    # for setting up batch:
+    train_examples_per_epoch = cfg.train_size_per_class*cfg.num_classes_per_task
+    
+    epochs_per_task = cfg.epochs
+    
+    # set up of class order:
+    class_order_path = os.path.join(cfg.data.data_path, cfg.data.dataset, 'data','class_order')
+    ## load the class order:
+    with open(class_order_path, 'rb+') as f:
+        class_order = pickle.load(f)
+        # class order is a numpy array of shape (300, 14000), containing number from 0 to 999
+    
+    ## set class_order based on the run_id:
+    class_order = class_order[cfg.run_id]
+    
+    # for extending the class_order to cover the tasks required:
+    num_class_repetitions_required = int(cfg.num_classes_per_task*cfg.num_tasks /cfg.data.num_classes) + 1
+    class_order = np.concatenate([class_order]*num_class_repetitions_required)
+    
+
+    
     #setup network architecture, 
+    
+    ## get the dataset for the classes
+    ## this is purely for dynamically getting the the input shape 
+    ## for the setup of the network
+    dataset_factory_by_classes = Imagnet_dataset_generator(train_images_per_class = cfg.train_size_per_class,
+                                                                test_images_per_class = cfg.val_size_per_class,
+                                                                  test = cfg.test)
+    
+    x_train, y_train, x_test, y_test = dataset_factory_by_classes(classes = class_order[:cfg.num_classes_per_task], randomize = True)  
+    
+    # set the input shape for the network:
+    cfg.net.netparams.input_height = x_train[0].shape[1]
+    cfg.net.netparams.input_width = x_train[0].shape[2]
+    
     
     #net = ConvNet(cfg.net.netparams)
     if cfg.net.network_class == 'fc':
@@ -94,28 +133,8 @@ def main(cfg :ExperimentConfig):
         from src.algos.supervised.continuous_backprop_with_GnT import ContinualBackprop_for_FC
         learner = ContinualBackprop_for_FC(net, cfg.learner)
         
-    class_order_path = os.path.join(cfg.data.data_path, cfg.data.dataset, 'data','class_order')
-    # load the class order:
-    with open(class_order_path, 'rb+') as f:
-        class_order = pickle.load(f)
-        # class order is a numpy array of shape (300, 14000), containing number from 0 to 999
-    
-    # set class_order based on the run_id:
-    class_order = class_order[cfg.run_id]
-    
-    # for extending the class_order to cover the tasks required:
-    num_class_repetitions_required = int(cfg.num_classes_per_task*cfg.num_tasks /cfg.data.num_classes) + 1
-    class_order = np.concatenate([class_order]*num_class_repetitions_required)
-    
-    # setup data:
-    transform = None
-    Imagnet_dataset_generator = dataset_factory(cfg.data, transform)
-    
-    # for setting up batch:
-    train_examples_per_epoch = cfg.train_size_per_class*cfg.num_classes_per_task
-    
-    epochs_per_task = cfg.epochs
-    
+
+
     # wandb setup
     if cfg.use_wandb:
         import wandb

@@ -1,0 +1,88 @@
+# Research configuration to test REAL hypotheses from literature
+# Based on Huang et al. (2017), Arpit et al. (2016), Salimans & Kingma (2016)
+
+runs: 1
+run_id: 0
+seed: 42
+device: 'cuda:1'
+epochs: 15  # Should be enough to see instability patterns
+batch_size: 256
+num_tasks: 30
+
+debug_mode: True
+
+# Minimal tracking
+track_rank: False
+track_dead_units: False  
+track_actual_rank: False
+track_weight_magnitude: True
+layers_identifier: None
+rank_measure_freq_to_epoch: 1 
+
+use_wandb: True
+use_json: False
+wandb:
+  project: 'weight_norm_research_literature_based'
+  entity: ''
+  tags: ['scale_explosion', 'regularization_mismatch', 'literature_based']
+
+#data
+data:
+  dataset: 'MNIST' 
+  use_torchvision: True
+  data_path: '/hdda/datasets'
+  num_classes: 10
+
+# The key variables we want to investigate
+net:
+  type: "ConvNet_norm"
+  network_class: "conv"
+  device: ${device}
+  netparams:
+    pretrained: False  
+    num_classes: ${data.num_classes}
+    initialization: 'kaiming'   
+    input_height: None
+    input_width: None
+    conv_layer_bias: True
+    linear_layer_bias: True
+    
+    # HYPOTHESIS 3: Activation distribution mismatch (Clevert et al. 2015)
+    # ELU produces negative mean activations, which may interact poorly with weight norm
+    activation: 'elu'  # Test: 'elu' (negative mean) vs 'relu' (non-negative)
+    
+    # HYPOTHESIS 4: Weight correction scale amplifies instability
+    weight_correction_scale: 1.0  # Test: 1.0 vs 2**0.5 vs "relu_output_correction"
+    fan_in_correction: False      # Test: True vs False
+    
+    SVD_only_stride_1: False
+    allow_svd_values_negative: True
+    num_hidden_layers: 1
+
+# Learning parameters that might affect stability    
+learner:
+  type: 'backprop'
+  init: 'kaiming'
+  device: ${device}
+  opt: 'sgd'
+  loss: 'cross_entropy'
+  
+  # HYPOTHESIS 1: Scale parameter explosion (Huang et al. 2017)
+  # Test different weight_decay values to see if insufficient regularization causes explosion
+  step_size: 0.01      
+  weight_decay: 0.01   # Try: 0.0 (no reg), 0.01 (standard), 0.1 (high reg)
+  momentum: 0.9        
+  
+  # HYPOTHESIS 2: Effective learning rate explosion (Salimans & Kingma 2016)  
+  # Large learning rates can cause scale parameters to explode
+  # step_size: 0.001   # Try smaller LR to test this hypothesis
+  
+  beta_1: 0.95
+  beta_2: 0.999
+  to_perturb: false
+  perturb_scale: 0.05
+
+evaluation:
+  use_testset: False
+  eval_freq_epoch: 1
+  eval_metrics: ['accuracy', 'loss']

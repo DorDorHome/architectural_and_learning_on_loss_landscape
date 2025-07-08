@@ -1,0 +1,87 @@
+# More stable configuration to debug NaN issues
+# Use this temporarily to test if the numerical stability fixes work
+
+runs: 1
+run_id: 0
+seed: 42  # Fixed seed for reproducibility
+device: 'cuda:1'
+epochs: 10  # Reduced for testing
+batch_size: 128  # Smaller batch size
+num_tasks: 2  # Much fewer tasks for testing
+
+# debug:
+debug_mode: True  # Enable for debugging
+
+#rank tracking:
+track_rank: True
+track_rank_batch: "use_specified"
+specified_batch_size: 500  # Smaller batch for stability
+rank_measure_freq_to_epoch: 5  # Less frequent to reduce computation
+use_pytorch_entropy_for_effective_rank: True
+prop_for_approx_or_l1_rank: 0.99
+numerical_rank_epsilon: 0.01
+
+# deal units checking:
+track_dead_units: True
+threshold_for_non_saturating_act: 0.01
+
+# for test, computationally expensive
+track_actual_rank: False  # Disable for testing
+
+# for tracking average weight magnitude:
+track_weight_magnitude: True
+layers_identifier: None
+
+# for logging and tracking the experiments
+use_wandb: False  # Disable for debugging
+use_json: False
+
+#data to use
+data:
+  dataset: 'MNIST' 
+  use_torchvision: True
+  data_path: '/hdda/datasets'
+  num_classes: 10
+
+# network architecture:
+net:
+  type: "ConvNet_norm"
+  network_class: "conv"
+  device: ${device}
+  netparams:
+    pretrained: False  
+    num_classes: ${data.num_classes}
+    initialization: 'kaiming'   
+    input_height: None
+    input_width: None
+    conv_layer_bias: True
+    linear_layer_bias: True
+    activation: 'relu'  # Changed from 'elu' to 'relu' for stability
+
+    # More conservative normalization settings
+    weight_correction_scale: 1.0  # Reduced from dynamic scaling
+    fan_in_correction: False
+    SVD_only_stride_1: False
+    allow_svd_values_negative: True
+    num_hidden_layers: 1
+    
+# learning algorithm:
+learner:
+  type: 'backprop'
+  init: 'kaiming'
+  device: ${device}
+  opt: 'sgd'
+  loss: 'cross_entropy'
+  step_size: 0.001  # Much smaller learning rate
+  beta_1: 0.95
+  beta_2: 0.999
+  weight_decay: 0.001  # Reduced weight decay
+  to_perturb: false
+  perturb_scale: 0.05
+  momentum: 0.9
+
+# evaluation
+evaluation:
+  use_testset: False
+  eval_freq_epoch: 5  # Less frequent evaluation
+  eval_metrics: ['accuracy', 'loss']

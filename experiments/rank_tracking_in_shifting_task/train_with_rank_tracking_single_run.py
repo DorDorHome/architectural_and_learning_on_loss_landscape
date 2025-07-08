@@ -26,6 +26,7 @@ import numpy as np #used in concatenating the data
 from omegaconf import OmegaConf # , DictConfig
 # import algorithm:
 from src.algos.supervised.basic_backprop import Backprop
+from src.algos.supervised.backprop_with_semantic_features import BackpropWithSemanticFeatures
 # import model factory:
 
 from src.models.model_factory import model_factory
@@ -117,7 +118,8 @@ def main(cfg: ExperimentConfig):
     # optimizer is setup in the learner
     # loss function is setup in the learner
     if cfg.learner.type == 'backprop':
-        learner = Backprop(net, cfg.learner, cfg.net)
+        # Use enhanced learner that provides semantic layer names
+        learner = BackpropWithSemanticFeatures(net, cfg.learner, cfg.net)
     if cfg.learner.type == 'cbp' and cfg.net.type == 'ConvNet':
         from src.algos.supervised.continuous_backprop_with_GnT import ContinuousBackprop_for_ConvNet
         learner = ContinuousBackprop_for_ConvNet(net, cfg.learner)
@@ -136,7 +138,7 @@ def main(cfg: ExperimentConfig):
         # raise not implemented error:
         raise NotImplementedError("JSON logging functionality is not implemented yet.")
         
-        # from src.utils.data_logging import save_data_json
+        from src.utils.data_logging import save_data_json
         # import json
         # # set up the folder for the json file:
         # # find a exp_id, integer, that is not used in the experiments folder:
@@ -179,63 +181,71 @@ def main(cfg: ExperimentConfig):
         wandb.init(project=cfg.wandb.project, config= cfg_dict )
    
     net.train()
-    # loop though the tasks
-    for task_idx in range(cfg.num_tasks):
-        # for each task, set a new permutation:
-        # for an FC network, the permutation is a random permutation of the input size
-        pixel_permutation = np.random.permutation(cfg.net.netparams.input_height * cfg.net.netparams.input_width)
-        
-        #  wrap the dataset with the permutation:
-        if cfg.net.network_class == 'fc':
-            flatten = True
-        if cfg.net.network_class == 'conv':
-            flatten = False     
-        
-        permutated_train_set = PermutedDataset(train_set, permutation=pixel_permutation, flatten=flatten, transform=None)#note: transform was used when setting up the dataset, but not used here.
-        
-        permutated_train_loader = torch.utils.data.DataLoader(permutated_train_set, batch_size=cfg.batch_size, shuffle=True, num_workers=2, pin_memory=True)
-    # training loop:
-
-        for epoch in tqdm(range(epochs_per_task), desc='Epoch'):
+    
+    # Wrap the entire training in try-catch to handle NaN properly
+    try:
+        # loop though the tasks
+        for task_idx in range(cfg.num_tasks):
+            print(f"\n{'='*50}")
+            print(f"Starting task {task_idx+1}/{cfg.num_tasks}")
+            print(f"{'='*50}")
             
-            # running loss for the epoch:
-            running_loss = 0.0
-
-            # alternative way to track loss, by batch loss
-            batch_running_loss = 0.0
+            # for each task, set a new permutation:
+            # for an FC network, the permutation is a random permutation of the input size
+            pixel_permutation = np.random.permutation(cfg.net.netparams.input_height * cfg.net.netparams.input_width)
             
-            # for accuracy
-            number_of_correct = 0
-            #number_of_correct_2 =0
-            total = 0
-
+            #  wrap the dataset with the permutation:
+            if cfg.net.network_class == 'fc':
+                flatten = True
+            if cfg.net.network_class == 'conv':
+                flatten = False     
             
-            for batch_idx, (input, label) in enumerate(tqdm(permutated_train_loader, desc=f"Epoch: {epoch}, progress on batches", leave =True)):
-                if input is None or label is None:
-                    print("Found None in the data loader batch")
-                    raise ValueError("Found None in the data loader batch")
-                
-                input, label = input.to(cfg.device), label.to(cfg.device)
-                
-                # print(label.dtype)  # Should be torch.long for CrossEntropyLoss
-                # print(label.min(), label.max())  # Should be within [0, num_classes - 1]
-                loss, output = learner.learn(input, label)
-                
-                # added to check for non-finite loss:
+            permutated_train_set = PermutedDataset(train_set, permutation=pixel_permutation, flatten=flatten, transform=None)#note: transform was used when setting up the dataset, but not used here.
+            
+            permutated_train_loader = torch.utils.data.DataLoader(permutated_train_set, batch_size=cfg.batch_size, shuffle=True, num_workers=2, pin_memory=True)
+        # training loop:
 
-                if not torch.isfinite(torch.as_tensor(loss)):
-                    _log_and_raise_non_finite_error(task_idx,epoch,
-                                    batch_idx, loss,
-                                    input, label,
-                                    output, learner, net)
+            for epoch in tqdm(range(epochs_per_task), desc='Epoch'):
+                
+                # running loss for the epoch:
+                running_loss = 0.0
 
-                #running_loss+= loss*input.size(0)
-                batch_running_loss += loss
-                _, predicted = output.max(1)
-                total += label.size(0)
-                # predicted = predicted.cpu()
-                number_of_correct += predicted.eq(label).sum().cpu().item()
-                #torch.max(output.data, 1)
+                # alternative way to track loss, by batch loss
+                batch_running_loss = 0.0
+                
+                # for accuracy
+                number_of_correct = 0
+                #number_of_correct_2 =0
+                total = 0
+
+                
+                for batch_idx, (input, label) in enumerate(tqdm(permutated_train_loader, desc=f"Epoch: {epoch}, progress on batches", leave =True)):
+                    if input is None or label is None:
+                        print("Found None in the data loader batch")
+                        raise ValueError("Found None in the data loader batch")
+                    
+                    input, label = input.to(cfg.device), label.to(cfg.device)
+                    
+                    # print(label.dtype)  # Should be torch.long for CrossEntropyLoss
+                    # print(label.min(), label.max())  # Should be within [0, num_classes - 1]
+                    loss, output = learner.learn(input, label)
+                    
+                    # Critical: Check for non-finite loss and STOP immediately
+                    if not torch.isfinite(torch.as_tensor(loss)):
+                        _log_and_raise_non_finite_error(task_idx, epoch,
+                                        batch_idx, loss,
+                                        input, label,
+                                        output, learner, net)
+                        # This should never be reached due to the exception above
+                        raise RuntimeError("Training should have stopped due to NaN loss!")
+
+                    #running_loss+= loss*input.size(0)
+                    batch_running_loss += loss
+                    _, predicted = output.max(1)
+                    total += label.size(0)
+                    # predicted = predicted.cpu()
+                    number_of_correct += predicted.eq(label).sum().cpu().item()
+                    #torch.max(output.data, 1)
 
 
             # extrack rank:
@@ -288,6 +298,29 @@ def main(cfg: ExperimentConfig):
                         use_pytorch_entropy_for_effective_rank=cfg.use_pytorch_entropy_for_effective_rank,
                         prop_for_approx_or_l1_rank=cfg.prop_for_approx_or_l1_rank,
                         numerical_rank_epsilon = cfg.numerical_rank_epsilon)
+                    
+                    # Enhanced logging with semantic layer names
+                    # This demonstrates the new capability while keeping existing code working
+                    try:
+                        if hasattr(learner, 'get_layer_names'):
+                            layer_names = learner.get_layer_names()
+                            # Log rank metrics with semantic names (in addition to indexed names)
+                            for i, layer_name in enumerate(layer_names):
+                                if i < len(rank_summary_list):
+                                    # Add semantic name versions of the metrics
+                                    data[f'{layer_name}_effective_rank'] = rank_summary_list[i]['effective_rank']
+                                    data[f'{layer_name}_approximate_rank'] = rank_summary_list[i]['approximate_rank']
+                                    data[f'{layer_name}_l1_distribution_rank'] = rank_summary_list[i]['l1_distribution_rank']
+                                    data[f'{layer_name}_numerical_rank'] = rank_summary_list[i]['numerical_rank']
+                    except Exception as e:
+                        # Fallback: if semantic names fail, use indexed names
+                        print(f"Semantic layer naming failed, using indexed names as fallback: {e}")
+                        for layer_idx in range(len(list_of_features_for_every_layers)):
+                            # for each layer,
+                            data[f'layer_{layer_idx}_effective_rank'] = rank_summary_list[layer_idx]['effective_rank']
+                            data[f'layer_{layer_idx}_approximate_rank'] = rank_summary_list[layer_idx]['approximate_rank']
+                            data[f'layer_{layer_idx}_l1_distribution_rank'] = rank_summary_list[layer_idx]['l1_distribution_rank']
+                            data[f'layer_{layer_idx}_numerical_rank'] = rank_summary_list[layer_idx]['numerical_rank']
 
                 # tracking actual rank:
                 if cfg.track_actual_rank:
@@ -312,21 +345,6 @@ def main(cfg: ExperimentConfig):
                 if cfg.debug_mode:
                     assert len(rank_summary_list) == len(list_of_features_for_every_layers), "The rank summary list and the list of features should have the same length"
                     assert len(actual_rank_list) == len(list_of_features_for_every_layers), "The rank summary list and the list of features should have the same length"
-                    
-               
-                
-
-                
-                
-                # calculate the effective rank, approximate rank, l1 distribution rank, numerical rank for each layer:
-                
-                # check!
-                for layer_idx in range(len(list_of_features_for_every_layers)):
-                    # for each layer,
-                    data[f'layer_{layer_idx}_effective_rank'] = rank_summary_list[layer_idx]['effective_rank']
-                    data[f'layer_{layer_idx}_approximate_rank'] = rank_summary_list[layer_idx]['approximate_rank']
-                    data[f'layer_{layer_idx}_l1_distribution_rank'] = rank_summary_list[layer_idx]['l1_distribution_rank']
-                    data[f'layer_{layer_idx}_numerical_rank'] = rank_summary_list[layer_idx]['numerical_rank']
                 
                 if cfg.track_actual_rank:
                     for layer_idx in range(len(list_of_features_for_every_layers)):
@@ -334,21 +352,29 @@ def main(cfg: ExperimentConfig):
                 
                 if cfg.track_weight_magnitude:
                     weight_magnitude_stats = track_weight_stats(net, layer_identifiers=cfg.layers_identifier)
-                    # register the weight magnitude stats in the data:
+                    # register the weight magnitude stats in the data with clear naming:
                     for name, stat in weight_magnitude_stats.items():
-                        data[name] = stat
+                        # Ensure the key clearly indicates this is mean absolute weight value
+                        if not name.endswith('_mean_abs_weight'):
+                            data[f'{name}_mean_abs_weight'] = stat
+                        else:
+                            data[name] = stat
                     
                 
-            # log to wandb:
-            if cfg.use_wandb:
-                wandb.log(data)
-            if cfg.use_json:
-                save_data_json(data, run_dir, filename=f'run_{cfg.run_id}.json')
+                # log to wandb:
+                if cfg.use_wandb:
+                    wandb.log(data)
+                if cfg.use_json:
+                    save_data_json(data, run_dir, filename=f'run_{cfg.run_id}.json')
 
-                
-
-        
-    
+    except ValueError as e:
+        # NaN/Inf errors will propagate as ValueError - let them stop the script
+        print(f"Training stopped due to numerical instability: {e}")
+        raise
+    except Exception as e:
+        # Catch any other unexpected errors
+        print(f"Unexpected error during training: {e}")
+        raise
 
 if __name__ == "__main__":
     # clear cached memory:
