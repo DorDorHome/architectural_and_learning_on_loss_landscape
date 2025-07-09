@@ -31,6 +31,7 @@ class ConvNetWithFCLayerNorm(nn.Module):
         num_classes = config.num_classes if config.num_classes is not None else 10
         self.activation = config.activation if config.activation is not None else 'relu'
         self.activation_fn = activation_dict.get(self.activation, nn.ReLU)()
+        self.elementwise_affine = config.norm_param.layer_norm.elementwise_affine
         
         # Conv layers
         self.conv1 = nn.Conv2d(3, 32, 5)
@@ -52,12 +53,12 @@ class ConvNetWithFCLayerNorm(nn.Module):
         
         ## fc1 + layer norm
         self.fc1 = nn.Linear(flattened_size, 128)
-        self.ln1 = nn.LayerNorm(128)  # Layer norm after first FC layer
+        self.ln1 = nn.LayerNorm(128, elementwise_affine=self.elementwise_affine)  # Layer norm after first FC layer
          
          
         ## fc2 + layer norm
         self.fc2 = nn.Linear(128, 128)
-        self.ln2 = nn.LayerNorm(128)  # Layer norm after second FC layer
+        self.ln2 = nn.LayerNorm(128, elementwise_affine=self.elementwise_affine)  # Layer norm after second FC layer
         
         # FC3
         self.fc3 = nn.Linear(128, num_classes)
@@ -144,6 +145,7 @@ class ConvNet_conv_and_FC_LayerNorm(nn.Module):
         num_classes = config.num_classes if config.num_classes is not None else 10
         self.activation = config.activation if config.activation is not None else 'relu'
         self.activation_fn = activation_dict.get(self.activation, nn.ReLU)()
+        self.elementwise_affine = config.norm_param.layer_norm.elementwise_affine
         
         # Conv layers with Layer Normalization
         self.conv1 = nn.Conv2d(3, 32, 5)
@@ -164,25 +166,25 @@ class ConvNet_conv_and_FC_LayerNorm(nn.Module):
         
         # Forward through conv layers to get shapes for layer norm
         conv1_out = self.conv1(dummy)
-        self.ln_conv1 = nn.LayerNorm(conv1_out.shape[1:])  # Normalize over [C, H, W]
+        self.ln_conv1 = nn.LayerNorm(conv1_out.shape[1:], elementwise_affine=self.elementwise_affine)  # Normalize over [C, H, W]
         
         x = self.pool(self.activation_fn(self.ln_conv1(conv1_out)))
         conv2_out = self.conv2(x)
-        self.ln_conv2 = nn.LayerNorm(conv2_out.shape[1:])  # Normalize over [C, H, W]
+        self.ln_conv2 = nn.LayerNorm(conv2_out.shape[1:], elementwise_affine=self.elementwise_affine)  # Normalize over [C, H, W]
         
         x = self.pool(self.activation_fn(self.ln_conv2(conv2_out)))
         conv3_out = self.conv3(x)
-        self.ln_conv3 = nn.LayerNorm(conv3_out.shape[1:])  # Normalize over [C, H, W]
+        self.ln_conv3 = nn.LayerNorm(conv3_out.shape[1:], elementwise_affine=self.elementwise_affine)  # Normalize over [C, H, W]
         
         x = self.pool(self.activation_fn(self.ln_conv3(conv3_out)))
         flattened_size = x.view(1, -1).shape[1]
         
         # FC layers with Layer Normalization
         self.fc1 = nn.Linear(flattened_size, 128)
-        self.ln_fc1 = nn.LayerNorm(128)  # Layer norm after first FC layer
+        self.ln_fc1 = nn.LayerNorm(128, elementwise_affine=self.elementwise_affine)  # Layer norm after first FC layer
         
         self.fc2 = nn.Linear(128, 128)
-        self.ln_fc2 = nn.LayerNorm(128)  # Layer norm after second FC layer
+        self.ln_fc2 = nn.LayerNorm(128, elementwise_affine=self.elementwise_affine)  # Layer norm after second FC layer
         
         self.fc3 = nn.Linear(128, num_classes)
         
@@ -269,7 +271,8 @@ if __name__ == "__main__":
         num_classes=10,
         input_height=32,
         input_width=32,
-        activation='relu'
+        activation='relu',
+        norm_param={'layer_norm': {'elementwise_affine': True}}
     )
     
     # Test ConvNetWithFCLayerNorm
