@@ -1,0 +1,44 @@
+
+==================================================
+Starting task 1/4000
+==================================================
+Epoch: 0, progress on batches: 100%|██████████████████████████████████████| 235/235 [00:11<00:00, 19.63it/s]
+Epoch: 1, progress on batches: 100%|██████████████████████████████████████| 235/235 [00:04<00:00, 50.85it/s]
+Epoch: 2, progress on batches: 100%|██████████████████████████████████████| 235/235 [00:04<00:00, 55.70it/s]
+Epoch: 3, progress on batches: 100%|██████████████████████████████████████| 235/235 [00:04<00:00, 56.56it/s]
+Epoch: 4, progress on batches:  65%|████████████████████████▌             | 152/235 [00:02<00:01, 55.84it/s]
+Epoch:   8%|█████▏                                                           | 4/50 [00:27<05:18,  6.92s/it]
+Traceback (most recent call last):
+  File "/hdda/models/my_own_models/architectural_and_learning_on_loss_landscape/experiments/output_vs_input_plasticity/train_data_shift_mode.py", line 393, in <module>
+    main()
+  File "/home/sfchan/anaconda3/envs/loss_landscape/lib/python3.9/site-packages/hydra/main.py", line 94, in decorated_main
+    _run_hydra(
+  File "/home/sfchan/anaconda3/envs/loss_landscape/lib/python3.9/site-packages/hydra/_internal/utils.py", line 394, in _run_hydra
+    _run_app(
+  File "/home/sfchan/anaconda3/envs/loss_landscape/lib/python3.9/site-packages/hydra/_internal/utils.py", line 457, in _run_app
+    run_and_report(
+  File "/home/sfchan/anaconda3/envs/loss_landscape/lib/python3.9/site-packages/hydra/_internal/utils.py", line 220, in run_and_report
+    return func()
+  File "/home/sfchan/anaconda3/envs/loss_landscape/lib/python3.9/site-packages/hydra/_internal/utils.py", line 458, in <lambda>
+    lambda: hydra.run(
+  File "/home/sfchan/anaconda3/envs/loss_landscape/lib/python3.9/site-packages/hydra/_internal/hydra.py", line 119, in run
+    ret = run_job(
+  File "/home/sfchan/anaconda3/envs/loss_landscape/lib/python3.9/site-packages/hydra/core/utils.py", line 186, in run_job
+    ret.return_value = task_function(task_cfg)
+  File "/hdda/models/my_own_models/architectural_and_learning_on_loss_landscape/experiments/output_vs_input_plasticity/train_data_shift_mode.py", line 231, in main
+    for batch_idx, (input, label) in enumerate(tqdm(permutated_train_loader, desc=f"Epoch: {epoch}, progress on batches", leave =True)):
+  File "/home/sfchan/anaconda3/envs/loss_landscape/lib/python3.9/site-packages/tqdm/std.py", line 1181, in __iter__
+    for obj in iterable:
+  File "/home/sfchan/anaconda3/envs/loss_landscape/lib/python3.9/site-packages/torch/utils/data/dataloader.py", line 521, in __next__
+    data = self._next_data()
+  File "/home/sfchan/anaconda3/envs/loss_landscape/lib/python3.9/site-packages/torch/utils/data/dataloader.py", line 1186, in _next_data
+    idx, data = self._get_data()
+  File "/home/sfchan/anaconda3/envs/loss_landscape/lib/python3.9/site-packages/torch/utils/data/dataloader.py", line 1142, in _get_data
+    success, data = self._try_get_data()
+  File "/home/sfchan/anaconda3/envs/loss_landscape/lib/python3.9/site-packages/torch/utils/data/dataloader.py", line 990, in _try_get_data
+    data = self._data_queue.get(timeout=timeout)
+  File "/home/sfchan/anaconda3/envs/loss_landscape/lib/python3.9/queue.py", line 180, in get
+    self.not_empty.wait(remaining)
+  File "/home/sfchan/anaconda3/envs/loss_landscape/lib/python3.9/threading.py", line 316, in wait
+    gotit = waiter.acquire(True, timeout)
+KeyboardInterrupt

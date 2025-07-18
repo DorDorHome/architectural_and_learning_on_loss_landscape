@@ -1,0 +1,12 @@
+
+==================================================
+Starting task 1/4000
+==================================================
+Unexpected error during training: name 'Permuted_output_Dataset' is not defined
+Error executing job with overrides: []
+Traceback (most recent call last):
+  File "/hdda/models/my_own_models/architectural_and_learning_on_loss_landscape/experiments/output_vs_input_plasticity/train_data_shift_mode.py", line 209, in main
+    permutated_train_set = Permuted_output_Dataset(train_set, permutation=class_permutation, flatten=False, transform=None)
+NameError: name 'Permuted_output_Dataset' is not defined
+
+Set the environment variable HYDRA_FULL_ERROR=1 for a complete stack trace.

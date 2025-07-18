@@ -1,7 +1,6 @@
 """
-shift tasks, with rank tracking.
-Purpose:
-to see the correlation (if any) between the loss of plasticity and the rank of the features, rank of CNN filters, dead units, rank of CNN filters times zerod activation during the training process.
+Experiment with different training data shift modes for plasticity in neural networks.
+Purpose: To analyze how varying the training data shift affects the performance of plasticity mechanisms in neural networks.
 
 """
 
@@ -34,7 +33,7 @@ from src.data_loading.dataset_factory import dataset_factory
 from src.data_loading.transform_factory import transform_factory
 import torch.nn.functional as F
 from src.utils.miscellaneous import nll_accuracy
-from src.data_loading.shifting_dataset import Permuted_input_Dataset
+from src.data_loading.shifting_dataset import Permuted_input_Dataset, Permuted_output_Dataset
 # rank tracking:
 from src.utils.zeroth_order_features import compute_all_rank_measures_list, count_saturated_units_list
 #from src.utils.miscellaneous import compute_matrix_rank_summaries
@@ -47,13 +46,14 @@ import torchvision.transforms as transforms
 import torchvision
 import torch
 
-from src.utils.miscellaneous import compute_accuracy
-
 # for checking non-finite loss:
 from src.utils.robust_checking_of_training_errors import _log_and_raise_non_finite_error
 
-@hydra.main(config_path="cfg", config_name="rank_tracking_in_shifting_tasks_config_conv")
-def main(cfg: ExperimentConfig):
+@hydra.main(config_path="cfg", config_name="rank_track_with_input_vs_output_conv", version_base=None)
+def main(cfg: ExperimentConfig) -> Any:
+    """
+    Main function to run the experiment with different training data shift modes.
+    """
     # Ensure reproducibility by setting the seed
     if cfg.seed is None or not isinstance(cfg.seed, (int, float)):
         cfg.seed = random.randint(0, 2**32 - 1)  # Generate a random seed if not provided
@@ -69,7 +69,7 @@ def main(cfg: ExperimentConfig):
     torch.cuda.manual_seed_all(cfg.seed)  # If using multi-GPU setups
     torch.backends.cudnn.deterministic = True  # Ensure deterministic behavior
     torch.backends.cudnn.benchmark = False  # Disable benchmark for reproducibility
-    
+
     print(OmegaConf.to_yaml(cfg))
     # set up the transform being used for the dataset, given the model architecture and dataset
     # expected cfg.data.dataset value is 'MNIST'
@@ -82,7 +82,7 @@ def main(cfg: ExperimentConfig):
     # for setting up batch:
     # train_examples_per_epoch = cfg.train_size_per_class*cfg.num_classes_per_task
      
-    
+        
     # Convert "None" string to Python None
     if cfg.layers_identifier == "None":
         cfg.layers_identifier = None
@@ -99,6 +99,7 @@ def main(cfg: ExperimentConfig):
     #setup network architecture
     net = model_factory(cfg.net)
     # set device for net
+    net.to(cfg.net.device)
     net.to(cfg.net.device)
 
     #verifty cfg.runs ==1:
@@ -185,19 +186,32 @@ def main(cfg: ExperimentConfig):
             print(f"Starting task {task_idx+1}/{cfg.num_tasks}")
             print(f"{'='*50}")
             
-            # for each task, set a new permutation:
-            # for an FC network, the permutation is a random permutation of the input size
-            pixel_permutation = np.random.permutation(cfg.net.netparams.input_height * cfg.net.netparams.input_width)
-            
-            #  wrap the dataset with the permutation:
-            if cfg.net.network_class == 'fc':
-                flatten = True
-            if cfg.net.network_class == 'conv':
-                flatten = False     
-            
-            permutated_train_set = Permuted_input_Dataset(train_set, permutation=pixel_permutation, flatten=flatten, transform=None)#note: transform was used when setting up the dataset, but not used here.
-            
-            permutated_train_loader = torch.utils.data.DataLoader(permutated_train_set, batch_size=cfg.batch_size, shuffle=True, num_workers=2, pin_memory=True)
+            if cfg.task_shift_mode == 'input_permutation':
+                # for each task, set a new permutation for pixels
+                # for an FC network, the permutation is a random permutation of the input size
+                pixel_permutation = np.random.permutation(cfg.net.netparams.input_height * cfg.net.netparams.input_width)
+                
+                #  wrap the dataset with the permutation:
+                if cfg.net.network_class == 'fc':
+                    flatten = True
+                if cfg.net.network_class == 'conv':
+                    flatten = False 
+                
+                permutated_train_set = Permuted_input_Dataset(train_set, permutation=pixel_permutation, flatten=flatten, transform=None)#note: transform was used when setting up the dataset, but not used here.
+                
+                permutated_train_loader = torch.utils.data.DataLoader(permutated_train_set, batch_size=cfg.batch_size, shuffle=True, num_workers=2, pin_memory=True)
+            elif cfg.task_shift_mode == 'output_permutation':
+                # for each task, set a new permutation for the output classes
+                # for an FC network, the permutation is a random permutation of the number of classes
+                class_permutation = np.random.permutation(cfg.data.num_classes)
+                
+                # wrap the dataset with the permutation:
+                permutated_train_set = Permuted_output_Dataset(train_set, permutation=class_permutation, flatten=False, transform=None)
+                
+                permutated_train_loader = torch.utils.data.DataLoader(permutated_train_set, batch_size=cfg.batch_size, shuffle=True, num_workers=2, pin_memory=True)
+                
+        
+        
         # training loop:
 
             for epoch in tqdm(range(epochs_per_task), desc='Epoch'):
@@ -377,7 +391,7 @@ if __name__ == "__main__":
     
     
     main()
-    
-    
-    
+
+
+
 
