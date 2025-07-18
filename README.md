@@ -1,10 +1,7 @@
 # architectural_and_learning_on_loss_landscape
 
 # to-do:
-### preliminary tests for rank tracking
-# in /basic_training_with_rank_tracking
-# build functions src.utils.forward_extraction_tools.compute_rank_for_list_of_features
-# check basic_training_with_rank_tracking/single_run.py
+# layer norm models need to pair with use of effective learning rate 
 # add support for partial jacabian rank.
 # add timer for rank computation to assess computational bottleneck.
 
