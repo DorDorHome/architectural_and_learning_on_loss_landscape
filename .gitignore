@@ -27,7 +27,11 @@ experiments/basic_training/outputs/*/*
 experiments/rank_tracking_in_shifting_task/outputs/*
 permuted_mnist_example.png
 
+test_outputs/*
 
+experiments/output_vs_input_plasticity/outputs/*
+experiments/output_vs_input_plasticity/wandb/*
+experiments/output_vs_input_plasticity/wandb
 
 FEATURE_CONTAINER_EXPLANATION.py
 FEATURE_ENHANCEMENT_PLAN.md

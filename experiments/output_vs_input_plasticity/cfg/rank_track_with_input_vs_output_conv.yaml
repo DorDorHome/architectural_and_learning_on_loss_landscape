@@ -2,13 +2,69 @@
 runs: 1
 run_id: 0
 seed: None
-device: 'cuda:1'
+device: 'cuda:0'
 epochs: 50 #epoch per task switch
 batch_size: 256 
 num_tasks: 4000 # number of tasks to train on. Each task will be trained on num_classes_per_task
 
 # task switching:
-task_shift_mode: "output_permutation" # "input_permutation", "output_permutation", "both"
+task_shift_mode: "input_permutation" # "input_permutation", "output_permutation", "slow_drift_bandit", "drifting_input"
+task_shift_param:
+  # Common parameters for permutation-based shifts.
+  # Used when task_shift_mode is 'input_permutation' or 'output_permutation'.
+  permutation_seed: 42 # Seed for generating reproducible permutations.
+
+  # --- Parameters for 'input_permutation' mode ---
+  input_permutation: None
+
+  # --- Parameters for 'output_permutation' mode ---
+  output_permutation: None
+
+  # --- Parameters for 'slow_drift_bandit' mode ---
+  # This mode wraps the dataset to simulate a contextual bandit problem
+  # where the true value of each class drifts over time.
+  slow_drift_bandit:
+    # The variance of the Gaussian noise added to the true value to generate feedback.
+    variance: 0.5
+    # The type of drift to apply to the true values.
+    # Options: 'random_walk', 'sinusoidal', 'interpolation'
+    drift_mode: 'random_walk'
+
+    # Settings for when drift_mode is 'random_walk'
+    random_walk:
+      drift_std_dev: 0.01 # Standard deviation of the noise added at each step.
+
+    # Settings for when drift_mode is 'sinusoidal'
+    sinusoidal:
+      amplitude: 0.5 # The magnitude of the sine wave oscillation.
+      frequency: 0.1 # The frequency of the sine wave (lower is slower).
+
+    # Settings for when drift_mode is 'interpolation'
+    interpolation:
+      # The number of `update_drift()` calls (e.g., epochs) to transition
+      # from start_values to end_values.
+      duration: 100
+      # The initial set of true values for each class.
+      start_values: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+      # The target set of true values for each class.
+      end_values:   [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+
+  # --- Parameters for 'drifting_input' mode ---
+  # This mode applies a continuously drifting affine transformation (rotation, scale, shear)
+  # to the input images.
+  drifting_input:
+    # The type of drift to apply to the affine transformation parameters.
+    # Options: 'random_walk' (currently implemented)
+    drift_type: 'random_walk'
+
+    # Settings for when drift_type is 'random_walk'
+    random_walk:
+      rotation_std_dev: 2.0   # Std dev for the change in angle (degrees) per step.
+      scale_std_dev: 0.01     # Std dev for the change in scale per step.
+      shear_std_dev: 0.02     # Std dev for the change in shear per step.
+      # To enable translation drift, you would add a 'translation_std_dev' here
+      # and implement it in the `_update_affine_random_walk` method.
+
 
 # debug:
 debug_mode: False # should be False for real experiments
@@ -80,7 +136,7 @@ net:
     norm_param:
       layer_norm:
         eps: 1e-5 # for ConvNet_FC_layer_norm, ConvNet_conv_and_FC_layer_norm
-        elementwise_affine: False # controls whether to have a learnable gain and bias, for ConvNet_FC_layer_norm, ConvNet_conv_and_FC_layer_norm
+        elementwise_affine: True # controls whether to have a learnable gain and bias, for ConvNet_FC_layer_norm, ConvNet_conv_and_FC_layer_norm
   
     # for ConvNet_batch_norm:
     #input_size: 784 # need to match the dataset used. # 3072 # 224*224*3 for Imagenet, 784 for MNIST, 3072 for CIFAR10
