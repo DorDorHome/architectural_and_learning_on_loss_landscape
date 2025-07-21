@@ -10,9 +10,10 @@ import pathlib
 import torch.utils
 
 PROJECT_ROOT = pathlib.Path(__file__).resolve().parent.parent.parent
+print(PROJECT_ROOT)
 sys.path.append(str(PROJECT_ROOT))
 from configs.configurations import ExperimentConfig
-import json
+# import json
 import os
 import random
 # import pickle
@@ -23,7 +24,7 @@ import hydra
 import numpy as np #used in concatenating the data
 from omegaconf import OmegaConf # , DictConfig
 # import algorithm:
-# from src.algos.supervised.basic_backprop import Backprop
+from src.algos.supervised.basic_backprop import Backprop
 from src.algos.supervised.backprop_with_semantic_features import BackpropWithSemanticFeatures
 # import model factory:
 
@@ -32,10 +33,7 @@ from src.data_loading.dataset_factory import dataset_factory
 from src.data_loading.transform_factory import transform_factory
 import torch.nn.functional as F
 from src.utils.miscellaneous import nll_accuracy
-from src.data_loading.shifting_dataset import (
-    create_stateful_dataset_wrapper,
-    create_stateless_dataset_wrapper
-)
+from src.data_loading.shifting_dataset import Permuted_input_Dataset, Permuted_output_Dataset
 # rank tracking:
 from src.utils.zeroth_order_features import compute_all_rank_measures_list, count_saturated_units_list
 #from src.utils.miscellaneous import compute_matrix_rank_summaries
@@ -47,12 +45,11 @@ from src.utils.track_weights_norm import track_weight_stats
 import torchvision.transforms as transforms
 import torchvision
 import torch
-import torch.multiprocessing as mp
 
 # for checking non-finite loss:
 from src.utils.robust_checking_of_training_errors import _log_and_raise_non_finite_error
 
-@hydra.main(config_path="cfg", config_name="drifting_input_and_output_experiment", version_base=None)
+@hydra.main(config_path="cfg", config_name="rank_track_with_input_vs_output_conv", version_base=None)
 def main(cfg: ExperimentConfig) -> Any:
     """
     Main function to run the experiment with different training data shift modes.
@@ -80,14 +77,8 @@ def main(cfg: ExperimentConfig) -> Any:
     transform = transform_factory(cfg.data.dataset, cfg.net.type)
     
     # setup data:
-    train_set, _ = dataset_factory(cfg.data, transform = transform, with_testset= False)            # The number of workers should be set from the config, not hardcoded.
-    # This was a temporary fix for a pickling issue that is now resolved.
-    if cfg.num_workers == "auto":
-        # Set num_workers to the number of available CPU cores
-        num_workers = int(os.cpu_count() or 0)
-        print(f"Dynamically setting num_workers to {num_workers}")
-    else:
-        num_workers = cfg.num_workers
+    train_set, _ = dataset_factory(cfg.data, transform = transform, with_testset= False)
+    
     # for setting up batch:
     # train_examples_per_epoch = cfg.train_size_per_class*cfg.num_classes_per_task
      
@@ -187,14 +178,6 @@ def main(cfg: ExperimentConfig) -> Any:
    
     net.train()
     
-
-    # Determine if the shift mode is stateful. This covers cases in which the wrapper changes across tasks
-    is_stateful = cfg.task_shift_mode in ["drifting_values", 'continuous_input_deformation']
-    # Initialize the appropriate wrapper if it's stateful
-    dataset_wrapper = None
-    if is_stateful:
-        dataset_wrapper = create_stateful_dataset_wrapper(cfg, train_set)
-
     # Wrap the entire training in try-catch to handle NaN properly
     try:
         # loop though the tasks
@@ -202,107 +185,96 @@ def main(cfg: ExperimentConfig) -> Any:
             print(f"\n{'='*50}")
             print(f"Starting task {task_idx+1}/{cfg.num_tasks}")
             print(f"{'='*50}")
-
-            # --- Refactored Dataset Handling for each task ---
-            if is_stateful:
-                # For stateful shifts, update the wrapper's state for the new task
-                if hasattr(dataset_wrapper, 'update_task'):
-                    dataset_wrapper.update_task()
-                current_train_set = dataset_wrapper
-            else:
-                # For stateless shifts, use the factory to get a new wrapper for each task
-                current_train_set = create_stateless_dataset_wrapper(cfg, train_set, task_idx)
-
-            # If the dataset is not stateful, create a new wrapper for each task
-            if not is_stateful:
-                dataset_wrapper = create_stateless_dataset_wrapper(cfg, train_set, task_idx)
-
-            # If no wrapper is needed (e.g., 'no_shift'), use the original dataset
-            current_train_set = dataset_wrapper if dataset_wrapper is not None else train_set
             
-            train_loader = torch.utils.data.DataLoader(
-                current_train_set,
-                batch_size=cfg.batch_size,
-                shuffle=True,
-                num_workers=num_workers,
-                pin_memory=True
-            )
-
-            # Update drift for stateful datasets that require it
-            if hasattr(dataset_wrapper, 'update_drift'):
-                print("Updating dataset drift...")
-                dataset_wrapper.update_drift()
-
-            pbar = tqdm(range(epochs_per_task), desc=f'Task {task_idx+1}/{cfg.num_tasks}')
-            for epoch in pbar:
-                epoch_loss = 0.0
-                epoch_correct = 0
-                epoch_total = 0
+            if cfg.task_shift_mode == 'input_permutation':
+                # for each task, set a new permutation for pixels
+                # for an FC network, the permutation is a random permutation of the input size
+                pixel_permutation = np.random.permutation(cfg.net.netparams.input_height * cfg.net.netparams.input_width)
                 
+                #  wrap the dataset with the permutation:
+                if cfg.net.network_class == 'fc':
+                    flatten = True
+                if cfg.net.network_class == 'conv':
+                    flatten = False 
                 
-                for batch_idx, (input, target) in enumerate(train_loader):
-                    input = input.to(cfg.net.device)
-                    if cfg.task_shift_mode == 'drifting_values':
-                        drifting_values, original_labels = target
-                        input = input.to(cfg.net.device)
-                        drifting_values = drifting_values.to(cfg.net.device)
-                        original_labels = original_labels.to(cfg.net.device)
-                        
-                        if cfg.debug_mode:
-                            # Debug: Check for problematic values
-                            if batch_idx == 0:  # Only for first batch to avoid spam
-                                print(f"Debug: Drifting values - min: {drifting_values.min():.3f}, max: {drifting_values.max():.3f}, "
-                                    f"mean: {drifting_values.mean():.3f}, std: {drifting_values.std():.3f}")
-                                print(f"Debug: Has NaN in drifting_values: {torch.isnan(drifting_values).any()}")
-                                print(f"Debug: Has Inf in drifting_values: {torch.isinf(drifting_values).any()}")
-                                print(f"Debug: Original labels range: {original_labels.min()}-{original_labels.max()}")
-                            
-                        loss, output = learner.learn_from_partial_values(input, drifting_values, original_labels)
-                        
-                        if cfg.debug_mode:
-                            # Debug: Check outputs and loss
-                            if batch_idx == 0:
-                                print(f"Debug: Network output - min: {output.min():.3f}, max: {output.max():.3f}, "
-                                    f"mean: {output.mean():.3f}, std: {output.std():.3f}")
-                                print(f"Debug: Has NaN in output: {torch.isnan(output).any()}")
-                                print(f"Debug: Loss: {loss:.6f}, isnan: {torch.isnan(torch.tensor(loss))}")
-
-                    else:
-                        input = input.to(cfg.net.device)
-                        target = target.to(cfg.net.device)              
-                        loss, output = learner.learn(input, target)
-
-                    # Check for non-finite loss and handle it
-                    # _log_and_raise_non_finite_error( loss, epoch, batch_idx, task_idx, cfg)
-
-
-                        
-                    # Accuracy calculation is not applicable for the regression task in 'drifting_values' mode.
-                    if cfg.task_shift_mode != 'drifting_values':
-                        epoch_correct += accuracy(output, target)
-
-                    epoch_total += input.size(0)
-                    epoch_loss += loss.item() if torch.is_tensor(loss) else loss
+                permutated_train_set = Permuted_input_Dataset(train_set, permutation=pixel_permutation, flatten=flatten, transform=None)#note: transform was used when setting up the dataset, but not used here.
+                
+                permutated_train_loader = torch.utils.data.DataLoader(permutated_train_set, batch_size=cfg.batch_size, shuffle=True, num_workers=2, pin_memory=True)
+            elif cfg.task_shift_mode == 'output_permutation':
+                # for each task, set a new permutation for the output classes
+                # for an FC network, the permutation is a random permutation of the number of classes
+                class_permutation = np.random.permutation(cfg.data.num_classes)
+                
+                # wrap the dataset with the permutation:
+                permutated_train_set = Permuted_output_Dataset(train_set, permutation=class_permutation)
+                
+                permutated_train_loader = torch.utils.data.DataLoader(permutated_train_set, batch_size=cfg.batch_size, shuffle=True, num_workers=2, pin_memory=True)
+                
         
+        
+        # training loop:
+
+            for epoch in range(epochs_per_task):
+                print(f"Epoch {epoch+1}/{epochs_per_task}")
+                
+                # running loss for the epoch:
+                running_loss = 0.0
+
+                # alternative way to track loss, by batch loss
+                batch_running_loss = 0.0
+                
+                # for accuracy
+                number_of_correct = 0
+                #number_of_correct_2 =0
+                total = 0
+
+                
+                for batch_idx, (input, label) in enumerate(tqdm(permutated_train_loader, desc=f"Epoch: {epoch}, progress on batches", leave =True)):
+                    if input is None or label is None:
+                        print("Found None in the data loader batch")
+                        raise ValueError("Found None in the data loader batch")
+                    
+                    input, label = input.to(cfg.device), label.to(cfg.device)
+                    
+                    # print(label.dtype)  # Should be torch.long for CrossEntropyLoss
+                    # print(label.min(), label.max())  # Should be within [0, num_classes - 1]
+                    loss, output = learner.learn(input, label)
+                    
+                    # Critical: Check for non-finite loss and STOP immediately
+                    if not torch.isfinite(torch.as_tensor(loss)):
+                        _log_and_raise_non_finite_error(task_idx, epoch,
+                                        batch_idx, loss,
+                                        input, label,
+                                        output, learner, net)
+                        # This should never be reached due to the exception above
+                        raise RuntimeError("Training should have stopped due to NaN loss!")
+
+                    #running_loss+= loss*input.size(0)
+                    batch_running_loss += loss
+                    _, predicted = output.max(1)
+                    total += label.size(0)
+                    # predicted = predicted.cpu()
+                    number_of_correct += predicted.eq(label).sum().cpu().item()
+                    #torch.max(output.data, 1)
+
+
                 # extrack rank:
                 if epoch % cfg.rank_measure_freq_to_epoch == 0 and cfg.track_rank:
                     # calculate and log accurary and loss:
-                    # acc = number_of_correct/total
+                    acc = number_of_correct/total
                     #acc_2 = number_of_correct_2/total
                     #loss = running_loss/total
-                    # loss_by_batch = batch_running_loss/len(current_train_loader)
+                    loss_by_batch = batch_running_loss/len(permutated_train_loader)
                     
                     data = {
                         'global_epoch': task_idx*epochs_per_task + epoch,
                         'task_idx': task_idx,
-                        #'accuracy': acc,
+                        'accuracy': acc,
                         #'accuracy_2': acc_2,
-                        # "loss_by_batch": loss,
-                        'epoch_loss': epoch_loss / len(train_loader),
+                        #'loss': loss,
+                        'loss_by_batch': loss_by_batch
                     }               
-                    if cfg.task_shift_mode != 'drifting_values':
-                            data['epoch_accuracy'] = epoch_correct / epoch_total
-
+                    
 
                     
                     # tracking rank:
@@ -314,10 +286,10 @@ def main(cfg: ExperimentConfig) -> Any:
                             # a list of dictionaries, each dictionary contains rank proxies for each output layer:
                         if cfg.track_rank_batch == "use_specified":
                             # get features of the specified batch:
-                            extracted_list_of_data = [current_train_set[i] for i in range(min(cfg.specified_batch_size, len(current_train_set)))]
+                            extracted_list_of_data = [permutated_train_set[i] for i in range(min(cfg.specified_batch_size, len(permutated_train_set)))]
                             extracted_inputs = [item[0] for item in extracted_list_of_data]  # Get the images
                             # Stack the list of tensors into a single batched tensor
-                            extracted_inputs = torch.stack(extracted_inputs).to(cfg.net.device)
+                            extracted_inputs = torch.stack(extracted_inputs).to(cfg.device)
                             
 
                             _, list_of_features_for_every_layers = net.predict(extracted_inputs)
@@ -325,14 +297,6 @@ def main(cfg: ExperimentConfig) -> Any:
                         # convert all the features into 2d, if they are not already:
                         list_of_features_for_every_layers = [feature.view(feature.size(0), -1) for feature in list_of_features_for_every_layers]
                         
-                        # Debug: Print feature shapes and statistics before rank computation
-                        if cfg.debug_mode:
-                            print("Debug: Features for rank computation:")
-                            print(f"Debug: Processing {len(list_of_features_for_every_layers)} feature layers")
-                            for i, feature in enumerate(list_of_features_for_every_layers):
-                                print(f"Layer {i}: shape={feature.shape}, min={feature.min():.2e}, max={feature.max():.2e}, "
-                                    f"std={feature.std():.2e}, norm={torch.linalg.norm(feature):.2e}")
-                            
                         
                         if cfg.track_rank_batch == "all":
                             # raise not implemented error:
@@ -390,8 +354,7 @@ def main(cfg: ExperimentConfig) -> Any:
                     
                     if cfg.debug_mode:
                         assert len(rank_summary_list) == len(list_of_features_for_every_layers), "The rank summary list and the list of features should have the same length"
-                        if cfg.track_actual_rank:
-                            assert len(actual_rank_list) == len(list_of_features_for_every_layers), "The actual rank list and the list of features should have the same length"
+                        assert len(actual_rank_list) == len(list_of_features_for_every_layers), "The rank summary list and the list of features should have the same length"
                     
                     if cfg.track_actual_rank:
                         for layer_idx in range(len(list_of_features_for_every_layers)):
@@ -407,11 +370,6 @@ def main(cfg: ExperimentConfig) -> Any:
                             else:
                                 data[name] = stat
                         
-                    
-                    # Log drifting values for 'drifting_values' mode
-                    if cfg.task_shift_mode == 'drifting_values' and hasattr(current_train_set, 'values'):
-                        for label_idx in range(len(current_train_set.values)):
-                            data[f'label_{label_idx}_value'] = current_train_set.values[label_idx].item()
                     
                     # log to wandb:
                     if cfg.use_wandb:
@@ -429,15 +387,6 @@ def main(cfg: ExperimentConfig) -> Any:
         raise
 
 if __name__ == "__main__":
-
-    # Set the start method for multiprocessing to 'spawn' to avoid CUDA errors.
-    # This is necessary when using CUDA with num_workers > 0 in DataLoader.
-    try:
-        mp.set_start_method('spawn', force=True)
-        print("multiprocessing start method set to 'spawn'.")
-    except RuntimeError:
-        pass  # context has already been set.
-
     # clear cached memory:
     torch.cuda.empty_cache()
     

@@ -9,7 +9,7 @@ from abc import ABC, abstractmethod
 
 from torch.optim import optimizer
 from omegaconf import DictConfig
-from typing import Optional, Union
+from typing import Optional, Union, Tuple
 
 # import the BackpropConfig class from the config file in configs folder in the
 # parent directory of the project:
@@ -25,6 +25,10 @@ class Backprop(Learner):
         super().__init__(net, config, netconfig)
         self.to_perturb = config.to_perturb
         self.perturb_scale = config.perturb_scale
+        
+        # Gradient clipping parameters
+        self.use_grad_clip = getattr(config, 'use_grad_clip', False)
+        self.grad_clip_max_norm = getattr(config, 'grad_clip_max_norm', 1.0)
         
         
     def learn(self, x: torch.Tensor, target: torch.Tensor):
@@ -45,6 +49,39 @@ class Backprop(Learner):
             
         return loss.item(), output.detach()
      
+    def learn_from_partial_values(self, x: torch.Tensor, value:torch.Tensor, label: torch.Tensor):
+        """This is used to handle regression tasks where the network outputs a multi-dimensional value,
+        but it receives only one of the dimensions as the target.
+        
+        the target is a tuple of (values, labels).
+        The label corresponds to the dimension of the output that is being learned.
+        
+        """
+        # move data to device:
+        x, value, label = x.to(self.device), value.to(self.device), label.to(self.device)
+        self.opt.zero_grad()
+        output, features = self.net.predict(x)
+
+        # Select the specific output neuron corresponding to the original label
+        # output shape: [batch_size, num_classes], original_labels shape: [batch_size]
+        action_outputs = output.gather(1, label.unsqueeze(1)).squeeze(1)
+        # Loss is between the selected output and the drifting value
+        loss = self.loss_func(action_outputs, value)
+        self.previous_features = features
+        
+        # backpropagate
+        loss.backward()
+        
+        # Gradient clipping to prevent gradient explosion (if enabled)
+        if self.use_grad_clip:
+            torch.nn.utils.clip_grad_norm_(self.net.parameters(), max_norm=self.grad_clip_max_norm)
+        
+        self.opt.step()
+        
+        if self.to_perturb:
+            self.perturb()
+            
+        return loss.item(), output.detach()
     
     def perturb(self):
         with torch.no_grad():

@@ -14,7 +14,7 @@ import pathlib
 import numpy as np
 PROJECT_ROOT = pathlib.Path(__file__).resolve().parent.parent.parent
 
-print(PROJECT_ROOT)
+#print(PROJECT_ROOT)
 
 from configs.configurations import DataConfig
 import hydra

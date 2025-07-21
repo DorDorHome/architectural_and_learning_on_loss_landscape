@@ -3,13 +3,12 @@ Enhanced Backprop learner that provides semantic layer names
 while maintaining 100% backward compatibility.
 """
 
-from src.algos.supervised.basic_backprop import Backprop
 from src.utils.feature_container import FeatureContainer
 from configs.configurations import BackpropConfig, NetParams
 import torch
 import torch.nn as nn
 from typing import Optional, Union, Dict, List
-
+from src.algos.supervised.basic_backprop import Backprop
 
 class BackpropWithSemanticFeatures(Backprop):
     """

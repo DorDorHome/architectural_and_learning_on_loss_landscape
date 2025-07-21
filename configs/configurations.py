@@ -3,7 +3,7 @@
 from itsdangerous import NoneAlgorithm
 from torch._C import device
 from dataclasses import dataclass, field 
-from typing import Optional, Union
+from typing import Optional, Union, List
 from hydra.core.config_store import ConfigStore
 import torch
 
@@ -138,6 +138,14 @@ class ExperimentConfig:
     learner: Union[BackpropConfig, ContinuousBackpropConfig] = field(default_factory=BackpropConfig)
     evaluation: Union[EvaluationConfig, None] = field(default_factory=EvaluationConfig)
     track_rank: bool = False
+    prop_for_approx_or_l1_rank: float = 0.99
+    numerical_rank_epsilon: float = 0.01
+    use_pytorch_entropy_for_effective_rank: bool = True
+    track_dead_units: bool = False
+    threshold_for_non_saturating_act: float = 0.01
+    track_weight_magnitude: bool = False
+    layers_identifier: Optional[List[str]] = None
+    num_workers: int = 2
     
     def __post_init__(self):
         if self.net.params.num_classes != self.data.num_classes:

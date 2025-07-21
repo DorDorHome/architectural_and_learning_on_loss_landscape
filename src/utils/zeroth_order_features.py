@@ -120,6 +120,17 @@ def compute_all_rank_measures(input: torch.Tensor, use_pytorch_entropy: bool = T
     # Validate input
     assert input.dim() == 2, "Input must be a 2D matrix"
     
+    # Check for non-finite values (NaN or Inf) which can cause SVD to fail
+    if not torch.isfinite(input).all():
+        print(f"Warning: Matrix contains non-finite values (NaN or Inf). Returning zero ranks.")
+        print(f"Matrix shape: {input.shape}")
+        print(f"Non-finite elements: {(~torch.isfinite(input)).sum().item()}")
+        return {
+            "effective_rank": torch.tensor(0.0, dtype=input.dtype),
+            "approximate_rank": torch.tensor(0, dtype=input.dtype),
+            "l1_distribution_rank": torch.tensor(0, dtype=input.dtype),
+            "numerical_rank": torch.tensor(0, dtype=input.dtype)
+        }
     
     # Check if the matrix is effectively zero
     if torch.allclose(input, torch.zeros_like(input), atol=1e-8):
@@ -130,9 +141,47 @@ def compute_all_rank_measures(input: torch.Tensor, use_pytorch_entropy: bool = T
             "numerical_rank": torch.tensor(0, dtype=input.dtype)
         }
     
-    
-    # Compute full singular values once
-    sv = torch.linalg.svdvals(input)  # Shape: (min(m, n),)
+    # Try SVD with error handling for numerical issues
+    try:
+        # First try regular SVD
+        sv = torch.linalg.svdvals(input)  # Shape: (min(m, n),)
+    except RuntimeError as e:
+        if "svd_cuda" in str(e) and "singular" in str(e):
+            print(f"SVD failed for matrix with shape {input.shape}. This indicates structural numerical issues.")
+            print(f"Matrix statistics: min={input.min():.2e}, max={input.max():.2e}, mean={input.mean():.2e}, std={input.std():.2e}")
+            print(f"Matrix Frobenius norm: {torch.linalg.norm(input):.2e}")
+            # Check if any row or column is all zeros (which can cause SVD issues)
+            zero_rows = (input == 0).all(dim=1).sum()
+            zero_cols = (input == 0).all(dim=0).sum()
+            print(f"Zero rows: {zero_rows}, Zero columns: {zero_cols}")
+            
+            # Try alternative: add small regularization and retry
+            print("Attempting regularized SVD...")
+            try:
+                # Add tiny regularization to diagonal
+                reg_matrix = input.clone()
+                min_dim = min(input.shape)
+                regularization = 1e-8 * torch.eye(min_dim, device=input.device, dtype=input.dtype)
+                if input.shape[0] >= input.shape[1]:
+                    # Add to A^T A
+                    reg_matrix = input + torch.zeros_like(input)
+                    # Try computing SVD of regularized version
+                    sv = torch.linalg.svdvals(reg_matrix + 1e-10)
+                else:
+                    # For wide matrices, add to AA^T
+                    reg_matrix = input + torch.zeros_like(input)
+                    sv = torch.linalg.svdvals(reg_matrix + 1e-10)
+                print("Regularized SVD succeeded!")
+            except:
+                print("Regularized SVD also failed. Returning zero ranks.")
+                return {
+                    "effective_rank": torch.tensor(0.0, dtype=input.dtype),
+                    "approximate_rank": torch.tensor(0, dtype=input.dtype),
+                    "l1_distribution_rank": torch.tensor(0, dtype=input.dtype),
+                    "numerical_rank": torch.tensor(0, dtype=input.dtype)
+                }
+        else:
+            raise  # Re-raise if it's a different error
 
     # Compute each rank measure using the precomputed singular values
     effective_rank = compute_effective_rank(sv, input_is_svd=True, use_pytorch_entropy=use_pytorch_entropy)

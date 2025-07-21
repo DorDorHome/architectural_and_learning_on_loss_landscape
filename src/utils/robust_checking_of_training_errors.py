@@ -3,16 +3,42 @@
 # This function is designed to log detailed information about the training state when a non-finite loss is detected.
 
 import torch
+from typing import Dict, Any, Optional
 
-def _log_and_raise_non_finite_error(task_idx, epoch,
-                                    batch_idx, loss_val,
-                                    input_data, label_data,
-                                    output_from_network, learner, net):
-    """Logs detailed information when a non-finite loss is detected and raises a ValueError to STOP training."""  
+def _log_and_raise_non_finite_error(
+    loss: float,
+    epoch: int,
+    batch_idx: int,
+    task_idx: int,
+    cfg: Any,  # Using Any for config objects like OmegaConf
+    artifacts: Optional[Dict[str, Any]] = None
+):
+    """
+    Logs detailed information when a non-finite loss is detected and raises a ValueError to STOP training.
+    
+    Args:
+        loss (float): The non-finite loss value.
+        epoch (int): The current epoch number.
+        batch_idx (int): The current batch index.
+        task_idx (int): The current task index.
+        cfg (Any): The configuration object (e.g., OmegaConf DictConfig).
+        artifacts (Optional[Dict[str, Any]]): A dictionary containing training artifacts for debugging,
+            such as 'learner', 'net', 'input_data', 'label_data', 'output_from_network'.
+    """
+    if artifacts is None:
+        artifacts = {}
+
+    # Extract artifacts for easier access
+    learner = artifacts.get('learner')
+    net = artifacts.get('net')
+    input_data = artifacts.get('input_data')
+    label_data = artifacts.get('label_data')
+    output_from_network = artifacts.get('output_from_network')
+
     print("\n" + "="*80)
     print(f"❌ NON-FINITE LOSS DETECTED - DETAILED DIAGNOSTIC REPORT")
     print(f"Location: task {task_idx}, epoch {epoch}, batch {batch_idx}")
-    print(f"Loss value: {loss_val}")
+    print(f"Loss value: {loss}")
     print("="*80)
     
     # 1. Check input and output data

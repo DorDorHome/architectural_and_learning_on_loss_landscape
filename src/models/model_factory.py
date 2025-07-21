@@ -125,7 +125,7 @@ def model_factory(config: NetConfig) -> Any:
     #     return vgg_with_internal_performance_track_custom_classifier(config.params)
     
 config_name = "basic_config"
-@hydra.main(config_path=CONFIG_PATH, config_name=config_name)
+@hydra.main(config_path=CONFIG_PATH, config_name=config_name, version_base=None)
 def main(cfg):
     print(OmegaConf.to_yaml(cfg))
     
@@ -138,12 +138,24 @@ def main(cfg):
     print('Model created successfully')
     print(model)
 
-if __name__ == "__main__":
+# for testing purposes
+if __name__ == '__main__':
     
-    # changing the config path if needed:
+    CONFIG_PATH = os.path.join(PROJECT_ROOT, 'configs')
+    config_name = "default_config"
     
-    # experiments/rank_tracking_in_shifting_task/cfg/rank_tracking_in_shifting_tasks_config_conv.yaml
-    CONFIG_PATH = str(PROJECT_ROOT / "experiments/rank_tracking_in_shifting_task/cfg")
-    config_name = "rank_tracking_in_shifting_tasks_config_conv"
-    main()
-    
+    @hydra.main(config_path=CONFIG_PATH, config_name=config_name, version_base=None)
+    def main(cfg: ExperimentConfig) -> None:
+        """
+        main function for testing the model factory
+        """
+        print(OmegaConf.to_yaml(cfg))
+        
+        # get the network configuration:
+        net_config = cfg.net
+        
+        # use the factory function to create the model instance
+        
+        model = model_factory(net_config)
+        print('Model created successfully')
+        print(model)

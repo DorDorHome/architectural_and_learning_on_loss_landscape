@@ -35,3 +35,13 @@ experiments/output_vs_input_plasticity/wandb
 
 FEATURE_CONTAINER_EXPLANATION.py
 FEATURE_ENHANCEMENT_PLAN.md
+
+wandb/*
+
+test_drift_minimal.py
+test_enhanced_features.py
+test_grad_clipping.py
+test_nan_issue.py
+test_boundary_enforcement.py
+debug_svd_issue.py
+

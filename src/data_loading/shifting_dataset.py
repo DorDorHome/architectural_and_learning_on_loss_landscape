@@ -1,405 +1,455 @@
 # This file contains classes useful for shifting the dataset.
 
-import sys
-import pathlib
-from typing import Any, Callable, Optional, Tuple, Union
-PROJECT_ROOT = pathlib.Path(__file__).resolve().parent.parent.parent
-print(PROJECT_ROOT)
-sys.path.append(str(PROJECT_ROOT))
-# import dataset_factory:
-
-from src.data_loading.dataset_factory import dataset_factory
-
-
+from typing import Any, Dict, Tuple, Union, Optional, Callable, List, Sized
 import torch
-import torch.nn.functional as F
 from torch.utils.data import Dataset
+import torch.nn.functional as F
 import numpy as np
+from omegaconf import OmegaConf
+from torchvision import transforms
+
+from configs.configurations import ExperimentConfig
 
 
-class Permuted_input_Dataset(Dataset[Tuple[torch.Tensor, Any]]):
-    def __init__(self, original_dataset: Dataset, permutation: Optional[Union[np.ndarray, list]] = None, flatten: bool = False, transform: Optional[Callable] = None):
-        """
-        A dataset wrapper that applies a fixed pixel permutation per task.
-
-        Args:
-            original_dataset (Dataset): The base dataset (e.g., MNIST, CIFAR10).
-            permutation (torch.Tensor or list, optional): Indices for pixel shuffling.
-                - If flatten=True: Size must match C*H*W (flattened image size).
-                - If flatten=False: Size must match H*W (spatial grid size).
-                If None, no permutation is applied.
-            flatten (bool): If True, flattens images into 1D vectors after processing.
-            transform (callable, optional): Transform to apply after permutation.
-        """
+class Permuted_input_Dataset(Dataset[Tuple[Any, Any]]):
+    def __init__(self, original_dataset: Dataset[Any], permutation: Optional[Union[torch.Tensor, np.ndarray, List[int]]] = None, flatten: bool = False, transform: Optional[Callable[..., Any]] = None):
+        super().__init__()
         self.original_dataset = original_dataset
         self.flatten = flatten
         self.transform = transform
+        self.permutation: torch.Tensor
 
-        # Infer image shape from the first sample
+        # Determine the shape of the input data from the first sample
         sample_img, _ = self.original_dataset[0]
-        if not isinstance(sample_img, torch.Tensor):
-            sample_img = torch.tensor(sample_img, dtype=torch.float32)
-        self.original_shape = sample_img.shape
-
-        # Determine channels (c), height (h), and width (w)
-        if len(self.original_shape) == 3:  # [C, H, W]
-            self.c, self.h, self.w = self.original_shape
-        elif len(self.original_shape) == 2:  # [H, W]
-            self.c, self.h, self.w = 1, self.original_shape[0], self.original_shape[1]
+        
+        # Handle both torch tensors and PIL Images
+        if hasattr(sample_img, 'shape'):
+            original_shape = sample_img.shape
+        elif hasattr(sample_img, 'size'):
+            original_shape = (1, sample_img.size[1], sample_img.size[0]) # Assuming CHW for PIL
         else:
-            raise ValueError(f"Unsupported image shape: {self.original_shape}")
+            raise TypeError("Unsupported image type. Expected a PIL Image or a torch Tensor.")
 
-        # Validate and set permutation
-        self.permutation = None
-        if permutation is not None:
-            permutation = torch.tensor(permutation, dtype=torch.long)
-            expected_size = (self.c * self.h * self.w) if flatten else (self.h * self.w)
+        if self.flatten:
+            # For flattened input, the size is the total number of elements
+            expected_size = int(np.prod(original_shape))
+        else:
+            # For non-flattened, permutation is on the spatial dimensions (H*W)
+            if len(original_shape) < 3:
+                raise ValueError("Expected image with at least 3 dimensions (C, H, W) for spatial permutation.")
+            expected_size = original_shape[1] * original_shape[2]
+
+        # Validate and set up the permutation
+        if permutation is None:
+            self.permutation = torch.randperm(expected_size)
+        else:
+            # Ensure permutation is a tensor
+            if not isinstance(permutation, torch.Tensor):
+                permutation = torch.tensor(permutation, dtype=torch.long)
+            
             if len(permutation) != expected_size:
-                raise ValueError(f"Permutation size {len(permutation)} must match {expected_size}")
+                raise ValueError(f"Permutation size {len(permutation)} must match the expected size {expected_size}")
             self.permutation = permutation
 
-    def __getitem__(self, index: int) -> Tuple[torch.Tensor, Any]:
-        """Retrieve and process an item from the dataset."""
+    def __getitem__(self, index: int) -> Tuple[Any, Any]:
         img, label = self.original_dataset[index]
 
-        # Convert to tensor and ensure channel dimension
-        if not isinstance(img, torch.Tensor):
-            img = torch.tensor(img, dtype=torch.float32)
-        if len(img.shape) == 2:  # [H, W] -> [1, H, W]
-            img = img.unsqueeze(0)
-
-        # Apply permutation
-        if self.permutation is not None:
-            if self.flatten:
-                # Flatten first, then permute the 1D vector
-                img = img.flatten()
-                img = img[self.permutation]
-            else:
-                # Permute spatial grid (H*W) while preserving channels
-                C, H, W = img.shape
-                flat_img = img.permute(1, 2, 0).reshape(H * W, C)  # [H*W, C]
-                permuted_img = flat_img[self.permutation]  # Apply permutation
-                img = permuted_img.reshape(H, W, C).permute(2, 0, 1)  # [C, H, W]
-
-        # Apply transform if provided
-        if self.transform is not None:
+        if self.transform:
             img = self.transform(img)
 
-        # Flatten if requested (after transform)
-        if self.flatten:
-            img = img.flatten()
+        # Ensure image is a tensor before permuting
+        if not isinstance(img, torch.Tensor):
+            img = transforms.ToTensor()(img)
+
+        if self.permutation is not None:
+            if self.flatten:
+                # Flatten the image and then permute
+                flat_img = img.view(-1)
+                permuted_img = flat_img[self.permutation]
+                img = permuted_img.view(img.shape)
+            else:
+                # Permute spatial dimensions (H*W) for each channel
+                c, h, w = img.shape
+                img_reshaped = img.view(c, -1)
+                if len(self.permutation) != h * w:
+                    raise ValueError(f"Permutation size {len(self.permutation)} must match the spatial size {h*w} for non-flattened input.")
+                img_reshaped = img_reshaped[:, self.permutation]
+                img = img_reshaped.view(c, h, w)
 
         return img, label
 
     def __len__(self) -> int:
-        """Return the size of the dataset."""
-        return len(self.original_dataset)
-
-    def get_input_shape(self) -> Tuple[int, ...]:
-        """Return the shape of processed data."""
-        if self.flatten:
-            return (self.c * self.h * self.w,)
-        return (self.c, self.h, self.w)
+        if isinstance(self.original_dataset, Sized):
+            return len(self.original_dataset)
+        raise TypeError("Original dataset does not have a __len__ method.")
 
 
-class Permuted_output_Dataset(Dataset[Tuple[Any, torch.Tensor]]):
-    def __init__(self, original_dataset: Dataset, permutation: Union[np.ndarray, list, torch.Tensor], flatten: bool = False, transform: Optional[Callable] = None):
-        """
-        A dataset wrapper that applies a fixed permutation to the output labels.
-
-        Args:
-            original_dataset (Dataset): The base dataset (e.g., MNIST, CIFAR10).
-            permutation (torch.Tensor or list): A tensor or list that maps original
-                class indices to new ones. For a dataset with 10 classes, this
-                should be a permutation of the integers 0-9.
-            flatten (bool): This argument is ignored but included for API consistency.
-            transform (callable, optional): This argument is ignored but included for
-                API consistency.
-        """
+class Permuted_output_Dataset(Dataset[Tuple[Any, int]]):
+    def __init__(self, original_dataset: Dataset[Any], permutation: Optional[Union[torch.Tensor, np.ndarray, List[int]]] = None):
+        super().__init__()
         self.original_dataset = original_dataset
+        self.permutation: torch.Tensor
         
-        if permutation is None:
-            raise ValueError("A permutation must be provided for Permuted_output_Dataset.")
-            
-        self.permutation = torch.tensor(permutation, dtype=torch.long)
-
-    def __getitem__(self, index: int) -> Tuple[Any, torch.Tensor]:
-        """Retrieve an item and permute its label."""
-        img, label = self.original_dataset[index]
-        
-        # Apply the permutation to the label
-        permuted_label = self.permutation[label]
-        
-        return img, permuted_label
-
-    def __len__(self) -> int:
-        """Return the size of the dataset."""
-        return len(self.original_dataset)
-
-
-class Slow_drift_contextual_bandit(Dataset[Tuple[Any, torch.Tensor]]):
-    """
-    A dataset wrapper that simulates a contextual bandit with slowly drifting true values.
-
-    Args:
-        original_dataset (Dataset): The base classification dataset.
-        num_classes (int): The number of output classes.
-        drift_mode (str): The type of drift to apply. Options are:
-            - 'random_walk': Values drift via Brownian motion.
-            - 'sinusoidal': Values oscillate based on a sine wave.
-            - 'interpolation': Values gradually shift from a start to an end state.
-        variance (float): Variance for the Gaussian noise added to the true value for feedback.
-        **kwargs: Keyword arguments specific to the chosen drift mode.
-            - For 'random_walk':
-                - drift_std_dev (float): Std dev for the random walk noise. Default: 0.01.
-            - For 'sinusoidal':
-                - amplitude (float): The magnitude of the oscillation. Default: 0.5.
-                - frequency (float): The speed of the oscillation (lower is slower). Default: 0.1.
-            - For 'interpolation':
-                - start_values (torch.Tensor): The initial set of true values.
-                - end_values (torch.Tensor): The target set of true values.
-                - duration (int): The number of updates (e.g., epochs) to complete the drift.
-    """
-    def __init__(self, original_dataset: Dataset,
-                 num_classes: int,
-                 drift_mode: str,
-                 variance: float = 0.5,
-                 **kwargs):
-        self.original_dataset = original_dataset
-        self.num_classes = num_classes
-        self.variance = variance
-        self.drift_mode = drift_mode
-        self.drift_params = kwargs
-        
-        # Track the current time step (e.g., epoch) for drift calculation
-        self.time_step = 0
-
-        # Initialize true values and validate parameters based on the mode
-        self._initialize_drift()
-
-    def _initialize_drift(self):
-        """Sets up the initial state based on the selected drift mode."""
-        if self.drift_mode == 'random_walk':
-            self.drift_params.setdefault('drift_std_dev', 0.01)
-            self.true_values = torch.randn(self.num_classes)
-        
-        elif self.drift_mode == 'sinusoidal':
-            self.drift_params.setdefault('amplitude', 0.5)
-            self.drift_params.setdefault('frequency', 0.1)
-            self.base_values = torch.randn(self.num_classes)
-            self.true_values = self.base_values.clone()
-        
-        elif self.drift_mode == 'interpolation':
-            if not all(k in self.drift_params for k in ['start_values', 'end_values', 'duration']):
-                raise ValueError("For 'interpolation' mode, 'start_values', 'end_values', and 'duration' must be provided.")
-            if self.drift_params['duration'] <= 0:
-                raise ValueError("'duration' must be a positive integer.")
-            self.true_values = self.drift_params['start_values'].clone()
-        
+        # Infer num_classes from the dataset
+        if hasattr(original_dataset, 'classes') and original_dataset.classes is not None:
+             self.num_classes = len(original_dataset.classes)
         else:
-            raise ValueError(f"Unknown drift_mode: '{self.drift_mode}'")
+            # Fallback for datasets without a .classes attribute
+            print("Warning: .classes attribute not found on dataset. Inferring from unique labels.")
+            labels = [label for _, label in original_dataset]
+            self.num_classes = len(set(labels))
+            print(f"Inferred {self.num_classes} classes.")
 
-    def __getitem__(self, index: int) -> Tuple[Any, torch.Tensor]:
-        """Returns the image and a noisy reward based on the true label."""
+
+        if permutation is None:
+            # Generate a random permutation if none is provided
+            self.permutation = torch.randperm(self.num_classes)
+        else:
+            # Use the provided permutation
+            if not isinstance(permutation, torch.Tensor):
+                self.permutation = torch.tensor(permutation, dtype=torch.long)
+            else:
+                self.permutation = permutation
+
+        # Validate permutation
+        if len(self.permutation) != self.num_classes:
+            raise ValueError(f"Permutation length {len(self.permutation)} must match number of classes {self.num_classes}")
+
+    def __getitem__(self, index: int) -> Tuple[Any, int]:
         img, label = self.original_dataset[index]
-        
-        # Get the true value for the correct class
-        underlying_value = self.true_values[label]
-        
-        # Draw from a Gaussian centered at the true value
-        feedback_value = torch.normal(mean=underlying_value, std=self.variance**0.5)
-        
-        return img, feedback_value
+        permuted_label = self.permutation[label].item()
+        return img, int(permuted_label)
 
     def __len__(self) -> int:
-        return len(self.original_dataset)
+        if isinstance(self.original_dataset, Sized):
+            return len(self.original_dataset)
+        raise TypeError("Original dataset does not have a __len__ method.")
 
-    def update_drift(self):
+
+class ContinuousDeformationDataset(Dataset[Tuple[torch.Tensor, int]]):
+    """
+    A stateful dataset wrapper that applies a continuous, time-varying affine transformation
+    to the input images. The transformation evolves with each call to `update_task`.
+    """
+    def __init__(self, 
+                 original_dataset: Dataset[Any], 
+                 mode: str, 
+                 num_classes: int,
+                 transform_params: Dict[str, Any],
+                 seed: Optional[int]):
+        self.original_dataset = original_dataset
+        self.mode = mode
+        self.num_classes = num_classes
+        self.transform_params = transform_params
+        self.seed = seed
+        self.time_step: int = 0
+        self.theta: torch.Tensor = self._generate_random_theta()
+        self.drift_velocity: Optional[torch.Tensor] = None
+
+        if self.mode == 'linear':
+            g = torch.Generator()
+            if self.seed is not None:
+                g.manual_seed(self.seed + 1) # Use a different seed to avoid correlation
+            # Define a random but fixed direction for the drift
+            self.drift_velocity = torch.empty(2, 3).uniform_(-1, 1, generator=g)
+            # Normalize to create a unit vector for direction
+            norm_val = torch.norm(self.drift_velocity)
+            if norm_val > 0:
+                self.drift_velocity /= norm_val
+
+    def _generate_random_theta(self) -> torch.Tensor:
         """
-        Updates the true values based on the configured drift mode.
-        This should be called periodically (e.g., once per epoch).
+        Generates a random affine transformation matrix (theta) on the CPU.
+        Initializes with an identity matrix and adds small random noise.
         """
-        # Dispatch to the correct private update method
-        update_method = getattr(self, f"_update_{self.drift_mode}")
+        g = torch.Generator()
+        if self.seed is not None:
+            g.manual_seed(self.seed)
+        
+        # Identity matrix for a 2x3 affine transformation
+        theta = torch.tensor([[1, 0, 0], [0, 1, 0]], dtype=torch.float)
+        
+        # Add small random noise for initial deformation
+        noise = torch.empty(2, 3).uniform_(-0.1, 0.1, generator=g)
+        theta += noise
+        return theta
+
+    def __getitem__(self, index: int) -> Tuple[torch.Tensor, int]:
+        image, label = self.original_dataset[index]
+        
+        if not isinstance(image, torch.Tensor):
+            image = transforms.ToTensor()(image)
+
+        # Add batch dimension, apply affine grid, then remove batch dimension
+        image_unsqueezed = image.unsqueeze(0)
+        grid = F.affine_grid(self.theta.unsqueeze(0), list(image_unsqueezed.shape), align_corners=False)
+        image = F.grid_sample(image_unsqueezed, grid, align_corners=False).squeeze(0)
+        
+        return image, label
+
+    def __len__(self) -> int:
+        if isinstance(self.original_dataset, Sized):
+            return len(self.original_dataset)
+        raise TypeError("Original dataset does not have a __len__ method.")
+
+    def update_task(self):
+        """
+        Updates the transformation matrix (theta) based on the deformation mode.
+        This should be called once per task/epoch to evolve the transformation.
+        """
+        update_method_name = f"_update_{self.mode}"
+        update_method = getattr(self, update_method_name, self._update_identity)
         update_method()
         self.time_step += 1
 
+    def _update_identity(self):
+        """No update, theta remains constant."""
+        pass
+
+    def _update_linear(self):
+        """Update theta with a constant velocity drift."""
+        if self.drift_velocity is not None:
+            step_size = self.transform_params.get('max_drift', 0.01)
+            self.theta += self.drift_velocity * step_size
+
     def _update_random_walk(self):
-        """Drift values using a random walk."""
-        std_dev = self.drift_params['drift_std_dev']
-        noise = torch.normal(mean=0.0, std=std_dev, size=(self.num_classes,))
-        self.true_values += noise
+        """Update theta with a small random walk."""
+        std_dev = self.transform_params.get('drift_std_dev', 0.01)
+        noise = torch.normal(mean=0.0, std=std_dev, size=(2, 3))
+        self.theta += noise
 
     def _update_sinusoidal(self):
-        """Drift values using a sine wave."""
-        amplitude = self.drift_params['amplitude']
-        frequency = self.drift_params['frequency']
-        # Use different phases for each value to desynchronize them
-        phases = torch.linspace(0, 2 * np.pi, self.num_classes)
-        drift = amplitude * torch.sin(frequency * self.time_step + phases)
-        self.true_values = self.base_values + drift
-
-    def _update_interpolation(self):
-        """Drift values by interpolating between two points."""
-        duration = self.drift_params['duration']
-        if self.time_step >= duration:
-            # Clamp to the end value after the duration has passed
-            self.true_values = self.drift_params['end_values'].clone()
-            return
-            
-        start = self.drift_params['start_values']
-        end = self.drift_params['end_values']
+        """Update theta with a sinusoidal drift."""
+        amplitude = self.transform_params.get('amplitude', 0.1)
+        frequency = self.transform_params.get('frequency', 0.1)
         
-        # Calculate the interpolation factor (alpha)
-        # The number of steps is duration, so we interpolate over [0, duration-1].
-        # To reach the end value at the last step, alpha should be 1.
-        alpha = self.time_step / (duration - 1) if duration > 1 else 1.0
+        # Create a base identity matrix
+        base_theta = torch.tensor([[1, 0, 0], [0, 1, 0]], dtype=torch.float)
         
-        # Linearly interpolate
-        self.true_values = (1 - alpha) * start + alpha * end
+        # Apply a sinusoidal wave to it
+        drift = amplitude * torch.sin(torch.tensor(frequency * self.time_step, dtype=torch.float))
+        self.theta = base_theta + drift
 
 
+class DriftingValuesDataset(Dataset[Tuple[Any, torch.Tensor]]):
+    """
+    A dataset wrapper that simulates a regression task where the target values for each
+    class drift over time. It ensures that the relative order of class values is
+    maintained through a repulsion mechanism.
 
-class DriftingInputDataset(Dataset[Tuple[torch.Tensor, Any]]):
-    def __init__(self, 
-                 original_dataset: Dataset, 
-                 drift_mode: str = 'affine',
-                 **kwargs):
+    1.  Initially, the value for class `i` is `i.0`.
+    2.  Values undergo a slow random walk.
+    3.  If values for adjacent classes collide (e.g., value[i] >= value[i+1]),
+        a repulsion force pushes them apart to maintain order.
+    """
+    def __init__(self, original_dataset: Dataset[Any],
+                 num_classes: int,
+                 drift_std_dev: float = 0.01,
+                 repulsion_strength: float = 0.5,
+                 min_gap: float = 0.1,
+                 lower_bound: float = -20.0,
+                 upper_bound: float = 20.0):
         """
-        A dataset wrapper that applies a continuously drifting transformation to the input space.
-
         Args:
-            original_dataset (Dataset): The base dataset (e.g., MNIST, CIFAR10).
-            drift_mode (str): The type of drift. Currently supports 'affine'.
-            **kwargs: Keyword arguments for the drift mode.
-                - For 'affine':
-                    - drift_type (str): 'random_walk' or 'sinusoidal'.
-                    - rotation_std_dev / rotation_amplitude (float): Controls drift of angle.
-                    - scale_std_dev / scale_amplitude (float): Controls drift of scale.
-                    - shear_std_dev / shear_amplitude (float): Controls drift of shear.
-                    # Add other parameters for frequency etc. as needed.
+            original_dataset (Dataset): The base classification dataset.
+            num_classes (int): The number of classes.
+            drift_std_dev (float): Std dev for the random walk noise.
+            repulsion_strength (float): How strongly colliding values push each other apart.
+            min_gap (float): The minimum gap to enforce between adjacent values after a collision.
+            lower_bound (float): Minimum allowed value (prevents drift to -infinity).
+            upper_bound (float): Maximum allowed value (prevents drift to +infinity).
         """
         self.original_dataset = original_dataset
-        self.drift_mode = drift_mode
-        self.drift_params = kwargs
-        self.time_step = 0
-
-        if self.drift_mode != 'affine':
-            raise NotImplementedError("Only 'affine' drift_mode is currently implemented.")
+        self.num_classes = num_classes
+        self.drift_std_dev = drift_std_dev
+        self.repulsion_strength = repulsion_strength
+        self.min_gap = min_gap
+        self.lower_bound = lower_bound
+        self.upper_bound = upper_bound
         
-        self._initialize_affine_params()
-
-    def _initialize_affine_params(self):
-        """Initializes the parameters for the affine transformation."""
-        self.drift_type = self.drift_params.get('drift_type', 'random_walk')
+        # Track the current time step (e.g., epoch) for drift calculation
+        self.time_step: int = 0
         
-        # Store the current state of the transformation parameters
-        self.transform_params = {
-            'angle': 0.0,
-            'scale': 1.0,
-            'shear_x': 0.0,
-            'shear_y': 0.0,
-            'trans_x': 0.0,
-            'trans_y': 0.0
-        }
-        
-        # Store the parameters that control the drift itself
-        self.drift_config = {
-            'rotation': self.drift_params.get('rotation_std_dev', 2.0), # degrees
-            'scale': self.drift_params.get('scale_std_dev', 0.01),
-            'shear': self.drift_params.get('shear_std_dev', 0.02)
-        }
+        # 1. Initialize values: value for class i is i.0
+        self.values = torch.arange(self.num_classes, dtype=torch.float32)
 
-    def __getitem__(self, index: int) -> Tuple[torch.Tensor, Any]:
-        """
-        Retrieves an item and applies the current drifting transformation.
-        """
+    def __getitem__(self, index: int) -> Tuple[Any, torch.Tensor, int]:
+        """Returns the image, its current drifting target value, and the original label."""
         img, label = self.original_dataset[index]
-
-        # Ensure image is a tensor with a batch dimension [N, C, H, W] for grid_sample
-        if not isinstance(img, torch.Tensor):
-            img = torch.tensor(img, dtype=torch.float32)
         
-        # Add batch and channel dimensions if missing
-        if img.dim() == 2: # H, W -> 1, 1, H, W
-            img = img.unsqueeze(0).unsqueeze(0)
-        elif img.dim() == 3: # C, H, W -> 1, C, H, W
-            img = img.unsqueeze(0)
-
-        # 1. Get the current transformation matrix
-        theta = self._get_affine_matrix(img.device)
-
-        # 2. Apply the affine transformation
-        #    affine_grid generates a sampling grid
-        #    grid_sample uses the grid to sample from the input image
-        grid = F.affine_grid(theta, img.size(), align_corners=False)
-        drifted_img = F.grid_sample(img, grid, align_corners=False)
-
-        # Remove the batch dimension before returning
-        return drifted_img.squeeze(0), label
-
-    def _get_affine_matrix(self, device: torch.device) -> torch.Tensor:
-        """
-        Constructs the 2x3 affine transformation matrix from current parameters.
-        Note: F.affine_grid expects a matrix that maps output coordinates to source coordinates.
-        Therefore, we must compute the inverse of our intuitive transformation.
-        """
-        p = self.transform_params
-        angle_rad = np.deg2rad(p['angle'])
-        cos_a, sin_a = np.cos(angle_rad), np.sin(angle_rad)
+        # Get the current drifting value for the corresponding class label
+        target_value = self.values[label]
         
-        # Forward transformation matrices (maps source to destination)
-        rot_matrix = torch.tensor([[cos_a, -sin_a], [sin_a, cos_a]], dtype=torch.float32)
-        scale_matrix = torch.tensor([[p['scale'], 0], [0, p['scale']]], dtype=torch.float32)
-        shear_matrix = torch.tensor([[1, p['shear_x']], [p['shear_y'], 1]], dtype=torch.float32)
-        
-        # Combined forward 2x2 transformation
-        forward_transform_2x2 = shear_matrix @ scale_matrix @ rot_matrix
-        
-        # Forward translation vector
-        forward_translation = torch.tensor([p['trans_x'], p['trans_y']], dtype=torch.float32)
+        return img, (target_value, label)
 
-        # Compute the inverse transformation
-        # Inverse of the 2x2 matrix
-        inverse_transform_2x2 = torch.inverse(forward_transform_2x2)
-        # Inverse of the translation
-        inverse_translation = -inverse_transform_2x2 @ forward_translation
-
-        # Create the final 2x3 affine matrix for F.affine_grid
-        transform_matrix = torch.zeros(2, 3, dtype=torch.float32)
-        transform_matrix[:2, :2] = inverse_transform_2x2
-        transform_matrix[:, 2] = inverse_translation
-        
-        return transform_matrix.unsqueeze(0).to(device) # Add batch dimension
+    def __len__(self) -> int:
+        if isinstance(self.original_dataset, Sized):
+            return len(self.original_dataset)
+        raise TypeError("Original dataset does not have a __len__ method.")
 
     def update_drift(self):
-        """Updates the transformation parameters based on the drift configuration."""
-        if self.drift_type == 'random_walk':
-            self._update_affine_random_walk()
-        # Add 'sinusoidal' or other types here as needed
+        """
+        Updates the target values with a random walk and applies a repulsion
+        force to prevent and resolve collisions. This should be called
+        periodically (e.g., once per epoch).
+        """
+        # 2. Apply a random walk to all values
+        noise = torch.normal(mean=0.0, std=self.drift_std_dev, size=(self.num_classes,))
+        self.values += noise
+
+        # 3. Handle collisions with repulsion first
+        # We loop multiple times to allow repulsion forces to propagate and settle.
+        max_iterations = self.num_classes * 2  # More iterations for complex cases
+        for iteration in range(max_iterations):
+            collided = False
+            # Check for collisions between all adjacent class values
+            for i in range(self.num_classes - 1):
+                # A collision occurs if a lower-indexed value crosses an upper-indexed one
+                if self.values[i] >= self.values[i+1] - self.min_gap:
+                    collided = True
+                    # Calculate how much they have overlapped
+                    overlap = self.values[i] - (self.values[i+1] - self.min_gap)
+                    
+                    # Apply a symmetric repulsion force
+                    half_correction = (overlap + self.min_gap) * 0.5 * self.repulsion_strength
+                    self.values[i] -= half_correction
+                    self.values[i+1] += half_correction
+            
+            # If no collisions were detected in a full pass, the system is stable
+            if not collided:
+                break
+        
+        # Final safety check: if ordering is still violated, sort and space them
+        if not torch.all(self.values[:-1] <= self.values[1:] - self.min_gap):
+            # Sort the values and enforce minimum spacing
+            sorted_values, _ = torch.sort(self.values)
+            for i in range(1, len(sorted_values)):
+                if sorted_values[i] < sorted_values[i-1] + self.min_gap:
+                    sorted_values[i] = sorted_values[i-1] + self.min_gap
+            self.values = sorted_values
+
+        # 4. Enforce boundary constraints AFTER collision resolution
+        # This ensures we maintain ordering while respecting boundaries
+        
+        # If the range exceeds available space, compress uniformly
+        total_range = self.values.max() - self.values.min()
+        available_space = self.upper_bound - self.lower_bound - (self.num_classes - 1) * self.min_gap
+        
+        if total_range > available_space:
+            # Compress the values to fit within bounds
+            compression_factor = available_space / total_range
+            center = (self.values.max() + self.values.min()) * 0.5
+            self.values = center + (self.values - center) * compression_factor
+        
+        # Check if the minimum value hits the lower bound
+        if self.values.min() < self.lower_bound:
+            # Shift all values up to respect the lower bound
+            shift_up = self.lower_bound - self.values.min()
+            self.values += shift_up
+        
+        # Check if the maximum value hits the upper bound
+        if self.values.max() > self.upper_bound:
+            # Shift all values down to respect the upper bound
+            shift_down = self.values.max() - self.upper_bound
+            self.values -= shift_down
         
         self.time_step += 1
 
-    def _update_affine_random_walk(self):
-        """Applies a random walk to the affine parameters."""
-        cfg = self.drift_config
-        self.transform_params['angle'] += np.random.normal(0, cfg['rotation'])
-        self.transform_params['scale'] += np.random.normal(0, cfg['scale'])
-        # Clamp scale to prevent image from vanishing or inverting
-        self.transform_params['scale'] = np.clip(self.transform_params['scale'], 0.5, 1.5)
+
+# --- Dataset Factories ---
+
+def create_stateless_dataset_wrapper(cfg: ExperimentConfig, base_dataset: Dataset[Any], task_idx: int) -> Dataset[Any]:
+    """Creates a stateless dataset wrapper based on the configuration for a specific task."""
+    shift_mode = getattr(cfg, 'task_shift_mode', 'no_shift')
+
+    if shift_mode == 'permuted_input':
+        g = torch.Generator()
+        seed = getattr(cfg, 'seed', None)
+        if seed is not None:
+            g.manual_seed(seed + task_idx)
         
-        self.transform_params['shear_x'] += np.random.normal(0, cfg['shear'])
-        self.transform_params['shear_y'] += np.random.normal(0, cfg['shear'])
-        # You could also drift translation if desired
+        sample_img, _ = base_dataset[0]
+        if hasattr(sample_img, 'shape'):
+            num_features = int(np.prod(sample_img.shape))
+        else: # Handle PIL images
+            num_features = int(np.prod((1, sample_img.size[1], sample_img.size[0])))
+        permutation = torch.randperm(num_features, generator=g).tolist()
         
-        print(f"Time {self.time_step}: Angle={self.transform_params['angle']:.2f}, Scale={self.transform_params['scale']:.2f}")
+        return Permuted_input_Dataset(base_dataset, permutation=permutation, flatten=True)
 
-    def __len__(self) -> int:
-        return len(self.original_dataset)
+    elif shift_mode == 'permuted_output':
+        g = torch.Generator()
+        seed = getattr(cfg, 'seed', None)
+        if seed is not None:
+            g.manual_seed(seed + task_idx)
+        
+        data_cfg = getattr(cfg, 'data', None)
+        num_classes = getattr(data_cfg, 'num_classes', None) if data_cfg else None
+        if num_classes is None:
+            raise ValueError("cfg.data.num_classes must be defined for permuted_output")
+        permutation = torch.randperm(num_classes, generator=g).tolist()
+        return Permuted_output_Dataset(base_dataset, permutation=permutation)
+
+    else:
+        return base_dataset
+
+def create_stateful_dataset_wrapper(cfg: ExperimentConfig, train_set: Dataset[Any]) -> Dataset[Any]:
+    """Creates a stateful dataset wrapper based on the configuration."""
+    task_shift_mode = getattr(cfg, 'task_shift_mode', None)
+    task_shift_param = getattr(cfg, 'task_shift_param', None)
+
+    if not task_shift_mode or not task_shift_param:
+        return train_set
+
+    if task_shift_mode == 'drifting_values': # Renamed from 'slow_drift_bandit'
+        params = getattr(task_shift_param, 'drifting_values', None)
+        if not params:
+            raise ValueError("Missing 'drifting_values' params in config")
+        
+        data_cfg = getattr(cfg, 'data', None)
+        num_classes = getattr(data_cfg, 'num_classes', None) if data_cfg else None
+        if num_classes is None:
+            raise ValueError("cfg.data.num_classes must be defined for drifting_values")
+
+        return DriftingValuesDataset(
+            original_dataset=train_set,
+            num_classes=num_classes,
+            drift_std_dev=params.drift_std_dev,
+            repulsion_strength=params.repulsion_strength,
+            min_gap=params.min_gap,
+            lower_bound=params.value_bounds.lower_bound,
+            upper_bound=params.value_bounds.upper_bound
+        )
+    elif task_shift_mode == 'continuous_input_deformation':
+        params = getattr(task_shift_param, 'continuous_input_deformation', None)
+        if not params:
+            raise ValueError("Missing 'continuous_input_deformation' params in config")
+
+        drift_mode = getattr(params, 'drift_mode', None)
+        if not drift_mode:
+            raise ValueError("Missing 'drift_mode' in continuous_input_deformation params")
+
+        transform_params_dict = OmegaConf.to_container(getattr(params, drift_mode, {}), resolve=True)
+        
+        data_cfg = getattr(cfg, 'data', None)
+        num_classes = getattr(data_cfg, 'num_classes', None) if data_cfg else None
+        if num_classes is None:
+            raise ValueError("cfg.data.num_classes must be defined for continuous_input_deformation")
+        
+        seed = getattr(cfg, 'seed', None)
+
+        return ContinuousDeformationDataset(
+            original_dataset=train_set,
+            mode=drift_mode,
+            num_classes=num_classes,
+            transform_params=transform_params_dict,
+            seed=seed
+        )
+    return train_set
 
 
 
-    
+
 if __name__ == "__main__":
     # Example usage
     from torchvision import datasets, transforms
@@ -507,172 +557,141 @@ if __name__ == "__main__":
     print("Permuted_output_Dataset custom permutation test passed!")
 
 
-    # --- Test for Slow_drift_contextual_bandit ---
-    print("\n--- Testing Slow_drift_contextual_bandit ---")
+    # --- Test for ContinuousDeformationDataset ---
+    print("\n--- Testing ContinuousDeformationDataset ---")
+    
+    # Setup a mock base dataset (e.g., MNIST)
+    transform = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize((0.5,), (0.5,))
+    ])
+    try:
+        mnist_dataset = datasets.MNIST(root='./data', train=True, download=True, transform=transform)
+    except Exception as e:
+        print(f"Could not download MNIST, creating a dummy dataset. Error: {e}")
+        # Create a dummy dataset if MNIST download fails
+        dummy_data = torch.randn(100, 1, 28, 28)
+        dummy_labels = torch.randint(0, 10, (100,))
+        mnist_dataset = torch.utils.data.TensorDataset(dummy_data, dummy_labels)
 
-    # 1. Test 'random_walk' mode with zero drift
-    print("\n1. Testing 'random_walk' with zero drift...")
-    bandit_rw = Slow_drift_contextual_bandit(
-        mnist_train,
-        num_classes=data_config.num_classes,
-        drift_mode='random_walk',
-        drift_std_dev=0.0  # Zero drift
+
+    num_tasks = 10
+    # Test linear drift
+    print("\nTesting Linear Drift...")
+    drift_dataset_linear = ContinuousDeformationDataset(
+        original_dataset=mnist_dataset,
+        num_tasks=num_tasks,
+        drift_mode='linear',
+        max_drift=0.5,
+        seed=42
     )
-    initial_values_rw = bandit_rw.true_values.clone()
-    bandit_rw.update_drift()
-    print(f"Initial values: {initial_values_rw}")
-    print(f"Values after 1 update: {bandit_rw.true_values}")
-    assert torch.equal(initial_values_rw, bandit_rw.true_values), "Values should not change with zero drift."
-    print("'random_walk' zero drift test passed!")
+    
+    # Check initial transformation (should be near identity)
+    initial_img, _ = drift_dataset_linear[0]
+    base_img, _ = mnist_dataset[0]
+    
+    # The first task is already updated, so it's not pure identity
+    # Let's check the inverse transformation
+    inv_theta = drift_dataset_linear.get_inverse_transformation()
+    
+    # Reconstruct the image
+    inv_affine_grid = F.affine_grid(inv_theta.unsqueeze(0), initial_img.unsqueeze(0).size(), align_corners=False).to(drift_dataset_linear.device)
+    reconstructed_img = F.grid_sample(initial_img.unsqueeze(0), inv_affine_grid, align_corners=False)
+    
+    # It should be close to the original
+    reconstruction_error = torch.mean((reconstructed_img.squeeze(0) - base_img.to(drift_dataset_linear.device))**2)
+    print(f"Reconstruction error after initial linear step: {reconstruction_error.item()}")
+    assert reconstruction_error < 1e-2, "Reconstruction failed for linear drift."
 
-    # 2. Test 'sinusoidal' mode with a specific check
-    print("\n2. Testing 'sinusoidal' drift logic...")
-    amp = 0.5
-    freq = 0.1
-    bandit_sin = Slow_drift_contextual_bandit(
-        mnist_train,
-        num_classes=data_config.num_classes,
+    # Update task and check again
+    drift_dataset_linear.update_task() # Move to task 2
+    img_task2, _ = drift_dataset_linear[0]
+    
+    # Test sinusoidal drift
+    print("\nTesting Sinusoidal Drift...")
+    drift_dataset_sin = ContinuousDeformationDataset(
+        original_dataset=mnist_dataset,
+        num_tasks=num_tasks,
         drift_mode='sinusoidal',
-        amplitude=amp,
-        frequency=freq
+        max_drift=0.8,
+        seed=123
     )
-    base_values = bandit_sin.base_values.clone()
-
-    # --- Check step 1 (uses time_step = 0) ---
-    bandit_sin.update_drift()
-    phases = torch.linspace(0, 2 * np.pi, data_config.num_classes)
-    expected_drift_1 = amp * torch.sin(freq * 0 + phases)
-    expected_values_1 = base_values + expected_drift_1
+    img_sin_task1, _ = drift_dataset_sin[0]
+    drift_dataset_sin.update_task()
+    img_sin_task2, _ = drift_dataset_sin[0]
     
-    print(f"Values after 1 update: {bandit_sin.true_values}")
-    print(f"Expected values:       {expected_values_1}")
-    assert torch.allclose(bandit_sin.true_values, expected_values_1), "Values should match expected sinusoidal drift for step 1."
+    # The images should be different
+    assert not torch.equal(img_sin_task1, img_sin_task2), "Image should change between tasks in sinusoidal drift."
+    print("Sinusoidal drift test passed.")
 
-    # --- Check step 2 (uses time_step = 1) ---
-    bandit_sin.update_drift()
-    expected_drift_2 = amp * torch.sin(freq * 1 + phases)
-    expected_values_2 = base_values + expected_drift_2
-    print(f"Values after 2 updates: {bandit_sin.true_values}")
-    print(f"Expected values:        {expected_values_2}")
-    assert torch.allclose(bandit_sin.true_values, expected_values_2), "Values should match expected sinusoidal drift for step 2."
-    print("'sinusoidal' drift logic test passed!")
+    # Test random walk drift
+    print("\nTesting Random Walk Drift...")
+    drift_dataset_rw = ContinuousDeformationDataset(
+        original_dataset=mnist_dataset,
+        num_tasks=num_tasks,
+        drift_mode='random_walk',
+        max_drift=0.1, # smaller drift for rw
+        seed=99
+    )
+    img_rw_task1, _ = drift_dataset_rw[0]
+    drift_dataset_rw.update_task()
+    img_rw_task2, _ = drift_dataset_rw[0]
+    assert not torch.equal(img_rw_task1, img_rw_task2), "Image should change between tasks in random walk drift."
+    print("Random walk drift test passed.")
 
-    # 3. Test 'interpolation' mode
-    print("\n3. Testing 'interpolation' drift...")
-    start_vals = torch.zeros(data_config.num_classes)
-    end_vals = torch.ones(data_config.num_classes)
-    duration = 10
-    bandit_interp = Slow_drift_contextual_bandit(
+    print("\nAll ContinuousDeformationDataset tests passed!")
+
+
+    # --- Test DriftingValuesDataset ---
+    print("\n--- Testing DriftingValuesDataset ---")
+
+    # 1. Test initialization
+    print("\n1. Testing initialization...")
+    dataset = DriftingValuesDataset(
         mnist_train,
         num_classes=data_config.num_classes,
-        drift_mode='interpolation',
-        start_values=start_vals,
-        end_values=end_vals,
-        duration=duration
+        drift_std_dev=0.1,
+        repulsion_strength=0.5,
+        min_gap=0.1
     )
-    
-    # Check initial state
-    assert torch.equal(bandit_interp.true_values, start_vals), "Should start at start_values."
-    
-    # Update to halfway point
-    for _ in range(duration // 2):
-        bandit_interp.update_drift()
-    
-    midpoint_values = bandit_interp.true_values.clone()
-    print(f"Values at midpoint (step {bandit_interp.time_step}): {midpoint_values}")
-    # After duration//2 steps, the time_step used for the last calculation was (duration//2 - 1).
-    # The alpha should be (duration//2 - 1) / (duration - 1) if we start from time_step 0.
-    # However, since update_drift increments time_step *after* calculation, the last calculation
-    # used time_step = 4. So alpha = 4 / 9.
-    expected_midpoint_val = 4/9
-    assert torch.allclose(midpoint_values, torch.full((data_config.num_classes,), expected_midpoint_val)), "Should be at the correct interpolated value."
+    expected_initial_values = torch.arange(data_config.num_classes, dtype=torch.float32)
+    print(f"Initial values: {dataset.values}")
+    print(f"Expected initial values: {expected_initial_values}")
+    assert torch.equal(dataset.values, expected_initial_values), "Initial values are incorrect."
+    print("Initialization test passed!")
 
-    # Update to the end
-    # We already did 5 steps, so we need 5 more to reach step 9 for the final calculation
-    for _ in range(duration - (duration // 2)):
-        bandit_interp.update_drift()
-        
-    print(f"Values at the end (step {bandit_interp.time_step}): {bandit_interp.true_values}")
-    assert torch.allclose(bandit_interp.true_values, end_vals), "Should finish at end_values."
-    print("'interpolation' drift test passed!")
+    # 2. Test drift and order preservation
+    print("\n2. Testing drift and order preservation...")
+    initial_values = dataset.values.clone()
+    # Update multiple times to see drift
+    for i in range(10):
+        dataset.update_drift()
+        print(f"Values after update {i+1}: {dataset.values}")
+        # Check that values have changed
+        assert not torch.equal(initial_values, dataset.values), "Values should drift after update."
+        # Check that order is preserved
+        for j in range(data_config.num_classes - 1):
+            assert dataset.values[j] < dataset.values[j+1], f"Order violated at index {j} after update {i+1}"
+    print("Drift and order preservation test passed after 10 updates.")
 
-
-    # --- Test for DriftingInputDataset ---
-    print("\n--- Testing DriftingInputDataset ---")
-
-    # Get a sample image to work with
-    original_img_tensor, _ = mnist_train[0]
-
-    # 1. Trivial Test: No drift applied initially
-    print("\n1. Testing initial state (identity transform)...")
-    drift_dataset_trivial = DriftingInputDataset(mnist_train)
-    transformed_img_trivial, _ = drift_dataset_trivial[0]
-    
-    # The initial transform should be identity, so images should be identical
-    assert torch.allclose(original_img_tensor, transformed_img_trivial, atol=1e-5), "Initial transform should be identity."
-    print("Initial state test passed!")
-
-    def test_affine_drift_and_inversion(dataset, drift_params, test_name, image_idx=0):
-        print(f"\n--- Running non-trivial test: '{test_name}' ---")
-        
-        # --- Setup ---
-        drift_dataset = DriftingInputDataset(dataset, drift_type='random_walk', **drift_params)
-        
-        # Manually set the transformation parameters for a deterministic test
-        drift_dataset.transform_params['angle'] = drift_params.get('angle', 0.0)
-        drift_dataset.transform_params['scale'] = drift_params.get('scale', 1.0)
-        drift_dataset.transform_params['shear_x'] = drift_params.get('shear_x', 0.0)
-        drift_dataset.transform_params['shear_y'] = drift_params.get('shear_y', 0.0)
-        
-        original_img, _ = dataset[image_idx]
-        transformed_img, _ = drift_dataset[image_idx]
-
-        # --- Save images for visual inspection ---
-        param_str = f"angle={drift_dataset.transform_params['angle']}_scale={drift_dataset.transform_params['scale']:.2f}"
-        save_image(original_img, os.path.join(output_dir, f"{test_name}_original_image.png"))
-        save_image(transformed_img, os.path.join(output_dir, f"{test_name}_transformed_{param_str}.png"))
-        print(f"Saved original and transformed images for '{test_name}' in '{output_dir}/'")
-
-        # --- Compute Inverse Transform and Verify ---
-        # Get the forward transformation matrix used by the dataset
-        forward_theta = drift_dataset._get_affine_matrix(device='cpu') # Shape: [1, 2, 3]
-
-        # Separate the 2x2 matrix (A) and the translation vector (t)
-        A = forward_theta[:, :2, :2]
-        t = forward_theta[:, :2, 2].unsqueeze(2)
-
-        # Compute the inverse of the 2x2 matrix A
-        A_inv = torch.inverse(A)
-
-        # Compute the new translation vector for the inverse transform: -A_inv * t
-        t_inv = -A_inv @ t
-
-        # Assemble the inverse transformation matrix
-        inverse_theta = torch.cat([A_inv, t_inv], dim=2)
-
-        # Apply the inverse transformation to the transformed image
-        # Add batch dim for grid_sample
-        grid = F.affine_grid(inverse_theta, transformed_img.unsqueeze(0).size(), align_corners=False)
-        reconstructed_img = F.grid_sample(transformed_img.unsqueeze(0), grid, align_corners=False).squeeze(0)
-
-        # --- Assert ---
-        # The reconstructed image should be very close to the original
-        mse = F.mse_loss(reconstructed_img, original_img)
-        print(f"MSE between original and reconstructed image: {mse.item()}")
-        assert mse < 1e-2, f"Reconstruction failed for '{test_name}'. MSE: {mse.item()}"
-        print(f"Inverse transform test passed for '{test_name}'!")
-
-    # 2. Non-trivial Test: Small Displacement
-    test_affine_drift_and_inversion(
+    # 3. Test collision-repulsion mechanism
+    print("\n3. Testing collision-repulsion mechanism...")
+    # Engineer a collision
+    dataset_for_collision_test = DriftingValuesDataset(
         mnist_train,
-        {'angle': 15.0, 'scale': 1.1, 'shear_x': 0.1, 'shear_y': -0.1},
-        "small_displacement"
+        num_classes=data_config.num_classes,
+        drift_std_dev=0.0, # No random drift
+        repulsion_strength=0.5,
+        min_gap=0.1
     )
+    # Manually create a collision
+    dataset_for_collision_test.values[1] = 0.5
+    dataset_for_collision_test.values[2] = 0.4 # Collision: value[1] > value[2]
+    print(f"Values before repulsion: {dataset_for_collision_test.values}")
 
-    # 3. Non-trivial Test: Large Displacement
-    test_affine_drift_and_inversion(
-        mnist_train,
-        {'angle': -45.0, 'scale': 0.7, 'shear_x': -0.3, 'shear_y': 0.4},
-        "large_displacement"
-    )
+    # update_drift should fix this even without noise
+    dataset_for_collision_test.update_drift()
+    print(f"Values after repulsion: {dataset_for_collision_test.values}")
+    assert dataset_for_collision_test.values[1] < dataset_for_collision_test.values[2], "Repulsion mechanism failed to correct collision."
+    print("Collision-repulsion test passed!")
 
