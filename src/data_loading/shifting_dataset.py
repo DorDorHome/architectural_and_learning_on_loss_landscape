@@ -66,6 +66,7 @@ class Permuted_input_Dataset(Dataset[Tuple[Any, Any]]):
                 # Flatten the image and then permute
                 flat_img = img.view(-1)
                 permuted_img = flat_img[self.permutation]
+                # Reshape back to the original image shape
                 img = permuted_img.view(img.shape)
             else:
                 # Permute spatial dimensions (H*W) for each channel
@@ -299,7 +300,7 @@ class DriftingValuesDataset(Dataset[Tuple[Any, torch.Tensor]]):
 
         # 3. Handle collisions with repulsion first
         # We loop multiple times to allow repulsion forces to propagate and settle.
-        max_iterations = self.num_classes * 2  # More iterations for complex cases
+        max_iterations = self.num_classes * 4  # More iterations for complex cases
         for iteration in range(max_iterations):
             collided = False
             # Check for collisions between all adjacent class values
@@ -459,6 +460,9 @@ if __name__ == "__main__":
     import os
     import torch.nn.functional as F
     from torchvision.utils import save_image
+    from .dataset_factory import dataset_factory
+    
+    
 
     # Create a directory for test outputs
     output_dir = "test_outputs"

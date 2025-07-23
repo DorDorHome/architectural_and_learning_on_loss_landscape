@@ -4,7 +4,7 @@ run_id: 0
 seed: None
 # debug:
 debug_mode: False  # Disable debug mode for performance
-device: 'cuda:0'
+device: 'cuda:1'
 epochs: 50 #epoch per task switch
 batch_size: 256 
 num_tasks: 500 # number of tasks to train on. Each task will be trained on num_classes_per_task
@@ -20,7 +20,7 @@ wandb:
   notes: 'Experiment with continuously drifting data.'
 
 # task switching:
-task_shift_mode: "drifting_values" # "continuous_input_deformation" (turn on weight decay, turn off gradient clipping), "drifting_values"(for this, turn on gradient clip, turn off weight decay )
+task_shift_mode: "continuous_input_deformation" # "continuous_input_deformation" (turn on weight decay, turn off gradient clipping), "drifting_values"(for this, turn on gradient clip, turn off weight decay )
 task_shift_param:
   # --- Parameters for 'drifting_values' mode ---
   # This mode wraps the dataset to simulate a regression task where the target
@@ -28,7 +28,7 @@ task_shift_param:
   drifting_values:
     drift_std_dev: 0.01       # Standard deviation of the random walk noise.
     repulsion_strength: 0.02   # How strongly colliding values push each other apart.
-    min_gap: 0.1            # The minimum gap to enforce between adjacent values.
+    min_gap: 0.2             # The minimum gap to enforce between adjacent values.
     value_bounds:            # Boundary constraints for the target values
       lower_bound: -20.0     # Minimum allowed value (prevents drift to -infinity)
       upper_bound: 20.0      # Maximum allowed value (prevents drift to +infinity)
@@ -38,16 +38,16 @@ task_shift_param:
   # to the input images.
   continuous_input_deformation:
     # The type of drift to apply to the affine transformation parameters.
-    # Options: 'linear', 'random_walk', 'sinusoidal'
-    drift_mode: 'linear'
+    drift_mode: 'sinusoidal' # Options: 'linear', 'random_walk', 'sinusoidal'
     
+    # linearly, non-random drift
     linear:
       # The maximum intensity of the transformation. Controls the scale of
       # translation, rotation, and shear.
       max_drift: 0.5
     
     random_walk:
-      drift_std_dev: 0.01 # Standard deviation of the noise added at each step.
+      drift_std_dev: 0.05 # Standard deviation of the noise added at each step.
 
     sinusoidal:
       amplitude: 0.5 # The magnitude of the sine wave oscillation.
@@ -83,7 +83,7 @@ data:
 
 # network architecture:
 net:
-  type: "ConvNet_batch_norm" # "ConvNet_batch_norm", "ConvNet_FC_layer_norm", "ConvNet_conv_and_FC_layer_norm" "ConvNet_norm", "vgg_custom" #options: "ConvNet", "vgg_custom" , "resnet_custom" , 'full_rank_resnet_custom'
+  type: "ConvNet_conv_and_FC_layer_norm" # "ConvNet_batch_norm", "ConvNet_FC_layer_norm", "ConvNet_conv_and_FC_layer_norm" "ConvNet_norm", "vgg_custom" #options: "ConvNet", "vgg_custom" , "resnet_custom" , 'full_rank_resnet_custom'
   network_class: "conv"
   device: ${device}
   netparams:

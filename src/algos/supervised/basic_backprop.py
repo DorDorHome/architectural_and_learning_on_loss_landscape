@@ -62,11 +62,15 @@ class Backprop(Learner):
         self.opt.zero_grad()
         output, features = self.net.predict(x)
 
-        # Select the specific output neuron corresponding to the original label
-        # output shape: [batch_size, num_classes], original_labels shape: [batch_size]
-        action_outputs = output.gather(1, label.unsqueeze(1)).squeeze(1)
+        # Use advanced indexing instead of gather operation
+
+        batch_indices = torch.arange(output.size(0), device=output.device)
+        action_outputs = output[batch_indices, label]
+        
         # Loss is between the selected output and the drifting value
+        # Use the loss function from base class instead of hardcoding MSE
         loss = self.loss_func(action_outputs, value)
+        
         self.previous_features = features
         
         # backpropagate
