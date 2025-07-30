@@ -3,6 +3,7 @@
 import math
 import itertools
 from unicodedata import numeric
+from typing import List, Union, Dict
 import numpy as np
 from torch import nn
 from tqdm import tqdm
@@ -71,8 +72,78 @@ def count_saturated_units(feature, activation_type, threshold = 0.01):
     return torch.sum(saturated)
 
 
-def compute_all_rank_measures_list(features: list[torch.Tensor], use_pytorch_entropy_for_effective_rank: bool = True, 
-                                   prop_for_approx_or_l1_rank: float = 0.99, numerical_rank_epsilon: float = 1e-2) -> list[dict]:
+def compute_all_rank_measures_list(features: List[torch.Tensor], use_pytorch_entropy_for_effective_rank: bool = True, 
+                                   prop_for_approx_or_l1_rank: float = 0.99, numerical_rank_epsilon: float = 1e-2) -> List[Dict]:
+    """
+    Computes rank measures for a list of feature matrices.
+    
+    Args:
+        features (list[torch.Tensor]): List of matrices, each [batch_size, feature_size].
+        use_pytorch_entropy (bool): Use PyTorch entropy for effective rank.
+        prop (float): Proportion for approximate and L1 ranks.
+        epsilon (float): Threshold for numerical rank.
+    
+    Returns:
+        list[dict]: List of rank measure dictionaries, one per matrix.
+    """
+    return [compute_all_rank_measures(f, use_pytorch_entropy_for_effective_rank, prop_for_approx_or_l1_rank, numerical_rank_epsilon) for f in features]
+
+
+
+
+def compute_all_rank_measures(input: torch.Tensor, use_pytorch_entropy: bool = True, 
+                              prop_for_approx_or_l1_rank: float = 0.99, numerical_rank_epsilon: float = 1e-2) -> Dict:
+
+
+def count_saturated_units(feature, activation_type, threshold = 0.01):
+    """
+    Counts the number of saturated units in a feature tensor based on activation type.
+    A unit is saturated if all its outputs across the batch are in the saturation region.
+    
+    Args:
+        feature (torch.tensor): Feature tensor of shape (batch_size, feature_dim)
+        activation_type (str): Type of activation ('relu', 'sigmoid', 'tanh')
+        
+    Returns:
+        int: Number of saturated units
+    """
+    if activation_type == 'relu':
+        # Saturated when all outputs are 0
+        saturated = torch.all((feature == 0), axis=0)
+    elif activation_type == 'sigmoid':
+        # Saturated when all outputs are < threshold or > 1-threshold
+        saturated = torch.all((feature < threshold) | (feature > (1 - threshold)), axis=0)
+    elif activation_type == 'tanh':
+        # Saturated when all outputs are < -(1 - threshold) or > (1 - threshold)
+        saturated = torch.all((feature < -1*(1-threshold)) | (feature > (1 -threshold)), axis=0)
+    elif activation_type == 'leaky_relu':
+    # For Leaky ReLU, no true saturation, but we can consider very small outputs
+    # Here, we might not define saturation or use a small threshold, e.g., |activation| < 1e-5
+    # For this example, we'll assume no saturation for simplicity
+        saturated = torch.zeros(feature.shape[1], dtype=bool)
+    elif activation_type == 'selu':
+        # SELU approaches -λ*α ≈ -1.758 for large negative inputs
+        # Consider saturation when all outputs are < -1.7
+        saturated = torch.all(feature < -1.7, axis=0)
+    elif activation_type == 'elu':
+        # ELU approaches -α for large negative inputs
+        # Assuming α=1, consider saturation when all outputs are < -0.99
+        saturated = torch.all(feature < -1*(1-threshold), axis=0)
+    elif activation_type == 'swish':
+        # Swish: f(x) = x * sigmoid(x)
+        # For large |x|, swish(x) ≈ x if x>0, ≈0 if x<0
+        # Saturation might be considered for large positive x where gradient approaches 0, but it's not straightforward
+        # For simplicity, we might not define saturation or use a threshold for very large positive values
+        # Here, we'll assume no saturation for swish
+        saturated = torch.zeros(feature.shape[1], dtype=bool)      
+    else:
+        raise ValueError("Unsupported activation type. Use 'relu', 'sigmoid', or 'tanh'.")
+    
+    return torch.sum(saturated)
+
+
+def compute_all_rank_measures_list(features: List[torch.Tensor], use_pytorch_entropy_for_effective_rank: bool = True, 
+                                   prop_for_approx_or_l1_rank: float = 0.99, numerical_rank_epsilon: float = 1e-2) -> List[Dict]:
     """
     Computes rank measures for a list of feature matrices.
     
@@ -479,9 +550,72 @@ def compute_nuclear_norm(input: torch.Tensor, input_is_svd: bool = False,
 
 
 
-    
-    
+def compute_rank_decay_dynamics(ranks: Union[List[Union[float, int]], torch.Tensor], mode='difference') -> Dict:
+    """
+    Computes metrics to characterize the dynamics of rank decay across layers.
 
+    Args:
+        ranks (list[float | int] | torch.Tensor): A sequence of rank values for L layers.
+        mode (str): 'difference' or 'ratio' to specify how drops are calculated.
+
+    Returns:
+        dict: A dictionary containing the rank decay metrics:
+            - "rank_drop_gini": Gini coefficient of the rank drops. 0 is perfectly even, 1 is max inequality.
+            - "rank_decay_centroid": The "center of mass" of the rank drop, from 1 to L-1.
+            - "normalized_aurc": Normalized Area Under the Rank Curve. Close to 1 means rank stays high.
+    """
+    if isinstance(ranks, torch.Tensor):
+        ranks = ranks.tolist()
+    
+    if len(ranks) < 2:
+        return {
+            "rank_drop_gini": 0.0,
+            "rank_decay_centroid": 0.0,
+            "normalized_aurc": 0.0
+        }
+
+    ranks = np.array(ranks, dtype=np.float64)
+    
+    # Calculate drops based on the chosen mode
+    if mode == 'difference':
+        drops = ranks[:-1] - ranks[1:]
+    elif mode == 'ratio':
+        # Add a small epsilon to avoid division by zero for ranks
+        safe_ranks = ranks + 1e-9
+        drops = (safe_ranks[:-1] - safe_ranks[1:]) / safe_ranks[:-1]
+    else:
+        raise ValueError("Mode must be either 'difference' or 'ratio'")
+
+    total_drop = np.sum(drops)
+
+    if total_drop < 1e-9: # No drop or negligible drop
+        return {
+            "rank_drop_gini": 0.0,
+            "rank_decay_centroid": (len(ranks) - 1) / 2.0, # Centered if no drop
+            "normalized_aurc": ranks[0] / (ranks[0] + 1e-9) if ranks[0] > 0 else 0.0
+        }
+
+    # 2. Rank Drop Gini Coefficient
+    n = len(drops)
+    # Using a more efficient formula for Gini: (Σ (2i - n - 1) * x_i) / (n * Σ x_i) for sorted x
+    sorted_drops = np.sort(drops)
+    gini_numerator = np.sum((2 * np.arange(1, n + 1) - n - 1) * sorted_drops)
+    gini_denominator = n * total_drop
+    gini_coefficient = gini_numerator / gini_denominator
+
+    # 3. Rank Decay Centroid
+    indices = np.arange(1, n + 1)
+    centroid = np.sum(indices * drops) / total_drop
+
+    # 4. Normalized Area Under the Rank Curve (AURC)
+    raw_aurc = np.sum(0.5 * (ranks[:-1] + ranks[1:]))
+    norm_aurc = raw_aurc / ((len(ranks) - 1) * (ranks[0] + 1e-9)) if ranks[0] > 0 else 0.0
+
+    return {
+        "rank_drop_gini": gini_coefficient,
+        "rank_decay_centroid": centroid,
+        "normalized_aurc": norm_aurc
+    }
     
 if __name__ == "__main__":
     # m = torch.randn(100, 100)

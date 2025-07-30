@@ -8,7 +8,7 @@ device: 'cuda:1'
 epochs: 50 #epoch per task switch
 batch_size: 256 
 num_tasks: 500 # number of tasks to train on. Each task will be trained on num_classes_per_task
-num_workers: 2  # Reduced from 12 to match old script performance
+num_workers: 0  # Reduced from 12 to match old script performance
 
 
 # for logging and tracking the experiments
@@ -26,8 +26,8 @@ task_shift_param:
   # This mode wraps the dataset to simulate a regression task where the target
   # values for each class drift over time while maintaining their relative order.
   drifting_values:
-    drift_std_dev: 0.01       # Standard deviation of the random walk noise.
-    repulsion_strength: 0.02   # How strongly colliding values push each other apart.
+    drift_std_dev: 0.05       # Standard deviation of the random walk noise.
+    repulsion_strength: 0.05   # How strongly colliding values push each other apart.
     min_gap: 0.2             # The minimum gap to enforce between adjacent values.
     value_bounds:            # Boundary constraints for the target values
       lower_bound: -20.0     # Minimum allowed value (prevents drift to -infinity)
@@ -38,7 +38,7 @@ task_shift_param:
   # to the input images.
   continuous_input_deformation:
     # The type of drift to apply to the affine transformation parameters.
-    drift_mode: 'sinusoidal' # Options: 'linear', 'random_walk', 'sinusoidal'
+    drift_mode: 'random_walk' # Options: 'linear', 'random_walk', 'sinusoidal'
     
     # linearly, non-random drift
     linear:
@@ -50,8 +50,8 @@ task_shift_param:
       drift_std_dev: 0.05 # Standard deviation of the noise added at each step.
 
     sinusoidal:
-      amplitude: 0.5 # The magnitude of the sine wave oscillation.
-      frequency: 0.1 # The frequency of the sine wave (lower is slower).
+      amplitude: 0.5 # default 0.5 The magnitude of the sine wave oscillation.
+      frequency: 0.01 # default 0.1 The frequency of the sine wave (lower is slower).
 
 
 #rank tracking:

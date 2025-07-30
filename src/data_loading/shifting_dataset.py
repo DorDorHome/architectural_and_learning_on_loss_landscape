@@ -221,7 +221,7 @@ class ContinuousDeformationDataset(Dataset[Tuple[torch.Tensor, int]]):
 
     def _update_sinusoidal(self):
         """Update theta with a sinusoidal drift."""
-        amplitude = self.transform_params.get('amplitude', 0.1)
+        amplitude = self.transform_params.get('amplitude', 0.01)
         frequency = self.transform_params.get('frequency', 0.1)
         
         # Create a base identity matrix
