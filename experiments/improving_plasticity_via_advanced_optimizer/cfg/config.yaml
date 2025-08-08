@@ -1,0 +1,143 @@
+# represent experiments config:
+runs: 1
+run_id: 0
+seed: None
+# debug:
+debug_mode: False  # Disable debug mode for performance
+device: 'cuda:1'
+epochs: 50 #epoch per task switch
+batch_size: 256
+num_tasks: 500 # number of tasks to train on. Each task will be trained on num_classes_per_task
+num_workers: 2  # Reduced from 12 to match old script performance
+
+
+# for logging and tracking the experiments
+use_wandb: True
+use_json: False
+wandb:
+  project: 'effects_of_optimizer_${task_shift_mode}' # Dynamically set project name
+  entity: ''
+  notes: 'Experiment with advanced optimizers.'
+
+# task switching:
+task_shift_mode: "continuous_input_deformation" # "continuous_input_deformation" (turn on weight decay, turn off gradient clipping), "drifting_values"(for this, turn on gradient clip, turn off weight decay )
+task_shift_param:
+  # --- Parameters for 'drifting_values' mode ---
+  # This mode wraps the dataset to simulate a regression task where the target
+  # values for each class drift over time while maintaining their relative order.
+  drifting_values:
+    drift_std_dev: 0.05       # Standard deviation of the random walk noise.
+    repulsion_strength: 0.05   # How strongly colliding values push each other apart.
+    min_gap: 0.2             # The minimum gap to enforce between adjacent values.
+    value_bounds:            # Boundary constraints for the target values
+      lower_bound: -20.0     # Minimum allowed value (prevents drift to -infinity)
+      upper_bound: 20.0      # Maximum allowed value (prevents drift to +infinity)
+
+  # --- Parameters for 'continuous_input_deformation' mode ---
+  # This mode applies a continuously drifting affine transformation (rotation, scale, shear)
+  # to the input images.
+  continuous_input_deformation:
+    # The type of drift to apply to the affine transformation parameters.
+    drift_mode: 'random_walk' # Options: 'linear', 'random_walk', 'sinusoidal'
+
+    # linearly, non-random drift
+    linear:
+      # The maximum intensity of the transformation. Controls the scale of
+      # translation, rotation, and shear.
+      max_drift: 0.5
+
+    random_walk:
+      drift_std_dev: 0.05 # Standard deviation of the noise added at each step.
+
+    sinusoidal:
+      amplitude: 0.5 # default 0.5 The magnitude of the sine wave oscillation.
+      frequency: 0.01 # default 0.1 The frequency of the sine wave (lower is slower).
+
+
+#rank tracking:
+track_rank: True  # Re-enabled with improved error handling
+track_rank_batch: "use_specified" # "last" or "use_specified" or "all"
+specified_batch_size: 1000 # for "specified"
+rank_measure_freq_to_epoch: 1  #should agree with, or a multiple of evaluation.eval_freq_epoch
+use_pytorch_entropy_for_effective_rank: True # if False, will use numpy for effective rank
+prop_for_approx_or_l1_rank: 0.99 # for approximate rank, or 1 for l1 rank
+numerical_rank_epsilon: 0.01 # for numerical rank, or 0 for l1 rank
+
+# deal units checking:
+track_dead_units: False  # Disabled for performance
+threshold_for_non_saturating_act: 0.01
+
+# for test, computationally expensive
+track_actual_rank: False  # Also disabled for now
+
+# for tracking average weight magnitude:
+track_weight_magnitude: True
+layers_identifier: None
+
+#data to use
+data:
+  dataset: 'MNIST'
+  use_torchvision: True
+  data_path: 'data'
+  num_classes: 10
+
+# network architecture:
+net:
+  type: "ConvNet_FC_layer_norm" # "ConvNet_batch_norm", "ConvNet_FC_layer_norm", "ConvNet_conv_and_FC_layer_norm" "ConvNet_norm", "vgg_custom" #options: "ConvNet", "vgg_custom" , "resnet_custom" , 'full_rank_resnet_custom'
+  network_class: "conv"
+  device: ${device}
+  netparams:
+    pretrained: False
+    num_classes: ${data.num_classes}
+    initialization: 'kaiming'
+    input_height: None
+    input_width: None
+    conv_layer_bias: True
+    linear_layer_bias: True
+    activation: 'leaky_relu'
+    norm_param:
+      layer_norm:
+        eps: 1e-5
+        elementwise_affine: False
+    weight_correction_scale: 1.0
+    fan_in_correction: False
+    SVD_only_stride_1: False
+    allow_svd_values_negative: True
+    num_hidden_layers: 1
+
+# learning algorithm:
+learner:
+  type: 'basic_continous_backprop'
+  init: 'kaiming'
+  device: ${device}
+  opt:  'sgd'
+  loss: ${loss_functions.${task_shift_mode}}
+  step_size: 0.01 # 0.01 for SGD, 0.001 for Adam
+  beta_1: 0.95
+  beta_2: 0.999
+  weight_decay: 0.01 # L2 regularization strength , use 0.001 for labelled regression tasks
+  to_perturb: false
+  perturb_scale: 0.05
+  momentum: 0.9
+  neurons_replacement_rate: 0.001
+  decay_rate_utility_track: 0.9
+  maturity_threshold: 100
+  util_type: 'contribution'
+  accumulate: False
+  outgoing_random: False
+
+
+  # Gradient clipping options
+  use_grad_clip: true  #on only for drifting_values       # Enable gradient clipping to prevent gradient explosion
+  grad_clip_max_norm: 1.0      # Maximum norm for gradient clipping
+
+# conditional on task_shift_mode
+loss_functions:
+  continuous_input_deformation: 'cross_entropy'
+  drifting_values: 'mse'
+
+# evaluation, for plotting and saving the results of the
+evaluation:
+  use_testset: False
+  eval_freq_epoch: 1
+  eval_metrics: ['accuracy', 'loss']
