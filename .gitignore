@@ -32,6 +32,8 @@ test_outputs/*
 experiments/output_vs_input_plasticity/outputs/*
 experiments/output_vs_input_plasticity/wandb/*
 experiments/output_vs_input_plasticity/wandb
+experiments/output_vs_input_plasticity/outputs
+experiments/output_vs_input_plasticity/outputs/*
 
 FEATURE_CONTAINER_EXPLANATION.py
 FEATURE_ENHANCEMENT_PLAN.md

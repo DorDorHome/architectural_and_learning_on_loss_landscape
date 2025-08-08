@@ -13,9 +13,9 @@ def create_learner(config: DictConfig, net):
     if config.type == 'backprop':
         return Backprop(net, config)
     elif config.type == 'basic_continous_backprop':
-        if net.network_class == 'conv':
+        if config.network_class == 'conv':
             return ContinuousBackprop_for_ConvNet(net, config)
-        elif net.network_class == 'fc':
+        elif config.network_class == 'fc':
             return ContinualBackprop_for_FC(net, config)
         else:
             raise ValueError(f"Unsupported network type for basic_continous_backprop: {net.type}")

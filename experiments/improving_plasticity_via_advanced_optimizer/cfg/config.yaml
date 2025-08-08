@@ -54,6 +54,11 @@ task_shift_param:
       frequency: 0.01 # default 0.1 The frequency of the sine wave (lower is slower).
 
 
+#track rank drop:
+track_rank_drop: True  # Enable tracking of rank drop metrics
+from_theoretical_max_first_feature_rank: True # If True, will use the theoretical max rank of the first feature map as the reference for rank drop
+rank_drop_mode: "ratio" # "ratio" or "difference"
+
 #rank tracking:
 track_rank: True  # Re-enabled with improved error handling
 track_rank_batch: "use_specified" # "last" or "use_specified" or "all"
@@ -78,12 +83,12 @@ layers_identifier: None
 data:
   dataset: 'MNIST'
   use_torchvision: True
-  data_path: 'data'
+  data_path: '/hdda/datasets'
   num_classes: 10
 
 # network architecture:
 net:
-  type: "ConvNet_FC_layer_norm" # "ConvNet_batch_norm", "ConvNet_FC_layer_norm", "ConvNet_conv_and_FC_layer_norm" "ConvNet_norm", "vgg_custom" #options: "ConvNet", "vgg_custom" , "resnet_custom" , 'full_rank_resnet_custom'
+  type: "ConvNet" # "ConvNet_batch_norm", "ConvNet_FC_layer_norm", "ConvNet_conv_and_FC_layer_norm" "ConvNet_norm", "vgg_custom" #options: "ConvNet", "vgg_custom" , "resnet_custom" , 'full_rank_resnet_custom'
   network_class: "conv"
   device: ${device}
   netparams:
@@ -108,6 +113,7 @@ net:
 # learning algorithm:
 learner:
   type: 'basic_continous_backprop'
+  network_class: ${net.network_class}  # Use the network class from the net configuration
   init: 'kaiming'
   device: ${device}
   opt:  'sgd'
