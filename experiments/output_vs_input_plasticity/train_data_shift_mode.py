@@ -4,6 +4,14 @@ Purpose: To analyze how varying the training data shift affects the performance 
 
 """
 
+
+
+import warnings
+warnings.filterwarnings("ignore", message="A NumPy version")
+warnings.filterwarnings("ignore", message="A NumPy version >=1.16.5 and <1.23.0 is required for this version of SciPy")
+warnings.filterwarnings("ignore", category=UserWarning, module="scipy")
+
+
 from typing import Any
 import sys
 import pathlib
@@ -38,6 +46,8 @@ from src.data_loading.shifting_dataset import (
 )
 # rank tracking:
 from src.utils.zeroth_order_features import compute_all_rank_measures_list, count_saturated_units_list
+# rank drop dynamics:
+from src.utils.rank_drop_dynamics import compute_rank_dynamics_from_features
 #from src.utils.miscellaneous import compute_matrix_rank_summaries
 #from src.utils.partial_jacobian_source import compute_rank_for_list_of_features
 
@@ -52,7 +62,10 @@ import torch.multiprocessing as mp
 # for checking non-finite loss:
 from src.utils.robust_checking_of_training_errors import _log_and_raise_non_finite_error
 
-@hydra.main(config_path="cfg", config_name="drifting_input_and_output_experiment", version_base=None)
+
+
+
+@hydra.main(config_path="cfg", config_name="rank_drop_metrics", version_base=None)
 def main(cfg: ExperimentConfig) -> Any:
     """
     Main function to run the experiment with different training data shift modes.
@@ -279,7 +292,10 @@ def main(cfg: ExperimentConfig) -> Any:
                         
                     # Accuracy calculation is not applicable for the regression task in 'drifting_values' mode.
                     if cfg.task_shift_mode != 'drifting_values':
-                        epoch_correct += accuracy(output, target)
+                        with torch.no_grad():
+                            _, predicted = torch.max(output, dim=1)
+                            correct = predicted.eq(target).sum().item()
+                            epoch_correct += correct
 
                     epoch_total += input.size(0)
                     epoch_loss += loss.item() if torch.is_tensor(loss) else loss
@@ -344,6 +360,32 @@ def main(cfg: ExperimentConfig) -> Any:
                             use_pytorch_entropy_for_effective_rank=cfg.use_pytorch_entropy_for_effective_rank,
                             prop_for_approx_or_l1_rank=cfg.prop_for_approx_or_l1_rank,
                             numerical_rank_epsilon = cfg.numerical_rank_epsilon)
+                        
+                        # Compute rank drop dynamics if enabled
+                        if cfg.track_rank_drop:
+                            try:
+                                rank_dynamics = compute_rank_dynamics_from_features(
+                                    feature_list=list_of_features_for_every_layers,
+                                    rank_summary_list=rank_summary_list,
+                                    batch_size=cfg.specified_batch_size if cfg.track_rank_batch == "use_specified" else cfg.batch_size,
+                                    mode=cfg.rank_drop_mode,  # Use ratio mode as default
+                                    use_theoretical_max_first=cfg.from_theoretical_max_first_feature_rank
+                                )
+                                
+                                # Add rank dynamics to data dict
+                                for metric_name, value in rank_dynamics.items():
+                                    data[metric_name] = value
+                                
+                                if cfg.debug_mode:
+                                    print(f"Debug: Computed rank dynamics metrics: {list(rank_dynamics.keys())}")
+                                    for metric_name, value in rank_dynamics.items():
+                                        print(f"  {metric_name}: {value:.4f}")
+                                        
+                            except Exception as e:
+                                print(f"Warning: Failed to compute rank drop dynamics: {e}")
+                                if cfg.debug_mode:
+                                    import traceback
+                                    print(f"Full traceback: {traceback.format_exc()}")
                         
                         # Enhanced logging with semantic layer names
                         # This demonstrates the new capability while keeping existing code working

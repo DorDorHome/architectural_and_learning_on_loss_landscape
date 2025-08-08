@@ -15,9 +15,9 @@ num_workers: 2  # Reduced from 12 to match old script performance
 use_wandb: True
 use_json: False
 wandb:
-  project: 'drifting_experiment_${task_shift_mode}' # Dynamically set project name
+  project: 'rank_drop_dynamics_${task_shift_mode}' # Dynamically set project name
   entity: ''
-  notes: 'Experiment with continuously drifting data.'
+  notes: 'Experiment with rank drop dynamics, to examine correlations between various rank drop metrics and plasticity.'
 
 # task switching:
 task_shift_mode: "continuous_input_deformation" # "continuous_input_deformation" (turn on weight decay, turn off gradient clipping), "drifting_values"(for this, turn on gradient clip, turn off weight decay )
@@ -47,12 +47,17 @@ task_shift_param:
       max_drift: 0.5
     
     random_walk:
-      drift_std_dev: 0.05 # Standard deviation of the noise added at each step.
+      drift_std_dev: 0.1 # Standard deviation of the noise added at each step.
 
     sinusoidal:
       amplitude: 0.5 # default 0.5 The magnitude of the sine wave oscillation.
-      frequency: 0.01 # default 0.1 The frequency of the sine wave (lower is slower).
+      frequency: 0.05 # default 0.1 The frequency of the sine wave (lower is slower).
 
+
+#track rank drop:
+track_rank_drop: True  # Enable tracking of rank drop metrics
+from_theoretical_max_first_feature_rank: True # If True, will use the theoretical max rank of the first feature map as the reference for rank drop
+rank_drop_mode: "difference" # "ratio" or "difference"
 
 #rank tracking:
 track_rank: True  # Re-enabled with improved error handling
@@ -83,7 +88,7 @@ data:
 
 # network architecture:
 net:
-  type: "ConvNet_FC_layer_norm" # "ConvNet_batch_norm", "ConvNet_FC_layer_norm", "ConvNet_conv_and_FC_layer_norm" "ConvNet_norm", "vgg_custom" #options: "ConvNet", "vgg_custom" , "resnet_custom" , 'full_rank_resnet_custom'
+  type:  "ConvNet_batch_norm" # "ConvNet_batch_norm", "ConvNet_FC_layer_norm", "ConvNet_conv_and_FC_layer_norm" "ConvNet_norm", "vgg_custom" #options: "ConvNet", "vgg_custom" , "resnet_custom" , 'full_rank_resnet_custom'
   network_class: "conv"
   device: ${device}
   netparams:

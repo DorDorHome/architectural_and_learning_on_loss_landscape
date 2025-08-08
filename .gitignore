@@ -38,6 +38,11 @@ FEATURE_ENHANCEMENT_PLAN.md
 
 wandb/*
 
+analysis/results/*
+analysis/wandb
+analysis/wandb/*
+
+
 test_drift_minimal.py
 test_enhanced_features.py
 test_grad_clipping.py
@@ -49,3 +54,4 @@ performance_debug.py
 safe_performance_analysis.py
 test_optimized_method.py
 test_training_bottlenecks.py
+
