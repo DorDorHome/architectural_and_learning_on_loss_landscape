@@ -60,15 +60,15 @@ class ConvNet(nn.Module):
         # architecture
         self.layers = nn.ModuleList()
         self.layers.append(self.conv1)
-        self.layers.append(self.activation())
+        if self.activation: self.layers.append(self.activation())
         self.layers.append(self.conv2)
-        self.layers.append(self.activation())
+        if self.activation: self.layers.append(self.activation())
         self.layers.append(self.conv3)
-        self.layers.append(self.activation())
+        if self.activation: self.layers.append(self.activation())
         self.layers.append(self.fc1)
-        self.layers.append(self.activation())
+        if self.activation: self.layers.append(self.activation())
         self.layers.append(self.fc2)
-        self.layers.append(self.activation())
+        if self.activation: self.layers.append(self.activation())
         self.layers.append(self.fc3)
 
 

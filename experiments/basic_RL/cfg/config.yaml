@@ -1,0 +1,45 @@
+# Basic RL Experiment Config
+
+# General settings
+seed: 42
+device: 'cpu'
+total_timesteps: 25000
+
+# Environment settings
+env:
+  id: 'CartPole-v1'
+
+# Learner settings
+learner:
+  type: 'ppo'
+  policy: 'MlpPolicy'
+  device: ${device}
+  # Hyperparameters for the PPO model are passed via model_kwargs
+  model_kwargs:
+    learning_rate: 0.0003
+    n_steps: 2048
+    batch_size: 64
+    n_epochs: 10
+    gamma: 0.99
+    gae_lambda: 0.95
+    clip_range: 0.2
+    ent_coef: 0.0
+    vf_coef: 0.5
+    max_grad_norm: 0.5
+
+# This section is for custom policy networks.
+# The 'type' will be used by the model_factory to get the feature extractor class.
+# The 'netparams' will be passed as kwargs to the feature extractor's constructor.
+# For this basic experiment, we use the default MlpPolicy, so this section is not used.
+# It will be used in the tracking_in_RL experiment.
+net:
+  type: "rl_mlp_backbone"
+  netparams:
+    features_dim: 64
+
+# Logging settings
+logging:
+  use_wandb: False
+  wandb:
+    project: 'basic_rl_experiment'
+    entity: '' # Your wandb entity here

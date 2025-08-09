@@ -1,0 +1,45 @@
+# Tracking in RL Experiment Config
+
+# General settings
+seed: 42
+device: 'cpu'
+total_timesteps: 200000
+
+# Environment settings
+env:
+  id: 'BipedalWalker-v3'
+
+# Learner settings
+learner:
+  type: 'ppo'
+  policy: 'MlpPolicy' # We use MlpPolicy and provide a custom feature extractor
+  device: ${device}
+  model_kwargs:
+    learning_rate: 0.0003
+    n_steps: 2048
+    batch_size: 64
+    n_epochs: 10
+    gamma: 0.99
+    gae_lambda: 0.95
+    clip_range: 0.2
+    ent_coef: 0.0
+    vf_coef: 0.5
+    max_grad_norm: 0.5
+
+# Model backbone settings for the custom feature extractor
+net:
+  type: "rl_mlp_backbone"
+  netparams:
+    features_dim: 128
+
+# Tracking settings
+tracking:
+  enabled: True
+  track_rank_freq: 10240 # Track every 5 rollouts (5 * 2048)
+
+# Logging settings
+logging:
+  use_wandb: True
+  wandb:
+    project: 'tracking_in_rl_experiment'
+    entity: '' # Your wandb entity here

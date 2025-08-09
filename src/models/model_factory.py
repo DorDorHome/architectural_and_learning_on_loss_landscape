@@ -114,6 +114,14 @@ def model_factory(config: NetConfig) -> Any:
         from src.models.deep_ffnn import FFNN_with_BN
         return FFNN_with_BN(config.netparams)
     
+    # New RL backbones
+    elif model_type == 'rl_cnn_backbone':
+        from src.models.rl_backbones import SimpleCNN
+        return SimpleCNN
+    elif model_type == 'rl_mlp_backbone':
+        from src.models.rl_backbones import SimpleMLP
+        return SimpleMLP
+
     else:
         # If the model type is not supported, raise a ValueError
         raise ValueError(f"Unsupported model type: {model_type}")

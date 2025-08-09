@@ -85,8 +85,8 @@ class Learner(ABC):
         # Check if regularization is enabled
         main_loss_func = loss_funcs[loss]
                 
-        if self.config.get('additional_regularization', False):
-            lambda_orth = self.config.get('lambda_orth', 1e-4)
+        if hasattr(self.config, 'additional_regularization') and self.config.additional_regularization:
+            lambda_orth = self.config.lambda_orth if hasattr(self.config, 'lambda_orth') and self.config.lambda_orth is not None else 1e-4
             return RegularizedLoss_SVD_conv(
                 main_loss_func=main_loss_func,
                 model=self.net,

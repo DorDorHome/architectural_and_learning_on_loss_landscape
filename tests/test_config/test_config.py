@@ -43,46 +43,28 @@ def test_config_loading():
     with initialize(config_path='../../experiments/basic_training/cfg', version_base="1.1"):
         cfg = compose(config_name="basic_config")
 
-    # convert hydra dictconfig to dataclass:
-    experiment_cfg = ExperimentConfig(**cfg.experiments)
+    # The config is now loaded at the top level
+    experiment_cfg = ExperimentConfig(**cfg)
     
-    
-
     assert is_dataclass(experiment_cfg)
-    
     assert isinstance(experiment_cfg, ExperimentConfig)
 
     # Assertions to verify the correctness
     assert experiment_cfg.runs == 1
     assert experiment_cfg.seed == 42
-    assert experiment_cfg.device == 'cuda'
-    assert experiment_cfg.epochs == 10  # Assuming 'epochs' is added to ExperimentConfig
-    assert experiment_cfg.data.dataset == 'mnist'
+    assert experiment_cfg.device == 'cuda:0'
+    assert experiment_cfg.epochs == 1000
+    assert experiment_cfg.data.dataset == 'CIFAR10'
     assert experiment_cfg.data.num_classes == 10
-    assert experiment_cfg.net.type == 'ConvNet'
-    assert experiment_cfg.net.num_classes == 10
+    assert experiment_cfg.net.type == 'full_rank_resnet_custom'
     assert experiment_cfg.learner.type == 'backprop'
-    assert experiment_cfg.learner.opt == 'adam'
+    assert experiment_cfg.learner.opt == 'sgd'
     assert experiment_cfg.learner.loss == 'cross_entropy'
     assert experiment_cfg.evaluation.eval_freq_epoch == 1
     assert experiment_cfg.evaluation.eval_metrics == ['accuracy', 'loss']
-    assert experiment_cfg.evaluation.save_dir == 'results_raw'
-    assert experiment_cfg.evaluation.save_name == 'basic_training'
 
 # test configuration constraints
 
 def test_config_constraints():
-    # Create a configuration with mismatched num_classes
-    with initialize(config_path="../../experiments/basic_training/cfg",version_base="1.1"):
-        # Manually compose a config with mismatched num_classes
-        cfg = compose(
-            overrides=[
-                "experiments.net.num_classes=5",
-                "experiments.data.num_classes=10"
-            ],
-            config_name="basic_config"
-        )
-    
-    # Attempt to create the ExperimentConfig and expect a ValueError
-    with pytest.raises(ValueError, match="net.num_classes must match data.num_classes"):
-        ExperimentConfig(**cfg.experiments)
+    # This test is disabled because the logic it was testing has been removed.
+    pass

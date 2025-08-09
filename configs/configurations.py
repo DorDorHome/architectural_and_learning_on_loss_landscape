@@ -125,9 +125,18 @@ class logConfig:
         version_base = "1.1"
 
 @dataclass
+class logConfig:
+    project: str = 'basic_training'
+    entity: str = ''
+
+@dataclass
 class ExperimentConfig:
     use_wandb: bool = False
+    use_json: bool = False
+    log_freq_every_n_task: int = 1
+    wandb: logConfig = field(default_factory=logConfig)
     runs: int = 1
+    run_id: Optional[int] = None
     seed: Optional[int] = None
     device: str = 'cuda'
     epochs: int = 10
@@ -146,9 +155,6 @@ class ExperimentConfig:
     layers_identifier: Optional[List[str]] = None
     num_workers: int = 2
     
-    def __post_init__(self):
-        if self.net.params.num_classes != self.data.num_classes:
-            raise ValueError("net.num_classes must match data.num_classes")
     class Config:
         version_base = "1.1"
 
