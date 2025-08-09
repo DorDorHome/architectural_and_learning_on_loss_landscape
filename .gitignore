@@ -12,9 +12,13 @@ __pycache__/
 *.pyc
 /experiments/shifting_tasks_on_Imagenet/outputs/
 
-/experiments/Normalized_weights_vs_Batched_norm/outputs
+experiments/Normalized_weights_vs_Batched_norm/outputs
 experiments/Normalized_weights_vs_Batched_norm/outputs/*
 experiments/Normalized_weights_vs_Batched_norm/outputs/*/*
+
+experiments/improving_plasticity_via_advanced_optimizer/outputs
+experiments/improving_plasticity_via_advanced_optimizer/outputs/*
+experiments/improving_plasticity_via_advanced_optimizer/wandb/
 
 src/utils/testing_plots
 src/utils/testing_plots/*

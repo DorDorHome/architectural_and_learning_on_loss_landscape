@@ -9,14 +9,14 @@ import sys
 from src.algos.supervised.basic_backprop import Backprop
 from src.algos.supervised.continuous_backprop_with_GnT import ContinuousBackprop_for_ConvNet, ContinualBackprop_for_FC
 
-def create_learner(config: DictConfig, net):
+def create_learner(config: DictConfig, net, netconfig=None):
     if config.type == 'backprop':
-        return Backprop(net, config)
+        return Backprop(net, config, netconfig)
     elif config.type == 'basic_continous_backprop':
         if config.network_class == 'conv':
-            return ContinuousBackprop_for_ConvNet(net, config)
+            return ContinuousBackprop_for_ConvNet(net, config, netconfig)
         elif config.network_class == 'fc':
-            return ContinualBackprop_for_FC(net, config)
+            return ContinualBackprop_for_FC(net, config, netconfig)
         else:
             raise ValueError(f"Unsupported network type for basic_continous_backprop: {net.type}")
     

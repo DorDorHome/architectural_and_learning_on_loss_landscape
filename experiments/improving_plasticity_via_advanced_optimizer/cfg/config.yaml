@@ -38,7 +38,7 @@ task_shift_param:
   # to the input images.
   continuous_input_deformation:
     # The type of drift to apply to the affine transformation parameters.
-    drift_mode: 'random_walk' # Options: 'linear', 'random_walk', 'sinusoidal'
+    drift_mode: 'sinusoidal' # Options: 'linear', 'random_walk', 'sinusoidal'
 
     # linearly, non-random drift
     linear:
@@ -51,7 +51,7 @@ task_shift_param:
 
     sinusoidal:
       amplitude: 0.5 # default 0.5 The magnitude of the sine wave oscillation.
-      frequency: 0.01 # default 0.1 The frequency of the sine wave (lower is slower).
+      frequency: 0.05 # default 0.1 The frequency of the sine wave (lower is slower).
 
 
 #track rank drop:

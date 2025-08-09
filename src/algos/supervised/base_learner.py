@@ -8,7 +8,7 @@ import torch.nn.functional as F
 import torch.nn as nn
 from torch import optim
 from abc import ABC, abstractmethod
-from typing import Callable
+from typing import Callable, Optional, Union, Any
 from torch.optim import optimizer
 from omegaconf import DictConfig
 from configs.configurations import *
@@ -19,7 +19,7 @@ class Learner(ABC):
     abstract base class for different learning algorithms
     """
 
-    def __init__(self, net: nn.Module, config: BaseLearnerConfig, netconfig: Optional[Union[NetParams, None]] = None):
+    def __init__(self, net: nn.Module, config: BaseLearnerConfig, netconfig: Optional[Union[NetParams, LinearNetParams, None]] = None):
 
         """handle the setup of networks(agents), optimizer, and loss function."""
         # network/agent:
@@ -51,7 +51,7 @@ class Learner(ABC):
         beta_1 = config.beta_1
         beta_2 = config.beta_2
         weight_decay = config.weight_decay
-        momentum = config.momentum if hasattr(config, 'momentum') else 0.0
+        momentum = config.momentum if hasattr(config, 'momentum') and config.momentum is not None else 0.0
         
 
         # initialize loss function was moved to the __init__ method
@@ -85,13 +85,14 @@ class Learner(ABC):
         # Check if regularization is enabled
         main_loss_func = loss_funcs[loss]
                 
-        if self.config.get('additional_regularization', False):
-            lambda_orth = self.config.get('lambda_orth', 1e-4)
+        if hasattr(self.config, 'additional_regularization') and self.config.additional_regularization:
+            lambda_orth = getattr(self.config, 'lambda_orth', 1e-4)
+            
             return RegularizedLoss_SVD_conv(
                 main_loss_func=main_loss_func,
                 model=self.net,
                 lambda_orth=lambda_orth,
-                allow_svd_values_negative=self.netconfig.netparams.allow_svd_values_negative
+                allow_svd_values_negative=False  # Default to False for now
             )
         else:
             return main_loss_func
@@ -99,7 +100,7 @@ class Learner(ABC):
 
 
     @abstractmethod
-    def learn(self, x: torch.Tensor, target: torch.Tensor):
+    def learn(self, x: torch.Tensor, target: torch.Tensor) -> Any:
         """learn from a batch of data"""
         pass
     

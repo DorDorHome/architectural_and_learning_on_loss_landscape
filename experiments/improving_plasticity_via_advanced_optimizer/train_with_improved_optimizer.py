@@ -133,7 +133,7 @@ def main(cfg: ExperimentConfig) -> Any:
         cfg.run_id = 0
 
     # setup learner:
-    learner = create_learner(cfg.learner, net)
+    learner = create_learner(cfg.learner, net, cfg.net)
 
 
     epochs_per_task = cfg.epochs
