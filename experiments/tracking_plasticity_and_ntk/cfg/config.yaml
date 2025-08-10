@@ -1,0 +1,87 @@
+# represent experiments config:
+runs: 1
+run_id: 0
+seed: 42
+device: 'cuda:0'
+epochs: 20 # epoch per task switch
+batch_size: 256
+num_tasks: 50
+num_workers: 2
+
+# for logging and tracking the experiments
+use_wandb: True
+wandb:
+  project: 'plasticity_and_ntk'
+  entity: ''
+  notes: 'Track plasticity and NTK metrics together.'
+
+# task switching:
+task_shift_mode: "continuous_input_deformation"
+task_shift_param:
+  continuous_input_deformation:
+    drift_mode: 'sinusoidal'
+    amplitude: 0.5
+    frequency: 0.05
+
+# track rank drop:
+track_rank_drop: True
+from_theoretical_max_first_feature_rank: True
+rank_drop_mode: "ratio"
+
+# rank tracking:
+track_rank: True
+track_rank_batch: "use_specified"
+specified_batch_size: 1000
+rank_measure_freq_to_epoch: 1
+use_pytorch_entropy_for_effective_rank: True
+prop_for_approx_or_l1_rank: 0.99
+numerical_rank_epsilon: 0.01
+
+# data to use
+data:
+  dataset: 'MNIST'
+  use_torchvision: True
+  data_path: '/hdda/datasets'
+  num_classes: 10
+
+# network architecture:
+net:
+  type: "ConvNet"
+  network_class: "conv"
+  device: ${device}
+  netparams:
+    pretrained: False
+    num_classes: ${data.num_classes}
+    initialization: 'kaiming'
+    input_height: None
+    input_width: None
+    conv_layer_bias: True
+    linear_layer_bias: True
+    activation: 'relu'
+
+# learning algorithm:
+learner:
+  type: 'backprop'
+  network_class: ${net.network_class}
+  init: 'kaiming'
+  device: ${device}
+  opt: 'sgd'
+  loss: 'cross_entropy'
+  step_size: 0.01
+  beta_1: 0.9
+  beta_2: 0.999
+  weight_decay: 0.0001
+  momentum: 0.9
+  to_perturb: False
+  perturb_scale: 0.05
+
+# ntk tracking:
+track_ntk: True
+ntk_measure_freq_epoch: 1 # measure NTK every n epochs, should be aligned with task switch
+ntk_batch_size: 256
+
+# evaluation:
+evaluation:
+  use_testset: False
+  eval_freq_epoch: 1
+  eval_metrics: ['accuracy', 'loss']

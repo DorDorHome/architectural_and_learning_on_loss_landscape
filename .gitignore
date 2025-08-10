@@ -61,3 +61,4 @@ safe_performance_analysis.py
 test_optimized_method.py
 test_training_bottlenecks.py
 
+/data/

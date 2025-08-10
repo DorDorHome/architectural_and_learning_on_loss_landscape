@@ -1,0 +1,65 @@
+# represent experiments config:
+runs: 1
+run_id: 0
+seed: 42
+device: 'cuda:0'
+epochs: 10
+batch_size: 128
+num_tasks: 10
+num_workers: 2
+
+# for logging and tracking the experiments
+use_wandb: True
+wandb:
+  project: 'basic_ntk_track'
+  entity: ''
+  notes: 'Basic experiment to track NTK eigenvalues.'
+
+# data to use
+data:
+  dataset: 'MNIST'
+  use_torchvision: True
+  data_path: '/hdda/datasets'
+  num_classes: 10
+
+# network architecture:
+net:
+  type: "ConvNet"
+  network_class: "conv"
+  device: ${device}
+  netparams:
+    pretrained: False
+    num_classes: ${data.num_classes}
+    initialization: 'kaiming'
+    input_height: None
+    input_width: None
+    conv_layer_bias: True
+    linear_layer_bias: True
+    activation: 'relu'
+
+# learning algorithm:
+learner:
+  type: 'backprop'
+  network_class: ${net.network_class}
+  init: 'kaiming'
+  device: ${device}
+  opt: 'sgd'
+  loss: 'cross_entropy'
+  step_size: 0.01
+  beta_1: 0.9
+  beta_2: 0.999
+  weight_decay: 0.0001
+  momentum: 0.9
+  to_perturb: False
+  perturb_scale: 0.05
+
+# ntk tracking:
+track_ntk: True
+ntk_measure_freq_epoch: 1 # measure NTK every n epochs
+ntk_batch_size: 256
+
+# evaluation:
+evaluation:
+  use_testset: True
+  eval_freq_epoch: 1
+  eval_metrics: ['accuracy', 'loss']

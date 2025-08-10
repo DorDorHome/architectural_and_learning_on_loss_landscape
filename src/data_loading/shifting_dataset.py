@@ -9,6 +9,7 @@ from omegaconf import OmegaConf
 from torchvision import transforms
 
 from configs.configurations import ExperimentConfig
+from src.utils.dict_to_obj import DictToObj
 
 
 class Permuted_input_Dataset(Dataset[Tuple[Any, Any]]):
@@ -401,6 +402,9 @@ def create_stateful_dataset_wrapper(cfg: ExperimentConfig, train_set: Dataset[An
 
     if not task_shift_mode or not task_shift_param:
         return train_set
+
+    if isinstance(task_shift_param, dict):
+        task_shift_param = DictToObj(task_shift_param)
 
     if task_shift_mode == 'drifting_values': # Renamed from 'slow_drift_bandit'
         params = getattr(task_shift_param, 'drifting_values', None)

@@ -73,7 +73,26 @@ class ConvNet(nn.Module):
 
 
 
+    def forward(self, x):
+        # Handle both single samples and batches
+        if x.dim() == 3:
+            x = x.unsqueeze(0)
+
+        batch_size = x.size(0)
+        x1 = self.pool(self.layers[1](self.layers[0](x)))
+        x2 = self.pool(self.layers[3](self.layers[2](x1)))
+        x3 = self.pool(self.layers[5](self.layers[4](x2)))
+        x3 = x3.view(batch_size, -1)
+        x4 = self.layers[7](self.layers[6](x3))
+        x5 = self.layers[9](self.layers[8](x4))
+        x6 = self.layers[10](x5)
+        return x6
+
     def predict(self, x):
+        # Handle both single samples and batches
+        if x.dim() == 3:
+            x = x.unsqueeze(0)
+
         batch_size = x.size(0)
         x1 = self.pool(self.layers[1](self.layers[0](x)))
         x2 = self.pool(self.layers[3](self.layers[2](x1)))

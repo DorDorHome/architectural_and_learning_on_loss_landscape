@@ -1,0 +1,9 @@
+Attempt 1:
+- jax==0.4.34
+- jaxlib==0.4.34
+
+Reasoning: This is the minimum version required by tf2jax, which was the source of the previous conflict.
+---
+Result: Failed with `ValueError: IO callbacks do not support JVP.`. This is a fundamental limitation of using `jax.experimental.host_callback.call` with `neural-tangents`, as the library requires JVP support for NTK computation.
+
+Conclusion: The approach of using `neural-tangents` with a PyTorch model via `host_callback` is not feasible. Switching to a native PyTorch NTK implementation.
