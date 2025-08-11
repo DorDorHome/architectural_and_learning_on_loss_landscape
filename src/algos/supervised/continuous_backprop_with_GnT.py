@@ -4,14 +4,7 @@
 import torch
 import torch.nn.functional as F
 import torch.nn as nn
-from torch import optim
-from abc import ABC, abstractmethod
-
-# for choices of optimizer
-from torch.optim import optimizer
-
-# for configuration:
-from omegaconf import DictConfig
+from typing import Optional, Union, Tuple, Sequence, cast  # noqa: F401
 
 # import the BackpropConfig class from the config file in configs folder in the
 # parent directory of the project:
@@ -26,94 +19,76 @@ from src.algos.supervised.base_learner import Learner
 # import the gnt class from the gnt.py file in the same directory:
 from src.algos.gnt import ConvGnT_for_ConvNet, GnT_for_FC
 from src.algos.AdamGnT import AdamGnT
-from configs.configurations import ContinuousBackpropConfig
-
-_all_loss_functions = {'cross_entropy': F.cross_entropy, 'mse': F.mse_loss}
+from configs.configurations import ContinuousBackpropConfig, NetConfig
 
 
-class ContinualBackprop_for_FC(object):
+class ContinualBackprop_for_FC(Learner):
     """
     The Continual Backprop algorithm, used in https://arxiv.org/abs/2108.06325v3
     
-    Only works for ConvNet model, as it uses the predict method of the ConvNet class
+    Only works for FC model, as it uses the predict method of the FC class.
+    
+    For easy tracking of features, the features are stored in the `previous_features` attribute
+    after each forward pass. 
+
+    This allows retrieval of the features during the generate-and-test step, and possibly later use in other methods, 
+    such as tracking rank of features of other analyses.
+    
     """
     def __init__(
             self,
             net: nn.Module, 
-            learnerconfig: ContinuousBackpropConfig
-            # step_size=0.001, # in BaseLearnerConfig
-            # loss='mse', # in BaseLearnerConfig
-            # opt='sgd', # in BaseLearnerConfig
-            # beta_1=0.9, # in BaseLearnerConfig
-            # beta_2=0.999,  # in BaseLearnerConfig
-            # neurons_replacement_rate=0.001, # in ContinuousBackpropConfig
-            # decay_rate_utility_track=0.9,  # in ContinuousBackpropConfig
-            # device='cpu', # in BaseLearnerConfig
-            # maturity_threshold=100, # in ContinuousBackpropConfig
-            # util_type='contribution', # in ContinuousBackpropConfig
-            # init='kaiming',  # in ContinuousBackpropConfig
-            # accumulate=False,  # in ContinuousBackpropConfig
-            # momentum=0, # in BaseLearnerConfig
-            # outgoing_random=False, # in ContinuousBackpropConfig
-            # weight_decay=0 # in BaseLearnerConfig
+            config: ContinuousBackpropConfig,
+            netconfig: Optional[Union[NetConfig, None]] = None
     ):
-        self.net = net
-        self.opt = learnerconfig.opt
-        self.loss = learnerconfig.loss
-        self.step_size = learnerconfig.step_size
-        self.beta_1 = learnerconfig.beta_1
-        self.beta_2 = learnerconfig.beta_2
-        self.neurons_replacement_rate = learnerconfig.neurons_replacement_rate
-        self.decay_rate_utility_track = learnerconfig.decay_rate_utility_track
-        self.device = learnerconfig.device
-        self.maturity_threshold = learnerconfig.maturity_threshold
-        self.util_type = learnerconfig.util_type
-        self.init = learnerconfig.init
-        self.accumulate = learnerconfig.accumulate
-        self.momentum = learnerconfig.momentum
-        self.outgoing_random = learnerconfig.outgoing_random
-        self.weight_decay = learnerconfig.weight_decay
+        netparams = netconfig.netparams if netconfig is not None else None
+        super().__init__(net, config, netparams)
         
-        
-        
+        self.neurons_replacement_rate = config.neurons_replacement_rate
+        self.decay_rate_utility_track = config.decay_rate_utility_track
+        self.maturity_threshold = config.maturity_threshold
+        self.util_type = config.util_type
+        self.init = config.init
+        self.accumulate = config.accumulate
+        self.outgoing_random = config.outgoing_random  # NOTE: currently unused in GnT init
 
-        # define the optimizer
-        if self.opt == 'sgd':
-            self.opt = optim.SGD(self.net.parameters(), lr=self.step_size, momentum=self.momentum, weight_decay=self.weight_decay)
-        elif self.opt == 'adam':
-            self.opt = AdamGnT(self.net.parameters(), lr=self.step_size, betas=(self.beta_1, self.beta_2), weight_decay=self.weight_decay)
-
-        # define the loss function
-        self.loss_func = _all_loss_functions[self.loss]
-
-        # a placeholder
-        self.previous_features = None
-
-        # define the generate-and-test object for the given network
-        self.gnt = None
-        
-        if self.net.type == 'FC':
-            self.gnt = GnT_for_FC(
-                net=self.net.layers,
-                hidden_activation=self.net.act_type,
-                opt=self.opt,
-                replacement_rate=self.neurons_replacement_rate,
-                decay_rate=self.decay_rate_utility_track,
-                maturity_threshold=self.maturity_threshold,
-                util_type=self.util_type,
-                device=self.device,
-                loss_func=self.loss_func,
-                init=self.init,
-                accumulate=self.accumulate,
+        if config.opt == 'adam':
+            self.opt = AdamGnT(
+                self.net.parameters(),
+                lr=config.step_size, 
+                betas=(config.beta_1, config.beta_2),
+                weight_decay=float(config.weight_decay)  # type: ignore[arg-type]
             )
 
-    def learn(self, x, target):
-        """
-        Learn using one step of gradient-descent and generate-&-test
-        :param x: input
-        :param target: desired output
-        :return: loss
-        """
+        hidden_activation = None
+        if netparams is not None:
+            for attr_name in ('activation', 'act_type'):
+                if hasattr(netparams, attr_name):
+                    hidden_activation = getattr(netparams, attr_name)
+                    break
+        if hidden_activation is None:
+            raise ValueError(f"hidden_activation must be specified in netparams.activation or netparams.act_type (netparams={netparams})")
+
+        if getattr(self.net, 'type', None) != 'FC':
+            raise TypeError(f"ContinualBackprop_for_FC requires net.type == 'FC', got {getattr(self.net,'type',None)}")
+
+        self.gnt: Optional[GnT_for_FC] = GnT_for_FC(
+            net=self.net.layers,
+            hidden_activation=hidden_activation,
+            opt=self.opt,
+            replacement_rate=self.neurons_replacement_rate,
+            decay_rate=self.decay_rate_utility_track,
+            maturity_threshold=self.maturity_threshold,
+            util_type=self.util_type,
+            device=self.device,
+            loss_func=self.loss_func,
+            init=self.init,
+            accumulate=self.accumulate,
+        )
+
+    def learn(self, x: torch.Tensor, target: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+        x, target = x.to(self.device), target.to(self.device)
+        
         # do a forward pass and get the hidden activations
         output, features = self.net.predict(x)
         loss = self.loss_func(output, target)
@@ -125,87 +100,114 @@ class ContinualBackprop_for_FC(object):
         self.opt.step()
 
         # take a generate-and-test step
+        # Clear grads before structural adaptation; GnT may inspect or create params expecting clean .grad buffers
+       
         self.opt.zero_grad()
         if type(self.gnt) is GnT_for_FC: # original: GnT:
             self.gnt.gen_and_test(features=self.previous_features)
 
-        if self.loss_func == F.cross_entropy:
-            return loss.detach(), output.detach()
+        # if self.loss_func == F.cross_entropy:
+        return loss.detach(), output.detach()
 
-        return loss.detach()
+        # return loss.detach()
 
-class ContinuousBackprop_for_ConvNet(object):
-    """
-    The Continual Backprop algorithm
-    """
+class ContinuousBackprop_for_ConvNet(Learner):
+    """Continual Backprop algorithm for ConvNets."""
     def __init__(self,
-                 net,
-                 learnerconfig: ContinuousBackpropConfig
-                #  step_size=0.001,
-                #  loss='mse',
-                #  opt='sgd',
-                #  beta_1=0.9,
-                #  beta_2=0.999,
-                #  neurons_replacement_rate=0.0001,
-                #  decay_rate=0.9,
-                #  init='kaiming',
-                #  util_type='contribution',
-                #  maturity_threshold=100,
-                #  device='cpu',
-                #  momentum=0,
-                #  weight_decay=0
+                 net: nn.Module,
+                 config: ContinuousBackpropConfig,
+                 netconfig: Optional[Union[NetConfig, None]] = None
                  ):
-        self.net = net
-        self.opt = learnerconfig.opt
-        self.loss = learnerconfig.loss
-        self.step_size = learnerconfig.step_size
-        self.beta_1 = learnerconfig.beta_1
-        self.beta_2 = learnerconfig.beta_2
-        self.neurons_replacement_rate = learnerconfig.neurons_replacement_rate
-        self.decay_rate_utility_track = learnerconfig.decay_rate_utility_track
-        self.init = learnerconfig.init
-        self.util_type = learnerconfig.util_type
-        self.maturity_threshold = learnerconfig.maturity_threshold
-        self.device = learnerconfig.device
-        self.momentum = learnerconfig.momentum
-        self.weight_decay = learnerconfig.weight_decay
+        # Extract netparams from netconfig if provided
+        netparams = netconfig.netparams if netconfig is not None else None
+        super().__init__(net, config, netparams)
         
+        # Store config-specific parameters
+        self.neurons_replacement_rate = config.neurons_replacement_rate
+        self.decay_rate_utility_track = config.decay_rate_utility_track
+        self.init = config.init
+        self.util_type = config.util_type
+        self.maturity_threshold = config.maturity_threshold
 
+        if config.opt == 'adam':
+            self.opt = AdamGnT(
+                self.net.parameters(),
+                lr=config.step_size, 
+                betas=(config.beta_1, config.beta_2),
+                weight_decay=float(config.weight_decay)  # type: ignore[arg-type]
+            )
 
-        # define the optimizer
-        if self.opt == 'sgd':
-            self.opt = optim.SGD(self.net.parameters(), lr=self.step_size, momentum=self.momentum, weight_decay=self.weight_decay)
-        elif self.opt == 'adam':
-            self.opt = AdamGnT(self.net.parameters(), lr=self.step_size, betas=(self.beta_1, self.beta_2), weight_decay=self.weight_decay)
+        hidden_activation = None
+        if netparams is not None:
+            for attr_name in ('activation', 'act_type'):
+                if hasattr(netparams, attr_name):
+                    hidden_activation = getattr(netparams, attr_name)
+                    break
+        if hidden_activation is None:
+            raise ValueError(f"hidden_activation must be specified in netparams.activation or netparams.act_type (netparams={netparams})")
 
-        # define the loss function
-        self.loss_func = _all_loss_functions[self.loss]
-        #{'cross_entropy': F.cross_entropy, 'mse': F.mse_loss}[self.loss]
-
-        # a placeholder
-        self.previous_features = None
+        # Calculate num_last_filter_outputs from the network structure
+        # This represents the spatial dimensions of the last conv layer before flattening
+        num_last_filter_outputs = self._calculate_last_filter_outputs()
 
         # define the generate-and-test object for the given network
         self.gnt = ConvGnT_for_ConvNet(
             net=self.net.layers,
-            hidden_activation=self.net.act_type,
+            hidden_activation=hidden_activation,
             opt=self.opt,
             replacement_rate=self.neurons_replacement_rate,
             decay_rate=self.decay_rate_utility_track,
             init=self.init,
-            num_last_filter_outputs=net.last_filter_output,
+            num_last_filter_outputs=num_last_filter_outputs,
             util_type=self.util_type,
             maturity_threshold=self.maturity_threshold,
             device=self.device,
         )
 
-    def learn(self, x, target):
+    def _calculate_last_filter_outputs(self) -> int:
+        """
+        Calculate the spatial dimensions (H x W) of the last convolutional layer
+        before it gets flattened into a linear layer.
+        
+        This value represents how many spatial locations each filter in the last
+        conv layer produces, which is needed for proper feature replacement when
+        transitioning from Conv2d to Linear layers.
+        """
+        layers = cast(Sequence[nn.Module], self.net.layers)  # type: ignore[assignment]
+        last_conv_idx = -1
+        first_linear_idx = -1
+        
+        # Find the last Conv2d layer and first Linear layer
+        for i in range(0, len(layers), 2):  # step by 2 since layers alternate conv/activation
+            if isinstance(layers[i], nn.Conv2d):
+                last_conv_idx = i
+            elif isinstance(layers[i], nn.Linear):
+                if first_linear_idx == -1:
+                    first_linear_idx = i
+                break
+        
+        if last_conv_idx == -1 or first_linear_idx == -1:
+            # Fallback: if we can't determine the structure, use a default value
+            # This handles cases where the network doesn't have the expected Conv->Linear transition
+            return 1
+        last_conv = cast(nn.Conv2d, layers[last_conv_idx])
+        first_linear = cast(nn.Linear, layers[first_linear_idx])
+        try:
+            num_last_filter_outputs: int = first_linear.in_features // last_conv.out_channels  # type: ignore[attr-defined]
+            return max(1, int(num_last_filter_outputs))
+        except Exception:
+            return 1
+
+    def learn(self, x: torch.Tensor, target: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Learn using one step of gradient-descent and generate-&-test
         :param x: input
         :param target: desired output
         :return: loss
         """
+        # move data to device:
+        x, target = x.to(self.device), target.to(self.device)
+        
         # do a forward pass and get the hidden activations
         output, features = self.net.predict(x=x)
         loss = self.loss_func(output, target)
@@ -214,6 +216,8 @@ class ContinuousBackprop_for_ConvNet(object):
         # do the backward pass and take a gradient step
         loss.backward()
         self.opt.step()
+        
+        # Clear grads before structural adaptation; GnT may inspect or create params expecting clean .grad buffers
         self.opt.zero_grad()
 
         # take a generate-and-test step

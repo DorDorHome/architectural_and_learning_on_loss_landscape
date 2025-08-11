@@ -18,6 +18,12 @@ from src.algos.AdamGnT import AdamGnT
 class GnT_for_FC(object):
     """
     Generate-and-Test algorithm for feed forward neural networks, based on maturity-threshold based replacement
+    GnT does: 
+        (a) compute/decay per-neuron utilities,
+        (b) decide which mature low-utility neurons to replace,
+        (c) re-initialize their incoming weights (and adjust downstream bias for FC),
+        (d) zero related optimizer state so the new weights start “fresh”.
+
     """
     def __init__(
             self,
@@ -33,7 +39,7 @@ class GnT_for_FC(object):
             loss_func=F.mse_loss,
             accumulate=False,
     ):
-        super(GnT_for_ConvNet, self).__init__()
+        super(GnT_for_FC, self).__init__()
         self.device = device
         self.net = net
         self.num_hidden_layers = int(len(self.net)/2)
