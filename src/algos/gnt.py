@@ -137,6 +137,14 @@ class GnT_for_FC(object):
 
     def test_features(self, features):
         """
+        Select features to replace based on their utility and maturity.
+        
+        - ages incremented for each layer.
+        
+
+        
+        
+        
         Args:
             features: Activation values in the neural network
         Returns:
