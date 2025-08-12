@@ -4,7 +4,7 @@ run_id: 0
 seed: None
 # debug:
 debug_mode: False  # Disable debug mode for performance
-device: 'cuda:0'
+device: 'cuda:1'
 epochs: 50 #epoch per task switch
 batch_size: 256
 num_tasks: 500 # number of tasks to train on. Each task will be trained on num_classes_per_task
@@ -51,7 +51,7 @@ task_shift_param:
 
     sinusoidal:
       amplitude: 0.5 # default 0.5 The magnitude of the sine wave oscillation.
-      frequency: 0.1 # default 0.1 The frequency of the sine wave (lower is slower).
+      frequency: 0.01 # default 0.1 The frequency of the sine wave (lower is slower).
 
 
 #track rank drop:
@@ -112,7 +112,7 @@ net:
 
 # learning algorithm:
 learner:
-  type: 'basic_continous_backprop'
+  type: 'backprop'  #options: 'basic_continous_backprop', 'backprop' , 
   network_class: ${net.network_class}  # Use the network class from the net configuration
   init: 'kaiming'
   device: ${device}

@@ -19,5 +19,6 @@ def create_learner(config: DictConfig, net, netconfig=None):
             return ContinualBackprop_for_FC(net, config, netconfig)
         else:
             raise ValueError(f"Unsupported network type for basic_continous_backprop: {net.type}")
-    
+    else:
+        raise ValueError(f"Unsupported learner type: {config.type}")
     # for support of torchvision models:
