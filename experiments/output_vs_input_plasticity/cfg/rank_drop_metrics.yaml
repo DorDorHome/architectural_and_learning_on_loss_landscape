@@ -4,7 +4,7 @@ run_id: 0
 seed: None
 # debug:
 debug_mode: False  # Disable debug mode for performance
-device: 'cuda:1'
+device: 'cuda:0'
 epochs: 50 #epoch per task switch
 batch_size: 256 
 num_tasks: 500 # number of tasks to train on. Each task will be trained on num_classes_per_task
@@ -38,7 +38,7 @@ task_shift_param:
   # to the input images.
   continuous_input_deformation:
     # The type of drift to apply to the affine transformation parameters.
-    drift_mode: 'random_walk' # Options: 'linear', 'random_walk', 'sinusoidal'
+    drift_mode: 'sinusoidal' # Options: 'linear', 'random_walk', 'sinusoidal'
     
     # linearly, non-random drift
     linear:
@@ -88,7 +88,7 @@ data:
 
 # network architecture:
 net:
-  type:  "ConvNet_batch_norm" # "ConvNet_batch_norm", "ConvNet_FC_layer_norm", "ConvNet_conv_and_FC_layer_norm" "ConvNet_norm", "vgg_custom" #options: "ConvNet", "vgg_custom" , "resnet_custom" , 'full_rank_resnet_custom'
+  type:  "ConvNet_norm" # "ConvNet_batch_norm", "ConvNet_FC_layer_norm", "ConvNet_conv_and_FC_layer_norm" "ConvNet_norm", "vgg_custom" #options: "ConvNet", "vgg_custom" , "resnet_custom" , 'full_rank_resnet_custom'
   network_class: "conv"
   device: ${device}
   netparams:

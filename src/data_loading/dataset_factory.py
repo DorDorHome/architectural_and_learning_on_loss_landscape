@@ -2,7 +2,7 @@
 
 from typing import Any
 from functools import partial as partial_fn
-import test
+
 import torchvision.datasets
 import torchvision.transforms as transforms
 import torch
@@ -17,7 +17,6 @@ PROJECT_ROOT = pathlib.Path(__file__).resolve().parent.parent.parent
 #print(PROJECT_ROOT)
 
 from configs.configurations import DataConfig
-import hydra
 from omegaconf import DictConfig, OmegaConf
 from src.data_loading.transform_factory import transform_factory
 

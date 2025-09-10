@@ -122,7 +122,6 @@ def main(cfg: ExperimentConfig) -> Any:
     net = model_factory(cfg.net)
     # set device for net
     net.to(cfg.net.device)
-    net.to(cfg.net.device)
 
     #verifty cfg.runs ==1:
     if cfg.runs != 1:
@@ -198,6 +197,21 @@ def main(cfg: ExperimentConfig) -> Any:
     if is_stateful:
         dataset_wrapper = create_stateful_dataset_wrapper(cfg, train_set)
 
+    # Configure DataLoader workers (safe defaults) and seeding
+    try:
+        num_workers = int(os.cpu_count() or 0) if str(cfg.num_workers).lower() == "auto" else int(cfg.num_workers)
+    except Exception:
+        num_workers = 0
+    # Stateful wrappers are often not multiprocess-safe; prefer single worker to surface errors clearly
+    if is_stateful and num_workers != 0:
+        print("Info: Forcing num_workers=0 for stateful dataset wrapper to avoid worker pickling/multiprocessing issues.")
+        num_workers = 0
+
+    def _seed_worker(worker_id: int):
+        worker_seed = torch.initial_seed() % 2**32
+        np.random.seed(worker_seed)
+        random.seed(worker_seed)
+
     # Wrap the entire training in try-catch to handle NaN properly
     try:
         # loop though the tasks
@@ -206,33 +220,28 @@ def main(cfg: ExperimentConfig) -> Any:
             print(f"Starting task {task_idx+1}/{cfg.num_tasks}")
             print(f"{'='*50}")
 
-            # --- Refactored Dataset Handling for each task ---
+            # --- Dataset Handling for each task ---
             if is_stateful:
                 # For stateful shifts, update the wrapper's state for the new task
                 if hasattr(dataset_wrapper, 'update_task'):
                     dataset_wrapper.update_task()
-                current_train_set = dataset_wrapper
+                current_train_set = dataset_wrapper if dataset_wrapper is not None else train_set
             else:
                 # For stateless shifts, use the factory to get a new wrapper for each task
-                current_train_set = create_stateless_dataset_wrapper(cfg, train_set, task_idx)
-
-            # If the dataset is not stateful, create a new wrapper for each task
-            if not is_stateful:
-                dataset_wrapper = create_stateless_dataset_wrapper(cfg, train_set, task_idx)
-
-            # If no wrapper is needed (e.g., 'no_shift'), use the original dataset
-            current_train_set = dataset_wrapper if dataset_wrapper is not None else train_set
+                current_train_set = create_stateless_dataset_wrapper(cfg, train_set, task_idx) or train_set
 
             train_loader = torch.utils.data.DataLoader(
                 current_train_set,
                 batch_size=cfg.batch_size,
                 shuffle=True,
                 num_workers=num_workers,
-                pin_memory=True
+                pin_memory=True,
+                persistent_workers=(num_workers > 0),
+                worker_init_fn=_seed_worker if num_workers > 0 else None
             )
 
             # Update drift for stateful datasets that require it
-            if hasattr(dataset_wrapper, 'update_drift'):
+            if is_stateful and hasattr(dataset_wrapper, 'update_drift'):
                 print("Updating dataset drift...")
                 dataset_wrapper.update_drift()
 
