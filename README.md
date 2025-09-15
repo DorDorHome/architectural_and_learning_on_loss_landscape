@@ -1,5 +1,11 @@
 # architectural_and_learning_on_loss_landscape
 
+## Documentation
+- Codebase overview: `docs/CODEBASE_OVERVIEW.md` (see also `docs/ARCHITECTURE.md`)
+- Extending the codebase: `docs/EXTENDING.md`
+- Datasets and transforms: `docs/DATA_LOADING.md`
+- Experiments: structure and templates: `docs/EXPERIMENTS.md`
+
 # to-do:
 # layer norm models need to pair with use of effective learning rate 
 # add support for partial jacabian rank.

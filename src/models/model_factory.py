@@ -98,15 +98,15 @@ def model_factory(config: NetConfig) -> Any:
             raise ValueError("config.params cannot be None for deep_ffnn")
         return DeepFFNN(config.netparams)
     if model_type == "deep_ffnn_weight_norm_single_rescale":
-        from src.models.deep_ffnn_with_normalized_weights import DeepFFNN_weight_norm
+        from src.models.deep_ffnn_with_normalized_weights import DeepFFNN_weight_norm_single_rescale
         if config.netparams is None:
             raise ValueError("config.params cannot be None for weight_norm_deep_ffnn")
-        return DeepFFNN_weight_norm(config.netparams)
+        return DeepFFNN_weight_norm_single_rescale(config.netparams)
     if model_type== "deep_ffnn_weight_norm_multi_channel_rescale":
-        from src.models.deep_ffnn_with_normalized_weights import DeepFFNN_weight_norm_multi_channel_recale
+        from src.models.deep_ffnn_with_normalized_weights import DeepFFNN_weight_norm_multi_channel_rescale
         if config.netparams is None:
             raise ValueError("config.params cannot be None for weight_norm_deep_ffnn")
-        return DeepFFNN_weight_norm_multi_channel_recale(config.netparams)
+        return DeepFFNN_weight_norm_multi_channel_rescale(config.netparams)
     if model_type == "deep_ffnn_weight_batch_norm":
         from src.models.deep_ffnn_with_normalized_weights import DeepFFNN_EMA_batch_weight_norm
         return DeepFFNN_EMA_batch_weight_norm(config.netparams)

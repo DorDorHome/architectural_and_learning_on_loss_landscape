@@ -20,6 +20,9 @@ experiments/improving_plasticity_via_advanced_optimizer/outputs
 experiments/improving_plasticity_via_advanced_optimizer/outputs/*
 experiments/improving_plasticity_via_advanced_optimizer/wandb/
 
+experiments/hyperparameters_sweep/wandb/
+experiments/hyperparameters_sweep/outputs/
+
 src/utils/testing_plots
 src/utils/testing_plots/*
 experiments/basic_training/outputs
@@ -61,3 +64,5 @@ safe_performance_analysis.py
 test_optimized_method.py
 test_training_bottlenecks.py
 
+experiments/hyperparameters_sweep/wandb/
+experiments/hyperparameters_sweep/outputs/

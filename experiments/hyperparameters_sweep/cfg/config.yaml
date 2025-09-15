@@ -1,0 +1,28 @@
+############################################################
+# Minimal single-run configuration for hyperparameter sweep
+# - No task shifting, no rank tracking, no extras
+# - Targets a simple CNN on MNIST for fast evaluation
+############################################################
+
+runs: 1
+seed: null
+device: 'cuda:0'
+epochs: 10
+batch_size: 256
+num_workers: 2
+
+use_wandb: True
+wandb:
+  project: 'hyperparameters_sweep'
+
+data:
+  dataset: 'MNIST'
+  data_path: '/hdda/datasets'
+  num_classes: 10
+
+learner:
+  opt: 'sgd'          # sgd | adam
+  step_size: 0.01     # learning rate
+  weight_decay: 0.0
+  momentum: 0.9       # ignored for adam
+

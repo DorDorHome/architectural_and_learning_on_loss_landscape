@@ -1,0 +1,45 @@
+# Declarative sweep specification for the orchestrator.
+# This is read by orchestrate_sweep.py to generate runs and launch the single-run trainer.
+
+method: grid  # grid | random
+samples: null  # used only if method == random
+
+parameters:
+  learner.step_size: [0.1, 0.01, 0.001]
+  learner.weight_decay: [0.0, 0.001, 0.01]
+  learner.momentum: [0.0, 0.9]
+  learner.opt: ["sgd", "adam"]
+  batch_size: [128, 256]
+
+# Constraint rules to adjust or skip combos.
+# - set: force value when the condition matches
+# - skip: true to drop the combination entirely
+constraints:
+  - when: { learner.opt: "adam" }
+    set: { learner.momentum: 0.0 }
+
+# Replicates and seeds
+repeats: 1
+seeds: null  # Provide explicit seeds (list) or leave null to auto-generate.
+
+# Concurrency and devices
+max_concurrent: 2
+devices: [0, 1]         # GPU IDs for round-robin assignment (e.g., [0,1,2,3])
+
+# Retry and error handling
+retry: 0
+continue_on_error: false
+
+# Execution mode
+dry_run: false       # true => print commands only, don’t run
+
+# Logging conventions
+logging:
+  wandb:
+    project: "hyperparameters_sweep"    # Explicit project (no space for CLI safety)
+    group_by: ["learner.opt"]
+    tags: ["sweep"]
+    name_template: "step=${learner.step_size}_wd=${learner.weight_decay}_mom=${learner.momentum}_seed=${seed}"
+  local:
+    summary_csv: "runs.csv"
+    metrics: ["epoch_loss", "epoch_accuracy"]

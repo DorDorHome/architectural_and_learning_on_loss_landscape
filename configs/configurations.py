@@ -44,6 +44,8 @@ class LinearNetParams:
     num_outputs: int = 10
     num_hidden_layers: Optional[Union[None, int]] = 2
     act_type: Optional[Union[None, str]] = 'relu'
+    # Initialization scheme for linear networks; default to Xavier for identity/linear activations
+    initialization: Optional[Union[None, str]] = 'xavier'
     class Config:
         version_base = "1.1"
 

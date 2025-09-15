@@ -6,9 +6,9 @@ import torch
 import torch.nn as nn   
 
 
-class DeepFFNN_weight_norm_single_recale(nn.Module):
+class DeepFFNN_weight_norm_single_rescale(nn.Module):
     def __init__(self, config: LinearNetParams):
-        super(DeepFFNN_weight_norm_single_recale, self).__init__()
+        super(DeepFFNN_weight_norm_single_rescale, self).__init__()
         self.input_size = config.input_size
         self.num_features = config.num_features
         self.num_outputs = config.num_outputs
@@ -50,9 +50,9 @@ class DeepFFNN_weight_norm_single_recale(nn.Module):
         out = self.out_layer.forward(out)
         return out, inner_features
         
-class DeepFFNN_weight_norm_multi_channel_recale(nn.Module):
+class DeepFFNN_weight_norm_multi_channel_rescale(nn.Module):
     def __init__(self, config: LinearNetParams):
-        super(DeepFFNN_weight_norm_multi_channel_recale, self).__init__()
+        super(DeepFFNN_weight_norm_multi_channel_rescale, self).__init__()
         self.input_size = config.input_size
         self.num_features = config.num_features
         self.num_outputs = config.num_outputs

@@ -3,11 +3,12 @@ import torch
 from configs.configurations import LinearNetParams
 
 class Layer(nn.Module):
-    def __init__(self, in_shape, out_shape, act_type='relu' , initialization = 'kaiming'):
+    def __init__(self, in_shape, out_shape, act_type='linear' , initialization='xavier'):
         super(Layer, self).__init__()
         self.in_shape = in_shape
         self.out_shape = out_shape
         self.act_type = act_type
+        self.initialization = initialization
 
         self.layers = nn.ModuleList()
 
@@ -27,13 +28,17 @@ class Layer(nn.Module):
         if bias:
             self.fc.bias.data.fill_(0.0)
         if initialization == "kaiming":
-            if self.act_type == 'elu' or self.act_type == 'swish':
-                
+            # Set default negative slope for leaky_relu
+            a = 0.01 if self.act_type == 'leaky_relu' else 0.0
+            if self.act_type in ('elu', 'swish'):
+                # Fallback to relu-compatible gain for similar behavior
                 nn.init.kaiming_uniform_(self.fc.weight, nonlinearity='relu')
-            
             else:
-                nn.init.kaiming_uniform_(self.fc.weight, nonlinearity=self.act_type)
-            
+                nn.init.kaiming_uniform_(self.fc.weight, a=a, nonlinearity=self.act_type)
+        elif initialization == "xavier":
+            # Xavier works well for linear/identity activations; use normal variant by default
+            gain = nn.init.calculate_gain('linear' if self.act_type == 'linear' else self.act_type)
+            nn.init.xavier_normal_(self.fc.weight, gain=gain)
         # otherwise raise not supported initialization error:
         else:
             raise ValueError(f"Initialization {initialization} not supported")
@@ -75,10 +80,10 @@ class DeepFFNN(nn.Module):
 
         self.hidden_layers = []
         for i in range(self.num_hidden_layers - 1):
-            self.hidden_layers.append(Layer(in_shape=self.num_features, out_shape=self.num_features, act_type=self.act_type))
+            self.hidden_layers.append(Layer(in_shape=self.num_features, out_shape=self.num_features, act_type=self.act_type, initialization=self.initialization))
             self.layers.extend(self.hidden_layers[i].layers)
 
-        self.out_layer = Layer(in_shape=self.num_features, out_shape=self.num_outputs, act_type='linear')
+        self.out_layer = Layer(in_shape=self.num_features, out_shape=self.num_outputs, act_type='linear', initialization=self.initialization)
         self.layers.extend(self.out_layer.layers)
 
     def predict(self, x):
