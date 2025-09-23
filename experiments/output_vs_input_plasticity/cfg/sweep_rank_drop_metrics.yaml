@@ -1,0 +1,37 @@
+# Sweep configuration for rank_drop_metrics (overrides base cfg/rank_drop_metrics.yaml)
+# Keys under `parameters` use Hydra dotted paths to override.
+
+name: rank_drop_metrics_sweep
+
+parameters:
+  # Core hyperparameters to sweep
+  # learner.step_size: [0.01, 0.005]
+  # learner.weight_decay: [0.01, 0.001]
+  # batch_size: [128, 256]
+  # Task modes or internal knobs can also be swept if desired
+  task_shift_mode: ["continuous_input_deformation"]
+  # Select the drift mode explicitly (key under continuous_input_deformation)
+  task_shift_param.continuous_input_deformation.drift_mode: ["sinusoidal"]
+  # Example: change drift std for random_walk in continuous_input_deformation
+  # task_shift_param.continuous_input_deformation.random_walk.drift_std_dev: [0.01, 0.05, 0.1, 0.2]
+  task_shift_param.continuous_input_deformation.sinusoidal.amplitude: [0.5]
+  task_shift_param.continuous_input_deformation.sinusoidal.frequency: [0.02, 0.05, 0.1]
+sampling:
+  method: grid  # Only grid is implemented in the orchestrator (cartesian product)
+
+seeds:
+  # Either specify explicit values, or set count and base
+  # values: [111, 222, 333]
+  count: 2
+  base: 31415
+  # Optional stride between generated seeds (default 1)
+  # stride: 10
+
+run:
+  max_concurrent: 4          # Number of simultaneous runs
+  # If your machine has a single GPU, keep only cuda:0 here
+  devices: ["cuda:1"]  # Round-robin assignment; leave empty to skip
+  set_cuda_visible_devices: true # If true, sets CUDA_VISIBLE_DEVICES based on device index
+  # Number of repetitions per parameter combination (each repetition uses a distinct seed)
+  repeats_per_combo: 5
+  python_executable: /home/sfchan/anaconda3/envs/loss_landscape/bin/python

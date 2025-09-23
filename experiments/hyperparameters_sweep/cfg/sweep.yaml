@@ -37,9 +37,9 @@ dry_run: false       # true => print commands only, don’t run
 logging:
   wandb:
     project: "hyperparameters_sweep"    # Explicit project (no space for CLI safety)
-    group_by: ["learner.opt"]
+  group_by: ["learner.opt"]
     tags: ["sweep"]
     name_template: "step=${learner.step_size}_wd=${learner.weight_decay}_mom=${learner.momentum}_seed=${seed}"
   local:
     summary_csv: "runs.csv"
-    metrics: ["epoch_loss", "epoch_accuracy"]
+  metrics: ["epoch_loss", "epoch_accuracy"]
