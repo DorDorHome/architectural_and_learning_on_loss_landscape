@@ -1,0 +1,110 @@
+# LLA suite config
+runs: 1
+run_id: 0
+seed: null
+
+# Device and basic training for short fine-tune
+device: 'cuda:0'
+epochs: 2           # Short fine-tune duration (1–3)
+batch_size: 256
+num_workers: 2
+
+use_wandb: false   # Can be overridden; also see lla.logging.wandb
+use_json: true
+
+# Data settings (reuse existing factory expectations)
+data:
+  dataset: 'CIFAR10'      # Notebook/demo default; pipeline can override
+  use_torchvision: true
+  data_path: '/hdda/datasets'
+  num_classes: 10
+
+# Model (default ConvNet; allow resnet_custom, vgg_custom)
+net:
+  type: 'ConvNet'
+  network_class: 'conv'
+  device: 'cuda:0'
+  netparams:
+    pretrained: false
+    num_classes: 10
+    initialization: 'kaiming'
+    input_height: null
+    input_width: null
+    activation: 'leaky_relu'
+
+# Learner (simple SGD for quick fine-tune)
+learner:
+  type: 'backprop'
+  network_class: 'conv'
+  init: 'kaiming'
+  device: 'cuda:0'
+  opt: 'sgd'
+  loss: 'cross_entropy'
+  step_size: 0.01
+  momentum: 0.9
+  weight_decay: 0.0
+  use_grad_clip: false
+
+# LLA-specific controls
+lla:
+  training:
+    epochs_short: 0
+    optimizer: 'sgd'
+    lr: 0.01
+    weight_decay: 0.0
+    save_checkpoints: true
+    max_checkpoints: 10     # ConvNet default; can lower for ResNet/VGG
+    second_run_seed: 12345
+  evaluation_data:
+    eval_batch_size: 256
+    dataset_fraction_for_landscape: 1.0  # 1 batch by default, but allow averaging later
+    fixed_eval_seed: 42
+  planes:
+    enable: true
+    grid_resolution: 41
+    high_res: false          # if true -> 51
+    span: [-1.0, 1.0]
+    normalization: 'filter'
+    include_random: true
+    include_hessian: true
+    include_trajectory: true
+    bn:
+      eval_mode_only: true
+      exclude_bn_and_bias: false  # toggle per run
+    chunk_size: 128
+    max_eval_points_cap: 4096
+  spectrum:
+    enable: true
+    top_k: 5
+    hutchinson_probes: 6
+    esd:
+      num_probes: 6
+      lanczos_steps: 30
+      bins: 80
+  sam:
+    enable: true
+    rho: 0.05
+    subsample_stride: 1   # 1 = same resolution; 2 = half res
+  mode_connectivity:
+    enable: true
+    curve_points: 21
+    opt_steps: 80
+    lr: 0.05
+    use_second_run: true  # second quick run for thetaB (demo)
+    data_subset_batches: 1
+  rank_tracking:
+    enable: true
+    batch_size: 256
+    approximate_rank_prop: 0.99
+    compute_gini: true
+  runtime:
+    device: 'cuda:0'
+    fp16: false
+    workers: 2
+    pbar: true
+    abort_if_estimated_hours_over: null
+  logging:
+    out_root: 'experiments/Hessian_and_landscape_plot_with_plasticity_loss/results'
+    save_numpy: true
+    save_csv: true
+    wandb: false

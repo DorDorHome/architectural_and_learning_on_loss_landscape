@@ -2,7 +2,7 @@ Prompt: “LLA-centric loss-landscape suite (single-script + notebook)”
 You are to generate two deliverables:
 
 1. LLA_demo.ipynb — a self-contained Jupyter notebook that:
-    * installs and imports the Loss Landscape Analysis (LLA) library from its GitHub repository,
+    * installs and imports the Loss Landscape Analysis (LLA) library from its GitHub repository as gitsubmodule
     * demonstrates: Hessian-aligned plane plots, random & trajectory planes, BN-aware normalization, Hessian spectrum (top-k, trace, ESD), SAM-style robust surface, and Mode Connectivity plots,
     * saves all figures and JSON summaries to a results folder.
     * if you need to use dataset, DO NOT downlaod directly. Use the instructions in docs\DATALOADING.md
@@ -11,34 +11,36 @@ You are to generate two deliverables:
 2. lla_pipeline.py — a single, importable Python module exposing clean functions you can call from other code:
     * get_hessian_axes(...), plot_plane(...), compute_spectrum(...), plot_sam_surface(...), fit_mode_connectivity(...), plot_mode_curve(...), plus a small main() with argparse so it can also be run as a script.
     * No extra local packages. Do not create hessian.py, bn.py, esd.py, etc.
-3. finally, a loss_landscape_change_during_task_shift.py This file uses functions in lla_pipeline.py, or directly from the LLA library, whichever is more convenient.
+3. a .yaml config file. The format should mirror experiments/improving_plasticity_via_advanced_optimizer/cfg/config.yaml, but with additional metrics available for tracking and plotting. (spectrum of Hessian, e.g. top-k eigenvalues, ESD histogram, see below)
+4. finally, after we examine the computational requirements for each metric, we will build a loss_landscape_change_during_task_shift.py. We can build the file after you write the other files,  but only tentatively. This file uses functions in lla_pipeline.py, or directly from the LLA library, whichever is more convenient. It should mirror the file in train_with_improved_optimizer.py, except with the additional options (from the dedicated .yaml files in cfg/)
+
 
 A. Frameworks and repos to use (use these, don’t re-implement)
 * LLA (Loss Landscape Analysis) GitHub:
     * Repo: https://github.com/GabdullinN/loss-landscape-analysis
-    * Use its public entry points (e.g., src_lla modules such as viz_lla, viz_esd, metrics or their current equivalents documented in the repo). If pip install isn’t available, clone and pip install -e ., or add src to sys.path. GitHub
+    * Use its public entry points (e.g., src_lla modules such as viz_lla, viz_esd, metrics or their current equivalents documented in the repo). Use as git submodule
 * Mode Connectivity (Garipov et al.):
     * Repo: https://github.com/timgaripov/dnn-mode-connectivity
     * Use it solely to fit a Bézier midpoint and evaluate loss along the path; plotting is done with matplotlib. GitHub+1
 (Background references you may cite in notebook markdown cells, but do not clone unless needed: loss-landscapesclassic lib, PyHessian page.) GitHub+1
 
 B. Environment & runtime constraints
-* Target: use the default requirements.txt in root as starting point. Consider whether there would be conflicts. If there are, create a dedicated requirements.txt for this experiments.
-* Keep everything runnable within ~10–25 minutes on CPU for MNIST/CIFAR-10 subsets.
-* Do not create any extra .py modules beyond lla_pipeline.py.
-* Notebook and script must be self-sufficient (install steps included at top).
+* Target: use the default requirements.txt in root as starting point. Consider whether there would be conflicts. If there are conflicts, create a dedicated requirements.txt for this experiments, trying to maximize similarity with the base requirement.
+* besides the loss_landscape_change_during_task_shift.py (main training code with taskshifts, and tracking of various rank measures, plus tracking of select metrics of Hessians statistics), minimize extra .py modules beyond lla_pipeline.py. 
+* LLA_demo.ipynb and lla_pipeline.py must be self-sufficient (install steps included at top).
 Conda blueprint (show in notebook markdown + script docstring):
-* Create an env with python=3.11; install torch, torchvision, matplotlib, numpy, scipy, tqdm, ipykernel.
-* Clone LLA and pip install -e . (or sys.path.append("loss-landscape-analysis/src") as fallback).
-* Clone dnn-mode-connectivity for the mode path routine.
+* assume base env in requirements.txt under root of repo.
+* use LLA as git submodule
+* use dnn-mode-connectivity as git submodule for the mode path routine.
 
 C. Dataset, models, and seeds
-* Dataset: CIFAR-10 (or MNIST) with a small eval split (e.g., 2k examples).
-* Models: (i) small CNN and (ii) torchvision.models.resnet18(pretrained=False) to exercise BN.
-* Training: do a very short fine-tune (e.g., 1–3 epochs) to get non-degenerate minima; also save an earlier checkpoint to enable trajectory-PCA axes.
+* Dataset: Only use what is available in src/data_loading/dataset_factory.py`, see docs/DATA_LOADING.md
+* Models: use those available at src/model_factory.py
+* Training in lla_pipeline.py: do a very short fine-tune (e.g., 1–3 epochs) to get non-degenerate minima; also save an earlier checkpoint to enable trajectory-PCA axes. 
 * Set global seeds (Python/NumPy/PyTorch), deterministic flags where reasonable.
 
-D. Exact functionality to implement
+
+D. Exact functionality to implement in lla_pipeline.py
 D1) Hessian-aligned and random planes (LLA)
 * Using LLA, compute a Hessian-aligned plane at the final checkpoint:
     * axes = “hessian” (top-2 eigenvectors)
@@ -67,6 +69,7 @@ D5) Mode connectivity (Garipov)
 * Load two solutions: θAθA  = your final checkpoint; θBθB  = a second run with different seed or an earlier solution.
 * Fit a quadratic Bézier midpoint θMθM  minimizing the maximum loss along γ(t)=(1−t)2θA+2t(1−t)θM+t2θBγ(t)=(1−t)2θA +2t(1−t)θM +t2θB .
 * Plot t↦L(γ(t))t↦L(γ(t)) before and after optimization; compute and print the barrier heights for linear interpolation and for the fitted curve.
+* for all the these functionality, include the time needed to compute the required metric.
 * Save to ./results/mode_connectivity/curve.png and metrics.json.
 (Use the official dnn-mode-connectivity routines to build the curve and evaluate the path.) GitHub
 
@@ -74,10 +77,10 @@ E. Code structure & quality requirements
 Notebook (LLA_demo.ipynb)
 1. Intro cell: What will be demonstrated, with a tiny math recap of the plane S(α,β)=L(θ0+αd1+βd2)S(α,β)=L(θ0 +αd1 +βd2 ).
 2. Install/setup cell:
-    * pip-install core libs; clone LLA; pip install -e ./loss-landscape-analysis (or add src to sys.path if needed); clone mode connectivity.
+??
 3. Imports & utility cell:
-    * Torch, TorchVision, Matplotlib, NumPy/SciPy, TQDM; LLA modules (e.g., viz_lla, viz_esd, metrics).
-    * Small helpers for saving grids/plots and timing.
+    * assume base environment from this repo
+    * you might need helpers for saving grids/plots and timing.
 4. Data & models:
     * CIFAR-10 subset loaders; define CNN and load resnet18; a quick train/fine-tune loop; checkpoint saving (e.g., every N steps).
 5. Planes:
@@ -109,13 +112,14 @@ F. UX & plotting
 * Persist grids (.npy) and small CSV summaries (e.g., center loss, min/max over grid).
 * Print timing for major blocks.
 
+
 G. Guardrails & gotchas
+G.1 for lla_pipeline.py
 * Do not write new helper modules (hessian.py, bn.py, esd.py, axes.py, models.py). Use LLA and mode-connectivity APIs as-is.
-* If LLA import fails, first try pip install -e ./loss-landscape-analysis; only then fall back to sys.pathinsertion pointing at /src.
 * Always set model.eval() when evaluating grids, spectrum, and SAM surfaces; don’t update BN running stats accidentally.
 * For filter normalization, follow LLA’s documented options; don’t home-brew a variant in this project.
 * If CUDA is available, select the correct torch wheel and move tensors/models accordingly.
-
+* add folder path to .gitignore to avoid push large files to github
 H. Acceptance criteria (must all pass)
 * Notebook runs top-to-bottom on CPU on CIFAR-10 subset in ≤25 minutes.
 * Produces three planes (random, Hessian, trajectory) for one model (and at least the random plane for the second model).
@@ -123,6 +127,12 @@ H. Acceptance criteria (must all pass)
 * Generates a SAM vs standard surface comparison for the Hessian plane.
 * Fits a mode-connectivity curve and reports barrier values (linear vs curve).
 * lla_pipeline.py functions can be imported and used from an external Python REPL; python lla_pipeline.py --task planes runs a demo and writes outputs.
+
+G.2 for loss_landscape_change_during_task_shift.py
+* images won't be logged to wandb
+large files like checkpoints and weights won't be logged to wandb
+* Only plot/check Hessian, etc, after a particular task has finished training (right before task shift)
+* Only add tracking of spectral properties that aren't too computationally demanding
 
 I. Links (for the agent to clone/read)
 * LLA (Loss Landscape Analysis) GitHub repo (features: axes including Hessian/Adam/trajectory, normalization, Hessian analysis incl. ESD/trace): GitHub
