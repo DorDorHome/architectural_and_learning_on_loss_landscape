@@ -2,6 +2,7 @@
 # This keeps the logic for transformations isolated from both the dataset and model factories.
 
 import torchvision.transforms as transforms
+import warnings
 
 # for debugging, import the dataset_factory:
 
@@ -27,8 +28,25 @@ def transform_factory(dataset_name: str, model_name: str):
     Returns:
         torchvision.transforms.Compose: A transform pipeline.
     """
+    # -------------------------------------------------------------
+    # Case-insensitive dataset name normalization (Step 5)
+    # -------------------------------------------------------------
+    raw_dataset_name = dataset_name
+    canonical_map = {
+        'cifar10': 'CIFAR10',
+        'mnist': 'MNIST',
+        'imagenet': 'ImageNet'
+    }
+    normalized = canonical_map.get(raw_dataset_name.lower(), raw_dataset_name)
+    if normalized != raw_dataset_name:
+        warnings.warn(
+            f"Dataset name '{raw_dataset_name}' normalized to '{normalized}' in transform_factory.",
+            UserWarning
+        )
+    dataset_name = normalized
+
     if dataset_name == "CIFAR10":
-        if model_name == "ResNet18" or model_name == "resnet_custom" or model_name == "full_rank_resnet_custom":
+        if model_name in {"ResNet18", "resnet_custom", "full_rank_resnet_custom", "ConvNet"}:
             # ResNet18 expects normalized inputs
             return transforms.Compose([
                 transforms.RandomCrop(32, padding=4),

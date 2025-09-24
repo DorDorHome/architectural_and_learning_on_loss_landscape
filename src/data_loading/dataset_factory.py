@@ -17,6 +17,7 @@ PROJECT_ROOT = pathlib.Path(__file__).resolve().parent.parent.parent
 #print(PROJECT_ROOT)
 
 from configs.configurations import DataConfig
+import warnings
 from omegaconf import DictConfig, OmegaConf
 from src.data_loading.transform_factory import transform_factory
 
@@ -115,11 +116,34 @@ def dataset_factory(config: DataConfig, transform, with_testset= False) -> Any:
         raise ValueError("Data path not provided. Please specify 'data_path' in the configuration for reading from disk or downloading."
         )
     dataset_path = config.data_path
+
+    # -------------------------------------------------------------
+    # Case-insensitive dataset name normalization (Step 5)
+    # Accept user-provided variants like 'cifar10', 'Cifar10', 'mnist', etc.
+    # We canonicalize to the torchvision class name when applicable.
+    # -------------------------------------------------------------
+    raw_dataset_name = config.dataset
+    canonical_map = {
+        'cifar10': 'CIFAR10',
+        'mnist': 'MNIST',
+        'imagenet': 'ImageNet',
+        'imagenet_for_plasticity': 'imagenet_for_plasticity',  # custom dataset kept lowercase
+    }
+    normalized_dataset_name = canonical_map.get(raw_dataset_name.lower(), raw_dataset_name)
+    if normalized_dataset_name != raw_dataset_name:
+        warnings.warn(
+            f"Dataset name '{raw_dataset_name}' normalized to '{normalized_dataset_name}'. "
+            "Dataset lookup is now case-insensitive (Step 5). Please update configs for canonical form.",
+            UserWarning
+        )
+
+    # We keep raw name for messaging but use normalized in logic below.
+    dataset_name_for_logic = normalized_dataset_name
     
     if config.use_torchvision:
         # dynamically load datasets from torchvision:
         try: 
-            dataset_class = getattr(torchvision.datasets, config.dataset)
+            dataset_class = getattr(torchvision.datasets, dataset_name_for_logic)
             trainset = dataset_class(root=dataset_path, train=True, download=True, transform=transform)
             if with_testset:
                 testset = dataset_class(root=dataset_path, train=False, download=True, transform=transform)
@@ -134,11 +158,11 @@ def dataset_factory(config: DataConfig, transform, with_testset= False) -> Any:
             
             
         except AttributeError:
-            raise AttributeError(f"dataset{config.dataset} not found in torchvision.datasets. Try setting use_torchvision to False.")
+            raise AttributeError(f"dataset '{raw_dataset_name}' (normalized: '{dataset_name_for_logic}') not found in torchvision.datasets. Try setting use_torchvision to False.")
             
         
         # for CIFAR10:
-        if config.dataset == 'CIFAR10':
+    if dataset_name_for_logic == 'CIFAR10':
                 # Define transformations for the training and test sets
             trainset = torchvision.datasets.CIFAR10(root=dataset_path, train=True, download=True, transform=transform)
         
@@ -152,7 +176,7 @@ def dataset_factory(config: DataConfig, transform, with_testset= False) -> Any:
 
     # custom data formats can be used:
     elif not config.use_torchvision:
-        if config.dataset == 'imagenet_for_plasticity':
+        if dataset_name_for_logic == 'imagenet_for_plasticity':
             assert config.num_classes == 1000, "Number of classes for Imagenet_plasicity_shifting_tasks should be 1000"
             # return a custom dataset object that allows for plasticity tasks
             path_to_imagenet =  os.path.join(config.data_path, 'imagenet_for_plasticity')

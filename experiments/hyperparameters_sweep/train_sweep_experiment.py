@@ -73,7 +73,13 @@ def main(cfg: DictConfig) -> Any:
 
     if cfg.get('use_wandb', False):
         import wandb
-        wandb.init(project=cfg.wandb.project, config=OmegaConf.to_container(cfg, resolve=True))
+        try:
+            from src.utils.task_shift_logging import build_logging_config_dict
+            cfg_dict = build_logging_config_dict(cfg)
+        except Exception as e:
+            print(f"Warning: task shift logging sanitization failed, using full config. Error: {e}")
+            cfg_dict = OmegaConf.to_container(cfg, resolve=True)
+        wandb.init(project=cfg.wandb.project, config=cfg_dict)
 
     model.train()
     for epoch in range(int(cfg.epochs)):

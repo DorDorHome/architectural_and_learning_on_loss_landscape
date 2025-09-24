@@ -10,11 +10,61 @@ CONFIG_PATH = str(PROJECT_ROOT / "experiments/basic_training/cfg")
 sys.path.append(str(PROJECT_ROOT))
 
 from src.models.conv_net import ConvNet
+import warnings
 
 from configs.configurations import NetConfig, NetParams  # Assuming NetParams is defined here
 
 import hydra 
 from omegaconf import DictConfig, OmegaConf
+
+def _infer_conv_input_dims(params: NetParams):
+    """Infer missing conv net input dimensions with conservative heuristics.
+
+    Priority:
+    1. If both provided, keep them.
+    2. If one provided, copy to the other (assume square images).
+    3. If none provided:
+       - If in_channels == 1 -> assume MNIST (28x28)
+       - Else if in_channels == 3:
+           * if num_classes in {1000} -> ImageNet (224)
+           * if num_classes in {10} -> assume CIFAR10 (32)
+           * fallback 32
+    Writes inferred values back into params and emits a warning.
+    """
+    changed = False
+    h, w = params.input_height, params.input_width
+    if h is not None and w is not None:
+        return
+    if h is not None and w is None:
+        params.input_width = h
+        changed = True
+    elif w is not None and h is None:
+        params.input_height = w
+        changed = True
+    else:  # both None
+        in_ch = getattr(params, 'in_channels', 3)
+        num_classes = getattr(params, 'num_classes', 10)
+        if in_ch == 1:
+            inferred = 28
+        elif in_ch == 3:
+            if num_classes == 1000:
+                inferred = 224
+            elif num_classes == 10:
+                inferred = 32
+            else:
+                inferred = 32
+        else:
+            inferred = 32
+        params.input_height = inferred
+        params.input_width = inferred
+        changed = True
+    if changed:
+        warnings.warn(
+            f"Inferred conv input dims (input_height={params.input_height}, input_width={params.input_width}). "
+            "Provide explicit values in net.netparams to silence this warning (Step 6).",
+            UserWarning
+        )
+
 
 def model_factory(config: NetConfig) -> Any:
     """
@@ -36,34 +86,40 @@ def model_factory(config: NetConfig) -> Any:
     if model_type == 'ConvNet':
         if config.netparams is None:
             raise ValueError("config.params cannot be None for ConvNet")
+        _infer_conv_input_dims(config.netparams)
         return ConvNet(config.netparams)
     if model_type == "ConvNet_norm":
         from src.models.conv_net_weights_normalized import ConvNet_normalized
         if config.netparams is None:
             raise ValueError("config.params cannot be None for ConvNet_norm")
+        _infer_conv_input_dims(config.netparams)
         return ConvNet_normalized(config.netparams)
     if model_type == "ConvNet_SVD":  
         from src.models.ConvNet_SVD import ConvNet_SVD
         if config.netparams is None:
             raise ValueError("config.params cannot be None for ConvNet_SVD")
+        _infer_conv_input_dims(config.netparams)
         return ConvNet_SVD(config.netparams)
     
     if model_type == "ConvNet_FC_layer_norm":
         from src.models.layer_norm_conv_net import ConvNetWithFCLayerNorm
         if config.netparams is None:
             raise ValueError("config.params cannot be None for ConvNet_layer_norm")
+        _infer_conv_input_dims(config.netparams)
         return ConvNetWithFCLayerNorm(config.netparams)
     
     if model_type == "ConvNet_conv_and_FC_layer_norm":
         from src.models.layer_norm_conv_net import ConvNet_conv_and_FC_LayerNorm
         if config.netparams is None:
             raise ValueError("config.params cannot be None for ConvNet_conv_and_FC_layer_norm")
+        _infer_conv_input_dims(config.netparams)
         return ConvNet_conv_and_FC_LayerNorm(config.netparams)
         
     if model_type == 'ConvNet_batch_norm':
         from src.models.conv_net_batch_norm import ConvNetWithBatchNorm
         if config.netparams is None:
             raise ValueError("config.params cannot be None for ConvNet_batch_norm")
+        _infer_conv_input_dims(config.netparams)
         return ConvNetWithBatchNorm(config.netparams)
     
     if model_type == 'vgg_custom':

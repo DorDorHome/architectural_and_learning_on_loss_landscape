@@ -34,6 +34,7 @@ from src.data_loading.dataset_factory import dataset_factory
 from src.data_loading.transform_factory import transform_factory
 import torch.nn.functional as F
 from src.utils.miscellaneous import nll_accuracy
+from src.utils.zeroth_order_features import compute_all_rank_measures_list
 import torchvision.transforms as transforms
 import torchvision
 import torch
@@ -103,7 +104,12 @@ def main(cfg :ExperimentConfig):
     if cfg.use_wandb:
         import wandb
         print('finished importing wandb')
-        cfg_dict = OmegaConf.to_container(cfg, resolve=True)
+        try:
+            from src.utils.task_shift_logging import build_logging_config_dict
+            cfg_dict = build_logging_config_dict(cfg)
+        except Exception as e:
+            print(f"Warning: task shift logging sanitization failed, falling back to full config. Error: {e}")
+            cfg_dict = OmegaConf.to_container(cfg, resolve=True)
         wandb.init(project=cfg.wandb.project, config= cfg_dict )
 
     if cfg.use_json:
@@ -188,6 +194,41 @@ def main(cfg :ExperimentConfig):
             print(f"Epoch: {epoch}, Accuracy: {acc}, Accuracy_2: {acc_2}, Loss:,  {loss}, loss by batch: {loss_by_batch}")
             
             data = {'epoch': epoch, 'accuracy': acc, 'accuracy_2': acc_2, 'loss': loss, 'loss_by_batch': loss_by_batch}
+
+            # ---------------------------------------------------------
+            # Step 8: Optional rank tracking of intermediate features.
+            # We reuse the last batch seen (input, output) since learner.predict not stored.
+            # For more rigorous evaluation use a held-out eval loader later.
+            # ---------------------------------------------------------
+            if getattr(cfg, 'track_rank', False):
+                try:
+                    # Run a forward pass (no grad) to collect features via model.predict
+                    net.eval()
+                    with torch.no_grad():
+                        # Use a small subset: reuse final batch 'input' still in scope
+                        y_pred, feature_list = net.predict(input)
+                        # Ensure 2D (batch, feature_dim) for each feature; flatten spatial dims if needed
+                        processed = []
+                        for f in feature_list:
+                            if f.dim() > 2:
+                                processed.append(f.view(f.size(0), -1))
+                            else:
+                                processed.append(f)
+                        rank_measures = compute_all_rank_measures_list(
+                            processed,
+                            use_pytorch_entropy_for_effective_rank=getattr(cfg, 'use_pytorch_entropy_for_effective_rank', True),
+                            prop_for_approx_or_l1_rank=getattr(cfg, 'prop_for_approx_or_l1_rank', 0.99),
+                            numerical_rank_epsilon=getattr(cfg, 'numerical_rank_epsilon', 1e-2)
+                        )
+                        # Flatten rank dicts into logging schema
+                        for idx, rm in enumerate(rank_measures):
+                            for k, v in rm.items():
+                                key = f"rank_layer{idx}_{k}"
+                                # Convert tensors to scalars
+                                data[key] = float(v.detach().cpu().item())
+                    net.train()
+                except Exception as e:
+                    print(f"Rank tracking failed at epoch {epoch}: {e}")
             # log to wandb:
             if cfg.use_wandb:
                 wandb.log(data)

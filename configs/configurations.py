@@ -2,7 +2,7 @@
 
 from torch._C import device
 from dataclasses import dataclass, field 
-from typing import Optional, Union, List
+from typing import Optional, Union, List, Dict, Any
 from hydra.core.config_store import ConfigStore
 import torch
 
@@ -54,6 +54,8 @@ class LinearNetParams:
 class NetConfig:
     type: str
     netparams: Optional[Union[None, NetParams,LinearNetParams ]] = None
+    # High-level structural category to help learner selection ('conv' | 'fc' | 'other').
+    network_class: Optional[str] = None
     class Config:
         version_base = "1.1"
 
@@ -61,6 +63,8 @@ class NetConfig:
 class BaseLearnerConfig:
     type: str 
     device: str = 'cuda'
+    # Structural category of network; inferred if None.
+    network_class: Optional[str] = None
     opt: str = 'adam' #or 'sgd'
     step_size: float= 0.001
     beta_1: float = 0.9
@@ -102,8 +106,9 @@ class BackpropConfig(BaseLearnerConfig):
 
 @dataclass
 class EvaluationConfig:
+    use_testset: bool = False
     eval_freq_epoch: int = 1
-    eval_metrics:  list = field(default_factory=lambda: ['accuracy', 'loss'])  # Correct
+    eval_metrics: List[str] = field(default_factory=lambda: ['accuracy', 'loss'])
     type: Optional[Union[None, str]] = None
     # save_name: str = 'basic_training'
 
@@ -120,14 +125,14 @@ class EvaluationConfig:
 #     outgoing_random: bool = False
 
 @dataclass
-class logConfig:
+class LoggingConfig:
     save_dir: str = 'results_raw'
     save_name: str = 'basic_training'
     class Config:
         version_base = "1.1"
 
 @dataclass
-class logConfig:
+class WandbConfig:
     project: str = 'basic_training'
     entity: str = ''
 
@@ -136,7 +141,7 @@ class ExperimentConfig:
     use_wandb: bool = False
     use_json: bool = False
     log_freq_every_n_task: int = 1
-    wandb: logConfig = field(default_factory=logConfig)
+    wandb: WandbConfig = field(default_factory=WandbConfig)
     runs: int = 1
     run_id: Optional[int] = None
     seed: Optional[int] = None
@@ -156,6 +161,14 @@ class ExperimentConfig:
     track_weight_magnitude: bool = False
     layers_identifier: Optional[List[str]] = None
     num_workers: int = 2
+    # task shifting (inert default fields; wired later)
+    task_shift_mode: Optional[str] = None  # e.g., 'permuted_input', 'permuted_output', 'continuous_input_deformation', 'drifting_values'
+    task_shift_param: Optional[Dict[str, Any]] = None  # container for mode-specific parameter groups
+    num_tasks: int = 1  # number of tasks for stateless/stateful shifts
+    # logging refinement: when True, only the active sub-config for the chosen task_shift_mode
+    # is retained in the dict passed to external loggers (e.g., W&B); inactive sibling
+    # parameter groups are pruned to reduce noise.
+    prune_inactive_task_shift_params: bool = False
     
     class Config:
         version_base = "1.1"
