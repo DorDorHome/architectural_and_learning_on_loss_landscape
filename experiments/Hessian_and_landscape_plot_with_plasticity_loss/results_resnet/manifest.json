@@ -1,0 +1,8 @@
+{
+  "num_checkpoints": 1,
+  "checkpoints": [
+    "experiments/Hessian_and_landscape_plot_with_plasticity_loss/results_resnet/checkpoints/ckpt_final.pt"
+  ],
+  "model": "resnet_custom",
+  "dataset": "CIFAR10"
+}

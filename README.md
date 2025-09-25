@@ -1,3 +1,67 @@
+## Loss Landscape Analysis (LLA) suite — quick guide for contributors
+
+This repo includes a focused Loss Landscape Analysis suite under `experiments/Hessian_and_landscape_plot_with_plasticity_loss/` that you can run as a demo, as a pipeline module, or integrated into training with task shifts.
+
+### Components and purpose
+
+- `lla_pipeline.py`
+	- Importable, single-file module that exposes functions to compute and save:
+		- Hessian-aligned planes, random planes, and trajectory-PCA planes (2D heatmap + optional 3D surface)
+		- Hessian spectrum (top-k, Hutchinson trace estimate, ESD via SLQ)
+		- SAM-style “robust” surface on the same plane
+		- Mode connectivity (Bézier midpoint) metrics and curve plot
+	- All outputs saved locally under `results/`; includes timings in JSON summaries.
+
+- `LLA_demo.ipynb`
+	- Demonstrates all features above end-to-end on small datasets/models available in this repo (see `docs/DATA_LOADING.md`).
+	- Includes short setup notes and a quick fine-tune to avoid degenerate minima.
+
+- `loss_landscape_change_during_task_shift.py`
+	- Trains across tasks in a chosen task-shift mode and computes LLA metrics only at the end of each task.
+	- Numeric-only logging to Weights & Biases (no images or large artifacts), local plots saved to disk.
+	- Uses a single, local YAML config: `experiments/Hessian_and_landscape_plot_with_plasticity_loss/cfg/task_shift_config.yaml`.
+
+### Configuration and toggles
+
+- The task-shift experiment reads `cfg/task_shift_config.yaml` in its folder. Important fields:
+	- `data`, `net`, `learner`, and `task_shift_mode` mirror existing training configs in this repo.
+	- `lla` block is evaluation-only and controls what to run at the end of each task:
+		- `enable_planes: true|false`, `enable_spectrum: true|false`, `enable_sam: true|false`
+		- `evaluation_data.eval_batch_size`, plane grid controls, spectrum ESD controls, etc.
+	- Top-level W&B isolation: `wandb.project: loss_landscape_taskshift_${task_shift_mode}` to avoid mixing with other experiments.
+
+### Logging policy (important)
+
+- Per-epoch logging (during training):
+	- `global_epoch` (task-aware step), `task_idx`, `epoch_loss`, and `epoch_accuracy` (when applicable) are logged each epoch.
+	- `global_epoch = task_idx * epochs_per_task + epoch` ensures there’s no overwrite across tasks.
+
+- End-of-task logging (after last epoch of a task):
+	- Only numeric summaries are logged: LLA timings, Hessian top-k (when spectrum enabled), layer-wise rank/gini/weight stats, and convenience fields `task_last_epoch_loss` and `task_last_epoch_accuracy`.
+	- The log step aligns with the last epoch of the task: `global_epoch = (task_idx + 1) * epochs_per_task - 1`.
+	- Images and large files are not sent to W&B; they are saved locally under `outputs/loss_landscape_taskshift/<arch>/task_XXXX_<arch>/`.
+
+### Correctness and stability details
+
+- Evaluations run with `model.eval()` to stabilize BN/Dropout; HVP/eigendecompositions are performed in eval mode and the original mode is restored afterward where relevant.
+- To ensure the center of the plane is a minimum after training a task, the LLA evaluation uses a snapshot of the current task’s dataset (best-effort freeze) to avoid drift during eval. This helps match the training distribution and fixes “off-center minima” issues.
+- For large models, reduce plane span/resolution, fewer ESD probes/Lanczos steps, or exclude BN/bias from directions for better runtime.
+
+### Quick start (task-shift LLA)
+
+```bash
+# Minimal dry run (one task, one epoch, no W&B)
+python experiments/Hessian_and_landscape_plot_with_plasticity_loss/loss_landscape_change_during_task_shift.py \
+	num_tasks=1 epochs=1 use_wandb=false lla.enable_spectrum=true lla.enable_planes=true lla.enable_sam=false
+```
+
+### What the next contributor can pick up
+
+- Add CLI flags that override YAML LLA toggles (currently YAML-only is supported).
+- Extend dataset “freeze” support if your wrappers expose a more explicit API.
+- Add smoke tests for the end-of-task LLA output structure and W&B numeric keys.
+- Optimize runtime for larger models by shrinking plane grids and ESD probes.
+
 # architectural_and_learning_on_loss_landscape
 
 ## Documentation

@@ -36,10 +36,10 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from configs.configurations import ExperimentConfig  # type: ignore
 from src.data_loading.dataset_factory import dataset_factory  # type: ignore
 from src.data_loading.transform_factory import transform_factory  # type: ignore
 from src.models.model_factory import model_factory  # type: ignore
+from configs.configurations import DataConfig, NetConfig, NetParams  # type: ignore
 
 # Optional: W&B
 try:
@@ -97,7 +97,9 @@ def prepare_data_and_model(cfg: Dict[str, Any]) -> Tuple[DataLoader, DataLoader,
     device = cfg.get('device', 'cuda:0')
     # Build transform and datasets
     transform = transform_factory(cfg['data']['dataset'], cfg['net']['type'])
-    train_set, _ = dataset_factory(cfg['data'], transform=transform, with_testset=False)
+    # Wrap dict into DataConfig for factory compatibility
+    data_cfg = DataConfig(**cfg['data'])
+    train_set, _ = dataset_factory(data_cfg, transform=transform, with_testset=False)
 
     # Fixed eval subset (single loader with fixed batch size)
     g = torch.Generator()
@@ -121,8 +123,29 @@ def prepare_data_and_model(cfg: Dict[str, Any]) -> Tuple[DataLoader, DataLoader,
         generator=g,
     )
 
-    # Build model
-    net = model_factory(cfg['net'])
+    # Build model (wrap into NetConfig/NetParams)
+    netparams = NetParams(**cfg['net'].get('netparams', {}))
+    # Auto-infer ConvNet dims/channels from a dataset sample when missing
+    try:
+        sample_x, _ = train_set[0]  # type: ignore[index]
+        if isinstance(sample_x, torch.Tensor):
+            if sample_x.ndim == 3:
+                c, h, w = int(sample_x.shape[0]), int(sample_x.shape[1]), int(sample_x.shape[2])
+            elif sample_x.ndim == 2:
+                c, h, w = 1, int(sample_x.shape[0]), int(sample_x.shape[1])
+            else:
+                c, h, w = None, None, None  # type: ignore[assignment]
+            # Fill only if unspecified
+            if getattr(netparams, 'input_height', None) is None:
+                netparams.input_height = h  # type: ignore[assignment]
+            if getattr(netparams, 'input_width', None) is None:
+                netparams.input_width = w  # type: ignore[assignment]
+            if getattr(netparams, 'in_channels', None) is None or netparams.in_channels in (0, 1) and c == 3:
+                netparams.in_channels = c  # type: ignore[assignment]
+    except Exception:
+        pass
+    net_cfg = NetConfig(type=cfg['net']['type'], netparams=netparams, network_class=cfg['net'].get('network_class'))
+    net = model_factory(net_cfg)
     net.to(device)
     return train_loader, eval_loader, net
 
@@ -168,7 +191,7 @@ def quick_finetune_and_checkpoint(cfg: Dict[str, Any], model: nn.Module, train_l
             y = y.to(device)
 
             optimizer.zero_grad(set_to_none=True)
-            out = model(x)
+            out = _model_forward_outputs(model, x)
             if isinstance(criterion, nn.MSELoss):
                 # If labels are class indices, convert to one-hot or float as needed.
                 if y.dtype in (torch.long, torch.int64):
@@ -215,8 +238,20 @@ def _criterion_from_cfg(cfg: Dict[str, Any]) -> nn.Module:
     return nn.CrossEntropyLoss()
 
 
+def _model_forward_outputs(model: nn.Module, x: torch.Tensor) -> torch.Tensor:
+    """Forward helper that supports models exposing predict().
+    Returns the primary output tensor suitable for computing loss.
+    """
+    if hasattr(model, 'predict') and callable(getattr(model, 'predict')):
+        out = model.predict(x)
+        if isinstance(out, tuple) or isinstance(out, list):
+            return out[0]
+        return out  # type: ignore[return-value]
+    return model(x)
+
+
 def _forward_loss(model: nn.Module, x: torch.Tensor, y: torch.Tensor, criterion: nn.Module) -> torch.Tensor:
-    out = model(x)
+    out = _model_forward_outputs(model, x)
     if isinstance(criterion, nn.MSELoss):
         if y.dtype in (torch.long, torch.int64):
             y = torch.nn.functional.one_hot(y, num_classes=out.shape[-1]).float()
@@ -267,6 +302,9 @@ def _get_base_trainable_state(model: nn.Module, exclude_bn_and_bias: bool = Fals
 
 
 def _hvp(model: nn.Module, x: torch.Tensor, y: torch.Tensor, v: torch.Tensor, criterion: nn.Module, exclude_bn_and_bias: bool = False) -> torch.Tensor:
+    # Compute HVP with model in eval mode for stable curvature (avoid BN/Dropout drift)
+    was_training = model.training
+    model.eval()
     params = [p for _, p in _named_params(model, exclude_bn_and_bias)]
     loss = _forward_loss(model, x, y, criterion)
     grads = torch.autograd.grad(loss, params, create_graph=True)
@@ -274,6 +312,8 @@ def _hvp(model: nn.Module, x: torch.Tensor, y: torch.Tensor, v: torch.Tensor, cr
     inner = (flat_grad * v).sum()
     hvps = torch.autograd.grad(inner, params, retain_graph=False)
     flat_hvp = torch.cat([h.contiguous().view(-1) for h in hvps]).detach()
+    if was_training:
+        model.train()
     return flat_hvp
 
 
@@ -312,7 +352,8 @@ def get_hessian_axes(model: nn.Module, eval_loader: DataLoader, cfg: Dict[str, A
     v = torch.randn(dim, device=device)
     v = v / (v.norm() + 1e-12)
 
-    iters = 20
+    iters = int(cfg.get('lla', {}).get('spectrum', {}).get('power_iters', 20))
+    t0 = time.time()
     eig1 = 0.0
     for _ in range(iters):
         Hv = _hvp(model, x, y, v, criterion, exclude_bn)
@@ -333,7 +374,15 @@ def get_hessian_axes(model: nn.Module, eval_loader: DataLoader, cfg: Dict[str, A
         w = Hw / (Hw.norm() + 1e-12)
     top2 = w.clone()
 
-    meta = {'rayleigh_top1': eig1, 'rayleigh_top2': eig2, 'dim': dim}
+    dt = time.time() - t0
+    meta = {
+        'rayleigh_top1': eig1,
+        'rayleigh_top2': eig2,
+        'dim': dim,
+        'power_iters': iters,
+        'algorithm': 'power_iteration+deflation',
+        'time_seconds': dt,
+    }
     return top1, top2, meta
 
 
@@ -365,6 +414,7 @@ def plot_plane(model: nn.Module, base_state: Dict[str, Any], axes: Tuple[torch.T
     _, shapes = _flatten_params(model, exclude_bn)
 
     losses = torch.zeros(grid_res, grid_res, device=device)
+    t0 = time.time()
     # Evaluate point-by-point to keep memory low
     for i, a in enumerate(alphas):
         for j, b in enumerate(betas):
@@ -376,6 +426,9 @@ def plot_plane(model: nn.Module, base_state: Dict[str, Any], axes: Tuple[torch.T
             losses[i, j] = l.detach()
             # restore base state
             _load_base(model, base_state)
+    dt = time.time() - t0
+    num_points = grid_res * grid_res
+    print(f"[TIMING][plane:{label}] grid_eval_forward_passes={num_points} total_time={dt:.2f}s avg_per_point={dt/num_points:.4f}s")
 
     losses_np = losses.detach().cpu().numpy()
     npy_path = out_dir / f"plane_{label}.npy"
@@ -393,7 +446,107 @@ def plot_plane(model: nn.Module, base_state: Dict[str, Any], axes: Tuple[torch.T
     fig.savefig(png_path)
     plt.close(fig)
 
-    return {'grid_resolution': grid_res, 'span': span, 'npy': str(npy_path), 'png': str(png_path)}
+    # Plot 3D surface
+    try:
+        from mpl_toolkits.mplot3d import Axes3D  # noqa: F401 - ensures 3D backend registered
+    except Exception:
+        pass
+    X, Y = np.meshgrid(np.linspace(a0, a1, grid_res), np.linspace(b0, b1, grid_res), indexing='ij')
+    fig3d = plt.figure(figsize=(6, 5))
+    ax3d = fig3d.add_subplot(111, projection='3d')
+    surf = ax3d.plot_surface(X, Y, losses_np, cmap='viridis', linewidth=0, antialiased=True)
+    ax3d.set_xlabel('alpha')
+    ax3d.set_ylabel('beta')
+    ax3d.set_zlabel('loss')
+    ax3d.set_title(f"Loss plane 3D: {label}")
+    fig3d.colorbar(surf, shrink=0.6, aspect=10)
+    ax3d.view_init(elev=30, azim=135)
+    fig3d.tight_layout()
+    png3d_path = out_dir / f"plane_{label}_3d.png"
+    fig3d.savefig(png3d_path)
+    plt.close(fig3d)
+
+    return {
+        'grid_resolution': grid_res,
+        'span': {'alpha': [a0, a1], 'beta': [b0, b1]},
+        'npy': str(npy_path),
+        'png': str(png_path),
+    }
+
+
+def _lanczos_tridiag(hvp_fn, dim: int, m: int, device: str) -> Tuple[torch.Tensor, torch.Tensor, int]:
+    """Run m-step Lanczos to build tridiagonal T. Returns (alpha, beta, steps)."""
+    v_prev = torch.zeros(dim, device=device)
+    v = torch.randn(dim, device=device)
+    v = v / (v.norm() + 1e-12)
+    alpha = torch.zeros(m, device=device)
+    beta = torch.zeros(m-1, device=device) if m > 1 else torch.zeros(0, device=device)
+    steps = 0
+    for j in range(m):
+        w = hvp_fn(v)
+        a = (v @ w)
+        alpha[j] = a
+        if j == 0:
+            w = w - a * v
+        else:
+            w = w - a * v - beta[j-1] * v_prev
+        b = w.norm()
+        steps = j + 1
+        if j < m - 1:
+            beta[j] = b
+        if b.item() < 1e-8:
+            break
+        v_prev, v = v, (w / b)
+    return alpha[:steps], beta[:max(0, steps-1)], steps
+
+
+def _esd_via_slq(hvp_fn, dim: int, device: str, m: int = 50, probes: int = 8, grid: int = 200) -> Tuple[np.ndarray, np.ndarray, Dict[str, Any]]:
+    """Stochastic Lanczos Quadrature to approximate empirical spectral density of Hessian.
+    Returns (lambda_grid, density, meta)."""
+    all_thetas: List[torch.Tensor] = []
+    all_weights: List[torch.Tensor] = []
+    lanczos_steps: List[int] = []
+    for _ in range(probes):
+        alpha, beta, steps = _lanczos_tridiag(hvp_fn, dim, m, device)
+        T = torch.diag(alpha)
+        if steps > 1:
+            off = torch.diag(beta, diagonal=1) + torch.diag(beta, diagonal=-1)
+            T = T + off
+        evals, evecs = torch.linalg.eigh(T)
+        # SLQ weights: square of first row of eigenvectors
+        w = (evecs[0, :].abs() ** 2)
+        all_thetas.append(evals.detach())
+        all_weights.append(w.detach())
+        lanczos_steps.append(steps)
+    thetas = torch.cat(all_thetas)
+    weights = torch.cat(all_weights)
+    lam_min = float(thetas.min().item())
+    lam_max = float(thetas.max().item())
+    span = lam_max - lam_min if lam_max > lam_min else 1.0
+    lam_min -= 0.05 * span
+    lam_max += 0.05 * span
+    lam_grid = np.linspace(lam_min, lam_max, grid, dtype=np.float64)
+    sigma = 0.02 * span + 1e-8
+    dens = np.zeros_like(lam_grid)
+    # Gaussian kernel smoothing
+    k = (1.0 / (np.sqrt(2 * np.pi) * sigma))
+    th = thetas.detach().cpu().numpy().astype(np.float64)
+    wt = weights.detach().cpu().numpy().astype(np.float64)
+    for t, w in zip(th, wt):
+        dens += w * k * np.exp(-0.5 * ((lam_grid - t) / sigma) ** 2)
+    # Normalize to unit area
+    area = np.trapz(dens, lam_grid)
+    if area > 0:
+        dens = dens / area
+    meta = {
+        'probes': probes,
+        'lanczos_m': m,
+        'avg_steps': float(np.mean(lanczos_steps)),
+        'lam_min': lam_min,
+        'lam_max': lam_max,
+        'sigma': sigma,
+    }
+    return lam_grid, dens, meta
 
 
 def compute_spectrum(model: nn.Module, eval_loader: DataLoader, cfg: Dict[str, Any], out_dir: Path) -> Dict[str, Any]:
@@ -406,6 +559,10 @@ def compute_spectrum(model: nn.Module, eval_loader: DataLoader, cfg: Dict[str, A
     top_k = int(cfg['lla']['spectrum'].get('top_k', 5))
     k = min(top_k, max(1, dim))
 
+    def hvp_op(v: torch.Tensor) -> torch.Tensor:
+        return _hvp(model, x, y, v, criterion, exclude_bn)
+
+    t_topk0 = time.time()
     vecs: List[torch.Tensor] = []
     vals: List[float] = []
     for _ in range(k):
@@ -415,23 +572,47 @@ def compute_spectrum(model: nn.Module, eval_loader: DataLoader, cfg: Dict[str, A
             v = v - (v @ u) * u
         v = v / (v.norm() + 1e-12)
         for _it in range(15):
-            Hv = _hvp(model, x, y, v, criterion, exclude_bn)
+            Hv = hvp_op(v)
             # Deflate
             for u in vecs:
                 Hv = Hv - (Hv @ u) * u
             v = Hv / (Hv.norm() + 1e-12)
-        eig = float((v @ _hvp(model, x, y, v, criterion, exclude_bn)).item())
+        eig = float((v @ hvp_op(v)).item())
         vecs.append(v.detach())
         vals.append(eig)
+    t_topk = time.time() - t_topk0
 
     # Hutchinson trace estimate
     probes = int(cfg['lla']['spectrum'].get('hutchinson_probes', 32))
+    t_tr0 = time.time()
     trace_est = 0.0
     for _ in range(probes):
         z = torch.randint(0, 2, (dim,), device=device, dtype=torch.float32) * 2 - 1  # Rademacher
-        Hz = _hvp(model, x, y, z, criterion, exclude_bn)
+        Hz = hvp_op(z)
         trace_est += float((z @ Hz).item())
     trace_est /= max(1, probes)
+    t_tr = time.time() - t_tr0
+
+    # ESD via SLQ
+    esd_m = int(cfg['lla']['spectrum'].get('slq_m', 50))
+    esd_probes = int(cfg['lla']['spectrum'].get('slq_probes', 8))
+    esd_grid = int(cfg['lla']['spectrum'].get('slq_grid', 200))
+    t_esd0 = time.time()
+    lam_grid, density, esd_meta = _esd_via_slq(hvp_op, dim, device=device, m=esd_m, probes=esd_probes, grid=esd_grid)
+    t_esd = time.time() - t_esd0
+
+    # Save ESD
+    esd_dir = out_dir
+    np.savez(esd_dir / 'spectrum_esd.npz', lambda_grid=lam_grid, density=density, **{k: v for k, v in esd_meta.items() if isinstance(v, (int, float))})
+    fig, ax = plt.subplots(figsize=(5, 4))
+    ax.plot(lam_grid, density)
+    ax.set_xlabel('eigenvalue')
+    ax.set_ylabel('density')
+    ax.set_title('Empirical Spectral Density (SLQ)')
+    fig.tight_layout()
+    esd_png = esd_dir / 'spectrum_esd.png'
+    fig.savefig(esd_png)
+    plt.close(fig)
 
     spec = {
         'top_k': vals,
@@ -439,8 +620,31 @@ def compute_spectrum(model: nn.Module, eval_loader: DataLoader, cfg: Dict[str, A
         'dim': dim,
         'k_used': k,
         'probes': probes,
+        'algorithm_topk': 'power_iteration+deflation',
+        'algorithm_trace': 'Hutchinson (Rademacher probes)',
+        'algorithm_esd': 'SLQ (Lanczos tridiagonalization + Gaussian kernel)',
+        'timing_seconds': {
+            'topk': t_topk,
+            'hutchinson_trace': t_tr,
+            'esd_slq': t_esd,
+            'total': t_topk + t_tr + t_esd,
+        },
+        'esd': {
+            'n_grid': esd_grid,
+            'probes': esd_probes,
+            'm': esd_m,
+            **esd_meta,
+            'png': str(esd_png),
+            'npz': str(esd_dir / 'spectrum_esd.npz'),
+        }
     }
     (out_dir / 'spectrum.json').write_text(json.dumps(spec, indent=2))
+    # Clear console summary
+    print(f"[TIMING][spectrum] dim={dim} topk(k={k})={t_topk:.2f}s hutchinson(probes={probes})={t_tr:.2f}s esd_slq(probes={esd_probes},m={esd_m})={t_esd:.2f}s total={(t_topk+t_tr+t_esd):.2f}s")
+    if len(vals) >= 2:
+        print(f"[METRICS][spectrum] top2_eigs≈ [{vals[0]:.4g}, {vals[1]:.4g}] (k={k})")
+    elif len(vals) == 1:
+        print(f"[METRICS][spectrum] top1_eig≈ {vals[0]:.4g} (k={k})")
     return spec
 
 
@@ -469,6 +673,7 @@ def plot_sam_surface(model: nn.Module, base_state: Dict[str, Any], axes: Tuple[t
     _, shapes = _flatten_params(model, exclude_bn)
 
     robust = torch.zeros(grid_res, grid_res, device=device)
+    t0 = time.time()
     for i, a in enumerate(alphas):
         for j, b in enumerate(betas):
             vec = a * v1 + b * v2
@@ -482,6 +687,9 @@ def plot_sam_surface(model: nn.Module, base_state: Dict[str, Any], axes: Tuple[t
             robust[i, j] = loss.detach() + rho * grad_norm
             # restore base
             _load_base(model, base_state)
+    dt = time.time() - t0
+    num_points = grid_res * grid_res
+    print(f"[TIMING][sam_surface] grid_eval_points={num_points} rho={rho} total_time={dt:.2f}s avg_per_point={dt/num_points:.4f}s (includes grad norm)")
 
     arr = robust.detach().cpu().numpy()
     npy_path = out_dir / 'sam_surface.npy'
@@ -496,7 +704,26 @@ def plot_sam_surface(model: nn.Module, base_state: Dict[str, Any], axes: Tuple[t
     png_path = out_dir / 'sam_surface.png'
     fig.savefig(png_path)
     plt.close(fig)
-    return {'npy': str(npy_path), 'png': str(png_path), 'rho': rho}
+    # 3D view for SAM surface
+    try:
+        from mpl_toolkits.mplot3d import Axes3D  # noqa: F401
+    except Exception:
+        pass
+    X, Y = np.meshgrid(np.linspace(a0, a1, grid_res), np.linspace(b0, b1, grid_res), indexing='ij')
+    fig3d = plt.figure(figsize=(6, 5))
+    ax3d = fig3d.add_subplot(111, projection='3d')
+    surf = ax3d.plot_surface(X, Y, arr, cmap='magma', linewidth=0, antialiased=True)
+    ax3d.set_xlabel('alpha')
+    ax3d.set_ylabel('beta')
+    ax3d.set_zlabel('robust loss')
+    ax3d.set_title('SAM approx surface (3D)')
+    fig3d.colorbar(surf, shrink=0.6, aspect=10)
+    ax3d.view_init(elev=30, azim=135)
+    fig3d.tight_layout()
+    png3d_path = out_dir / 'sam_surface_3d.png'
+    fig3d.savefig(png3d_path)
+    plt.close(fig3d)
+    return {'npy': str(npy_path), 'png': str(png_path), 'png3d': str(png3d_path), 'rho': rho}
 
 
 def fit_mode_connectivity(model_fn, thetaA: Dict[str, Any], thetaB: Dict[str, Any], cfg: Dict[str, Any], out_dir: Path) -> Tuple[Dict[str, Any], Dict[str, Any]]:
@@ -527,14 +754,16 @@ def plot_mode_curve(model_fn, thetaA: Dict[str, Any], thetaM: Dict[str, Any], th
     # Assumption: same dataset config
     from src.data_loading.transform_factory import transform_factory as _tf
     from src.data_loading.dataset_factory import dataset_factory as _df
+    from configs.configurations import DataConfig as _DataCfg
     transform = _tf(cfg['data']['dataset'], cfg['net']['type'])
-    train_set, _ = _df(cfg['data'], transform=transform, with_testset=False)
+    train_set, _ = _df(_DataCfg(**cfg['data']), transform=transform, with_testset=False)
     eval_loader = DataLoader(train_set, batch_size=cfg['lla']['evaluation_data'].get('eval_batch_size', 256), shuffle=False, num_workers=0)
     x, y = _get_eval_batch(eval_loader, device)
 
     t_points = int(cfg['lla']['mode_connectivity'].get('curve_points', 21))
     ts = torch.linspace(0, 1, t_points, device=device)
     losses: List[float] = []
+    t0 = time.time()
     for t in ts:
         # Quadratic Bézier
         state: Dict[str, torch.Tensor] = {}
@@ -547,6 +776,8 @@ def plot_mode_curve(model_fn, thetaA: Dict[str, Any], thetaM: Dict[str, Any], th
         model.eval()
         l = _forward_loss(model, x, y, criterion)
         losses.append(float(l.item()))
+    dt = time.time() - t0
+    print(f"[TIMING][mode_curve] points={t_points} total_time={dt:.2f}s avg_per_point={dt/max(1,t_points):.4f}s")
     arr = np.array(losses, dtype=np.float32)
     npy_path = out_dir / 'mode_curve.npy'
     np.save(npy_path, arr)
@@ -575,9 +806,14 @@ def _gini(x: torch.Tensor) -> float:
 def compute_rank_stats_at_checkpoints(model_factory_cfg: Dict[str, Any], checkpoint_paths: List[Path], cfg: Dict[str, Any], eval_loader: DataLoader) -> Dict[str, Any]:
     # Uses per-layer SVD summaries (approximate rank with prop) and Gini of singular values
     device = cfg.get('device', 'cuda:0')
-    prop = float(cfg['lla']['rank_tracking'].get('approximate_rank_prop', 0.99))
+    # rank_tracking config moved to top-level; keep a backward-compatible fallback
+    rt_cfg = cfg.get('rank_tracking', cfg.get('lla', {}).get('rank_tracking', {}))
+    prop = float(rt_cfg.get('approximate_rank_prop', 0.99))
     from src.models.model_factory import model_factory as _mf
-    model = _mf(model_factory_cfg)
+    # Wrap net dict into NetConfig
+    _netparams = NetParams(**model_factory_cfg.get('netparams', {}))
+    _netcfg = NetConfig(type=model_factory_cfg['type'], netparams=_netparams, network_class=model_factory_cfg.get('network_class'))
+    model = _mf(_netcfg)
     model.to(device)
     criterion = _criterion_from_cfg(cfg)
     x, y = _get_eval_batch(eval_loader, device)
@@ -673,9 +909,44 @@ def main():
         with timer_block('hessian_axes_and_plane'):
             v1, v2, meta = get_hessian_axes(model, eval_loader, cfg)
             (out_root / 'hessian_axes_meta.json').write_text(json.dumps(meta, indent=2))
+            print(f"[TIMING][hessian_axes] algorithm={meta.get('algorithm')} power_iters={meta.get('power_iters')} dim={meta.get('dim')} time={meta.get('time_seconds'):.2f}s eigs≈[{meta.get('rayleigh_top1'):.4g},{meta.get('rayleigh_top2'):.4g}]")
             plane_dir = out_root / 'planes'
             plane_dir.mkdir(exist_ok=True)
             plot_plane(model, base_state, (v1, v2), eval_loader, cfg, plane_dir, label='hessian')
+
+        # Also: random directions around the trained base
+        with timer_block('random_plane_directions'):
+            device = cfg.get('device', 'cuda:0')
+            exclude_bn = bool(cfg['lla']['planes'].get('bn', {}).get('exclude_bn_and_bias', False))
+            v0, _ = _flatten_params(model, exclude_bn)
+            dim = v0.numel()
+            if dim > 0:
+                r1 = torch.randn(dim, device=device); r1 = r1/(r1.norm()+1e-12)
+                r2 = torch.randn(dim, device=device); r2 = r2 - (r1@r2)*r1; r2 = r2/(r2.norm()+1e-12)
+                plane_dir = out_root / 'planes'
+                plane_dir.mkdir(exist_ok=True)
+                plot_plane(model, base_state, (r1, r2), eval_loader, cfg, plane_dir, label='random_dirs')
+
+        # And: plane around a freshly initialized ConvNet (random base)
+        with timer_block('random_base_plane'):
+            try:
+                _netparams = NetParams(**cfg['net'].get('netparams', {}))
+                _netcfg = NetConfig(type=cfg['net']['type'], netparams=_netparams, network_class=cfg['net'].get('network_class'))
+                fresh = model_factory(_netcfg)
+                fresh.to(cfg.get('device', 'cuda:0'))
+                rand_state = fresh.state_dict()
+                device = cfg.get('device', 'cuda:0')
+                exclude_bn = bool(cfg['lla']['planes'].get('bn', {}).get('exclude_bn_and_bias', False))
+                v0, _ = _flatten_params(model, exclude_bn)
+                dim = v0.numel()
+                if dim > 0:
+                    r1 = torch.randn(dim, device=device); r1 = r1/(r1.norm()+1e-12)
+                    r2 = torch.randn(dim, device=device); r2 = r2 - (r1@r2)*r1; r2 = r2/(r2.norm()+1e-12)
+                    plane_dir = out_root / 'planes'
+                    plane_dir.mkdir(exist_ok=True)
+                    plot_plane(model, rand_state, (r1, r2), eval_loader, cfg, plane_dir, label='random_base')
+            except Exception as e:
+                print(f"[warn] random_base_plane skipped: {e}")
 
     if 'spectrum' in tasks_to_run:
         with timer_block('spectrum'):
@@ -685,20 +956,25 @@ def main():
         with timer_block('sam_surface'):
             # reuse axes if computed, else compute random axes
             try:
-                v1, v2, _ = get_hessian_axes(model, eval_loader, cfg)
+                v1, v2, meta = get_hessian_axes(model, eval_loader, cfg)
+                print(f"[TIMING][sam_surface] axes_source=hessian algorithm={meta.get('algorithm')} power_iters={meta.get('power_iters')} time={meta.get('time_seconds'):.2f}s")
             except Exception:
                 device = cfg.get('device', 'cuda:0')
-                v0, _ = _flatten_params(model, cfg['lla']['planes'].get('exclude_bn_and_bias', False))
+                exclude_bn = bool(cfg['lla']['planes'].get('bn', {}).get('exclude_bn_and_bias', False))
+                v0, _ = _flatten_params(model, exclude_bn)
                 dim = v0.numel()
                 v1 = torch.randn(dim, device=device); v1 = v1 / (v1.norm()+1e-12)
                 v2 = torch.randn(dim, device=device); v2 = v2 - (v1@v2)*v1; v2 = v2/(v2.norm()+1e-12)
+                print("[TIMING][sam_surface] axes_source=random time≈0.00s")
             plot_sam_surface(model, base_state, (v1, v2), eval_loader, cfg, out_root)
 
     if 'mode' in tasks_to_run:
         with timer_block('mode_connectivity'):
             # Define a factory to rebuild the same model
             def model_fn():
-                m = model_factory(cfg['net'])
+                _netparams = NetParams(**cfg['net'].get('netparams', {}))
+                _netcfg = NetConfig(type=cfg['net']['type'], netparams=_netparams, network_class=cfg['net'].get('network_class'))
+                m = model_factory(_netcfg)
                 return m
             # For A and B, we pick the first and last checkpoints
             A_state = torch.load(ckpts[0], map_location=cfg.get('device', 'cuda:0'))

@@ -83,6 +83,11 @@ class ConvNet(nn.Module):
         x5 = self.layers[9](self.layers[8](x4))
         x6 = self.layers[10](x5)
         return x6, [x1, x2, x3, x4, x5]
+
+    # Ensure nn.Module forward is implemented for standard inference paths
+    def forward(self, x):
+        out, _ = self.predict(x)
+        return out
     
     def get_layer_names(self):
         """Return semantic names for the intermediate features."""

@@ -1,39 +1,36 @@
-# LLA suite config
+# LLA suite config for ResNet18 backbone on CIFAR-10
 runs: 1
 run_id: 0
-seed: null
+seed: 123
 
 # Device and basic training for short fine-tune
 device: 'cuda:0'
-epochs: 2           # Short fine-tune duration (1–3)
-batch_size: 256
-num_workers: 2
+epochs: 0            # No training by default; we only save an initial checkpoint
+batch_size: 128
+num_workers: 4
 
-use_wandb: false   # Can be overridden; also see lla.logging.wandb
+use_wandb: false
 use_json: true
 
-# Data settings (reuse existing factory expectations)
+# Data settings
 data:
-  dataset: 'CIFAR10'      # Notebook/demo default; pipeline can override
+  dataset: 'CIFAR10'
   use_torchvision: true
   data_path: '/hdda/datasets'
   num_classes: 10
 
-# Model (default ConvNet; allow resnet_custom, vgg_custom)
+# Model: switch to ResNet
 net:
-  type: 'ConvNet'
+  type: 'resnet_custom'
   network_class: 'conv'
   device: 'cuda:0'
   netparams:
     pretrained: false
     num_classes: 10
     initialization: 'kaiming'
-    input_height: 32
-    input_width: 32
-    in_channels: 3
-    activation: 'leaky_relu'
+    # ResNet18 will infer input size from transforms; CIFAR10 uses 32x32
 
-# Learner (simple SGD for quick fine-tune)
+# Learner (optimizer/loss only matter if epochs_short > 0)
 learner:
   type: 'backprop'
   network_class: 'conv'
@@ -54,16 +51,16 @@ lla:
     lr: 0.01
     weight_decay: 0.0
     save_checkpoints: true
-    max_checkpoints: 10     # ConvNet default; can lower for ResNet/VGG
+    max_checkpoints: 6      # lower default for heavier models
     second_run_seed: 12345
   evaluation_data:
-    eval_batch_size: 256
-    dataset_fraction_for_landscape: 1.0  # 1 batch by default, but allow averaging later
+    eval_batch_size: 64     # smaller to avoid OOM during HVP on ResNet
+    dataset_fraction_for_landscape: 1.0
     fixed_eval_seed: 42
   planes:
     enable: true
     grid_resolution: 41
-    high_res: false          # if true -> 51
+    high_res: false
     span: [-1.0, 1.0]
     normalization: 'filter'
     include_random: true
@@ -71,8 +68,8 @@ lla:
     include_trajectory: true
     bn:
       eval_mode_only: true
-      exclude_bn_and_bias: false  # toggle per run
-    chunk_size: 128
+      exclude_bn_and_bias: false  # keep default; can flip to true to reduce dim
+    chunk_size: 64
     max_eval_points_cap: 4096
   spectrum:
     enable: true
@@ -85,19 +82,19 @@ lla:
   sam:
     enable: true
     rho: 0.05
-    subsample_stride: 1   # 1 = same resolution; 2 = half res
+    subsample_stride: 4    # subsample grid for tractability on ResNet
   mode_connectivity:
     enable: true
     curve_points: 21
-    opt_steps: 80
+    opt_steps: 60          # reduce for demo timing
     lr: 0.05
-    use_second_run: true  # second quick run for thetaB (demo)
+    use_second_run: true
     data_subset_batches: 1
 
 # Rank tracking (top-level)
 rank_tracking:
   enable: true
-  batch_size: 256
+  batch_size: 128
   approximate_rank_prop: 0.99
   compute_gini: true
 
@@ -111,7 +108,7 @@ runtime:
 
 # Logging (top-level)
 logging:
-  out_root: 'experiments/Hessian_and_landscape_plot_with_plasticity_loss/results'
+  out_root: 'experiments/Hessian_and_landscape_plot_with_plasticity_loss/results_resnet'
   save_numpy: true
   save_csv: true
   wandb: false

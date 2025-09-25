@@ -1,3 +1,5 @@
+## only for testing purpose
+
 from configs.configurations import EvaluationConfig, ExperimentConfig
 
 e = EvaluationConfig()

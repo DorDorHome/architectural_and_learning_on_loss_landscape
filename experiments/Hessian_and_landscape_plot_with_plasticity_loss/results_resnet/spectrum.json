@@ -1,0 +1,34 @@
+{
+  "top_k": [
+    151266.203125,
+    140438.796875,
+    139415.765625,
+    121937.359375,
+    112687.9375
+  ],
+  "hutchinson_trace": -51510.590494791664,
+  "dim": 11181642,
+  "k_used": 5,
+  "probes": 6,
+  "algorithm_topk": "power_iteration+deflation",
+  "algorithm_trace": "Hutchinson (Rademacher probes)",
+  "algorithm_esd": "SLQ (Lanczos tridiagonalization + Gaussian kernel)",
+  "timing_seconds": {
+    "topk": 7.585241317749023,
+    "hutchinson_trace": 0.292233943939209,
+    "esd_slq": 18.265604972839355,
+    "total": 26.143080234527588
+  },
+  "esd": {
+    "n_grid": 200,
+    "probes": 8,
+    "m": 50,
+    "lanczos_m": 50,
+    "avg_steps": 50.0,
+    "lam_min": -38299.80126953125,
+    "lam_max": 160922.28369140625,
+    "sigma": 3622.2197265725,
+    "png": "experiments/Hessian_and_landscape_plot_with_plasticity_loss/results_resnet/spectrum_esd.png",
+    "npz": "experiments/Hessian_and_landscape_plot_with_plasticity_loss/results_resnet/spectrum_esd.npz"
+  }
+}

@@ -1,0 +1,82 @@
+{
+  "checkpoints": [
+    {
+      "checkpoint": "experiments/Hessian_and_landscape_plot_with_plasticity_loss/results_refactor_smoke/checkpoints/ckpt_final.pt",
+      "loss": 2.305757522583008,
+      "layers": [
+        {
+          "layer": "conv1",
+          "rank": 32,
+          "effective_rank": 30.03898048400879,
+          "approx_rank": 30,
+          "approx_abs": 32,
+          "gini_sv": 0.20093166828155518,
+          "shape": [
+            32,
+            75
+          ]
+        },
+        {
+          "layer": "conv2",
+          "rank": 64,
+          "effective_rank": 62.12479019165039,
+          "approx_rank": 63,
+          "approx_abs": 63,
+          "gini_sv": 0.13962584733963013,
+          "shape": [
+            64,
+            288
+          ]
+        },
+        {
+          "layer": "conv3",
+          "rank": 128,
+          "effective_rank": 124.16838836669922,
+          "approx_rank": 124,
+          "approx_abs": 126,
+          "gini_sv": 0.1410844922065735,
+          "shape": [
+            128,
+            576
+          ]
+        },
+        {
+          "layer": "fc1",
+          "rank": 128,
+          "effective_rank": 123.71880340576172,
+          "approx_rank": 124,
+          "approx_abs": 126,
+          "gini_sv": 0.14934664964675903,
+          "shape": [
+            128,
+            512
+          ]
+        },
+        {
+          "layer": "fc2",
+          "rank": 128,
+          "effective_rank": 102.72404479980469,
+          "approx_rank": 99,
+          "approx_abs": 115,
+          "gini_sv": 0.3604438304901123,
+          "shape": [
+            128,
+            128
+          ]
+        },
+        {
+          "layer": "fc3",
+          "rank": 10,
+          "effective_rank": 9.871777534484863,
+          "approx_rank": 10,
+          "approx_abs": 10,
+          "gini_sv": 0.09097061306238174,
+          "shape": [
+            10,
+            128
+          ]
+        }
+      ]
+    }
+  ]
+}

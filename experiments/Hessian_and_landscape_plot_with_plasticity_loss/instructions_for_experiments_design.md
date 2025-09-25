@@ -133,6 +133,57 @@ G.2 for loss_landscape_change_during_task_shift.py
 large files like checkpoints and weights won't be logged to wandb
 * Only plot/check Hessian, etc, after a particular task has finished training (right before task shift)
 * Only add tracking of spectral properties that aren't too computationally demanding
+## Practical summary (for next contributors/agents)
+
+### File purposes and integration
+
+- `lla_pipeline.py`
+    - Importable, single-file pipeline exposing LLA functions: Hessian/rand/trajectory planes, spectrum (top-k, trace, ESD), SAM surface, and mode connectivity.
+    - Contains small `main()` so it can be run as a script for a quick demo. Saves artifacts under `results/`.
+
+- `loss_landscape_change_during_task_shift.py`
+    - Training with task shifts plus end-of-task LLA. Mirrors `train_with_improved_optimizer.py`’s training structure, but adds the evaluation-only LLA at task boundaries.
+    - Reads a single, local YAML config: `cfg/task_shift_config.yaml`. This keeps the experiment self-contained and avoids mixing with other experiments.
+
+- `cfg/task_shift_config.yaml`
+    - Looks like the optimizer experiment’s config, with an additional `lla` block for evaluation-only controls:
+        - `enable_planes`, `enable_spectrum`, `enable_sam` toggles at `lla` root.
+        - Per-section `enable` fields (legacy fallback) under `lla.planes`, `lla.spectrum`, and `lla.sam`.
+        - Fine-grained plane/spectrum parameters and evaluation batch size.
+    - W&B project is namespaced to avoid mixing logs: `loss_landscape_taskshift_${task_shift_mode}`.
+
+### Logging scheme (numeric only; no images)
+
+- During training (per-epoch):
+    - Log numeric metrics with a global index: `global_epoch = task_idx * epochs_per_task + epoch`.
+    - Keys: `global_epoch`, `task_idx`, `epoch_loss`, and `epoch_accuracy` (if not in `drifting_values` mode).
+
+- End-of-task (after last epoch in a task):
+    - Runs LLA components according to `lla` toggles and saves figures locally.
+    - Logs numeric summaries only to W&B at step `global_epoch = (task_idx + 1) * epochs_per_task - 1`:
+        - Layer-wise rank/gini and weight stats, top-k Hessian eigenvalues (if spectrum enabled), and `lla_runtime_sec`.
+        - Includes `task_last_epoch_loss` and `task_last_epoch_accuracy` to tie LLA metrics to recent performance.
+
+### Stability and correctness notes
+
+- All LLA computations are executed with `model.eval()` to avoid perturbing BN/Dropout stats.
+- The dataset used for LLA is a snapshot of the current task’s shifted dataset to avoid drift between train and eval; this helps keep the plane’s center close to a local minimum.
+- Use `evaluation_data.fixed_eval_seed` and single-batch evaluation for reproducibility; reduce plane span/resolution and ESD probes for faster runs on large models.
+
+### Minimal run examples
+
+```bash
+# End-of-task LLA with planes and spectrum only (no SAM), one task, one epoch, no W&B
+python loss_landscape_change_during_task_shift.py num_tasks=1 epochs=1 use_wandb=false \
+    lla.enable_planes=true lla.enable_spectrum=true lla.enable_sam=false
+```
+
+### Suggested next steps
+
+- Add CLI overrides for `lla` toggles (currently YAML-only) and smoke tests that assert presence of expected outputs per task.
+- If your dataset wrappers provide explicit drift-freezing APIs, wire them in `_snapshot_eval_dataset` for a stronger guarantee.
+- Provide a profiling config for large models (smaller plane grid, fewer ESD probes) and document typical runtimes.
+
 
 I. Links (for the agent to clone/read)
 * LLA (Loss Landscape Analysis) GitHub repo (features: axes including Hessian/Adam/trajectory, normalization, Hessian analysis incl. ESD/trace): GitHub

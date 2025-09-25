@@ -1,0 +1,8 @@
+{
+  "rayleigh_top1": 151552.625,
+  "rayleigh_top2": 141539.734375,
+  "dim": 11181642,
+  "power_iters": 20,
+  "algorithm": "power_iteration+deflation",
+  "time_seconds": 6.445148229598999
+}

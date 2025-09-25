@@ -1,0 +1,137 @@
+runs: 1
+run_id: 0
+seed: None
+debug_mode: false
+device: cuda:0
+epochs: 50
+batch_size: 256
+num_tasks: 500
+num_workers: 2
+use_wandb: true
+use_json: false
+wandb:
+  project: loss_landscape_taskshift_${task_shift_mode}
+  entity: ''
+  notes: Experiment with advanced optimizers.
+task_shift_mode: continuous_input_deformation
+task_shift_param:
+  drifting_values:
+    drift_std_dev: 0.05
+    repulsion_strength: 0.05
+    min_gap: 0.2
+    value_bounds:
+      lower_bound: -20.0
+      upper_bound: 20.0
+  continuous_input_deformation:
+    drift_mode: sinusoidal
+    linear:
+      max_drift: 0.5
+    random_walk:
+      drift_std_dev: 0.05
+    sinusoidal:
+      amplitude: 5
+      frequency: 0.1
+track_rank_drop: true
+from_theoretical_max_first_feature_rank: true
+rank_drop_mode: difference
+track_rank: true
+track_rank_batch: use_specified
+specified_batch_size: 1000
+rank_measure_freq_to_epoch: 1
+use_pytorch_entropy_for_effective_rank: true
+prop_for_approx_or_l1_rank: 0.99
+numerical_rank_epsilon: 0.01
+track_dead_units: false
+threshold_for_non_saturating_act: 0.01
+track_actual_rank: false
+track_weight_magnitude: true
+layers_identifier: None
+data:
+  dataset: MNIST
+  use_torchvision: true
+  data_path: /hdda/datasets
+  num_classes: 10
+net:
+  type: ConvNet
+  network_class: conv
+  device: ${device}
+  netparams:
+    pretrained: false
+    num_classes: ${data.num_classes}
+    initialization: kaiming
+    input_height: None
+    input_width: None
+    conv_layer_bias: true
+    linear_layer_bias: true
+    activation: leaky_relu
+    norm_param:
+      layer_norm:
+        eps: 1.0e-05
+        elementwise_affine: false
+    weight_correction_scale: 1.0
+    fan_in_correction: false
+    SVD_only_stride_1: false
+    allow_svd_values_negative: true
+    num_hidden_layers: 1
+learner:
+  type: backprop
+  network_class: ${net.network_class}
+  init: kaiming
+  device: ${device}
+  opt: sgd
+  loss: ${loss_functions.${task_shift_mode}}
+  step_size: 0.01
+  beta_1: 0.95
+  beta_2: 0.999
+  weight_decay: 0.01
+  to_perturb: false
+  perturb_scale: 0.05
+  momentum: 0.9
+  neurons_replacement_rate: 0.001
+  decay_rate_utility_track: 0.9
+  maturity_threshold: 100
+  util_type: contribution
+  accumulate: false
+  outgoing_random: false
+  use_grad_clip: true
+  grad_clip_max_norm: 1.0
+loss_functions:
+  continuous_input_deformation: cross_entropy
+  drifting_values: mse
+evaluation:
+  use_testset: false
+  eval_freq_epoch: 1
+  eval_metrics:
+  - accuracy
+  - loss
+lla:
+  enable_planes: true
+  enable_spectrum: true
+  enable_sam: false
+  evaluation_data:
+    eval_batch_size: 256
+    fixed_eval_seed: 42
+  planes:
+    enable: true
+    grid_resolution: 31
+    span:
+    - -0.5
+    - 0.5
+    normalization: filter
+    bn:
+      exclude_bn_and_bias: false
+    chunk_size: 128
+    max_eval_points_cap: 4096
+  spectrum:
+    enable: true
+    power_iters: 20
+    top_k: 5
+    hutchinson_probes: 6
+    esd:
+      num_probes: 6
+      lanczos_steps: 30
+      bins: 200
+  sam:
+    enable: false
+    rho: 0.05
+    subsample_stride: 2
