@@ -500,9 +500,21 @@ def _lanczos_tridiag(hvp_fn, dim: int, m: int, device: str) -> Tuple[torch.Tenso
     return alpha[:steps], beta[:max(0, steps-1)], steps
 
 
-def _esd_via_slq(hvp_fn, dim: int, device: str, m: int = 50, probes: int = 8, grid: int = 200) -> Tuple[np.ndarray, np.ndarray, Dict[str, Any]]:
+def _esd_via_slq(
+    hvp_fn,
+    dim: int,
+    device: str,
+    m: int = 50,
+    probes: int = 8,
+    grid: int = 200,
+    sigma_scale: float = 0.02,
+) -> Tuple[np.ndarray, np.ndarray, Dict[str, Any], np.ndarray, np.ndarray]:
     """Stochastic Lanczos Quadrature to approximate empirical spectral density of Hessian.
-    Returns (lambda_grid, density, meta)."""
+    Returns (lambda_grid, density, meta, thetas, weights).
+
+    - sigma_scale controls Gaussian KDE bandwidth: sigma = max(sigma_scale * span, 1e-8).
+    - thetas and weights are the concatenated Ritz values and their SLQ weights (on CPU, float64).
+    """
     all_thetas: List[torch.Tensor] = []
     all_weights: List[torch.Tensor] = []
     lanczos_steps: List[int] = []
@@ -518,20 +530,20 @@ def _esd_via_slq(hvp_fn, dim: int, device: str, m: int = 50, probes: int = 8, gr
         all_thetas.append(evals.detach())
         all_weights.append(w.detach())
         lanczos_steps.append(steps)
-    thetas = torch.cat(all_thetas)
-    weights = torch.cat(all_weights)
-    lam_min = float(thetas.min().item())
-    lam_max = float(thetas.max().item())
+    thetas_t = torch.cat(all_thetas)
+    weights_t = torch.cat(all_weights)
+    lam_min = float(thetas_t.min().item())
+    lam_max = float(thetas_t.max().item())
     span = lam_max - lam_min if lam_max > lam_min else 1.0
     lam_min -= 0.05 * span
     lam_max += 0.05 * span
     lam_grid = np.linspace(lam_min, lam_max, grid, dtype=np.float64)
-    sigma = 0.02 * span + 1e-8
+    sigma = max(float(sigma_scale) * span, 1e-8)
     dens = np.zeros_like(lam_grid)
     # Gaussian kernel smoothing
     k = (1.0 / (np.sqrt(2 * np.pi) * sigma))
-    th = thetas.detach().cpu().numpy().astype(np.float64)
-    wt = weights.detach().cpu().numpy().astype(np.float64)
+    th = thetas_t.detach().cpu().numpy().astype(np.float64)
+    wt = weights_t.detach().cpu().numpy().astype(np.float64)
     for t, w in zip(th, wt):
         dens += w * k * np.exp(-0.5 * ((lam_grid - t) / sigma) ** 2)
     # Normalize to unit area
@@ -545,8 +557,9 @@ def _esd_via_slq(hvp_fn, dim: int, device: str, m: int = 50, probes: int = 8, gr
         'lam_min': lam_min,
         'lam_max': lam_max,
         'sigma': sigma,
+        'sigma_scale': float(sigma_scale),
     }
-    return lam_grid, dens, meta
+    return lam_grid, dens, meta, th, wt
 
 
 def compute_spectrum(model: nn.Module, eval_loader: DataLoader, cfg: Dict[str, Any], out_dir: Path) -> Dict[str, Any]:
@@ -597,8 +610,14 @@ def compute_spectrum(model: nn.Module, eval_loader: DataLoader, cfg: Dict[str, A
     esd_m = int(cfg['lla']['spectrum'].get('slq_m', 50))
     esd_probes = int(cfg['lla']['spectrum'].get('slq_probes', 8))
     esd_grid = int(cfg['lla']['spectrum'].get('slq_grid', 200))
+    esd_cfg = cfg['lla']['spectrum'].get('esd', {}) if isinstance(cfg['lla']['spectrum'].get('esd', {}), dict) else {}
+    sigma_scale = float(esd_cfg.get('sigma_scale', 0.02))
+    hist_enable = bool(esd_cfg.get('enable_hist', True))
+    hist_bins = int(esd_cfg.get('hist_bins', esd_grid))
     t_esd0 = time.time()
-    lam_grid, density, esd_meta = _esd_via_slq(hvp_op, dim, device=device, m=esd_m, probes=esd_probes, grid=esd_grid)
+    lam_grid, density, esd_meta, th_raw, wt_raw = _esd_via_slq(
+        hvp_op, dim, device=device, m=esd_m, probes=esd_probes, grid=esd_grid, sigma_scale=sigma_scale
+    )
     t_esd = time.time() - t_esd0
 
     # Save ESD
@@ -613,6 +632,29 @@ def compute_spectrum(model: nn.Module, eval_loader: DataLoader, cfg: Dict[str, A
     esd_png = esd_dir / 'spectrum_esd.png'
     fig.savefig(esd_png)
     plt.close(fig)
+
+    # Optional: weighted histogram of SLQ nodes (thetas) with weights
+    hist_png = None
+    hist_npz = None
+    if hist_enable and th_raw is not None and wt_raw is not None and len(th_raw) > 0:
+        # Build edges over the same span as lam_grid to align visuals
+        lam_min, lam_max = float(np.min(lam_grid)), float(np.max(lam_grid))
+        edges = np.linspace(lam_min, lam_max, int(max(1, hist_bins)) + 1, dtype=np.float64)
+        counts, edges = np.histogram(th_raw, bins=edges, weights=wt_raw, density=True)
+        centers = 0.5 * (edges[:-1] + edges[1:])
+        # Save histogram data
+        hist_npz = esd_dir / 'spectrum_esd_hist.npz'
+        np.savez(hist_npz, centers=centers, density=counts, edges=edges)
+        # Plot
+        fig_h, ax_h = plt.subplots(figsize=(5, 4))
+        ax_h.bar(centers, counts, width=(edges[1]-edges[0]), align='center', alpha=0.7, color='#4472C4', edgecolor='black')
+        ax_h.set_xlabel('eigenvalue')
+        ax_h.set_ylabel('weighted density')
+        ax_h.set_title('ESD (weighted histogram)')
+        fig_h.tight_layout()
+        hist_png = esd_dir / 'spectrum_esd_hist.png'
+        fig_h.savefig(hist_png)
+        plt.close(fig_h)
 
     spec = {
         'top_k': vals,
@@ -636,6 +678,11 @@ def compute_spectrum(model: nn.Module, eval_loader: DataLoader, cfg: Dict[str, A
             **esd_meta,
             'png': str(esd_png),
             'npz': str(esd_dir / 'spectrum_esd.npz'),
+            **({
+                'hist_png': str(hist_png),
+                'hist_npz': str(hist_npz),
+                'hist_bins': int(hist_bins),
+            } if hist_png is not None else {}),
         }
     }
     (out_dir / 'spectrum.json').write_text(json.dumps(spec, indent=2))
