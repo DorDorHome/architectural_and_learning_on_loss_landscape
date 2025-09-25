@@ -1,0 +1,30 @@
+name: loss_landscape_basic
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  # Base Python and core scientific stack
+  - python=3.9
+  - pip
+  - numpy
+  - scipy
+  - pandas
+  - matplotlib
+  - pillow
+  - tqdm
+  - psutil
+  # PyTorch from Conda (CPU/GPU resolved by Conda)
+  - pytorch
+  - torchvision
+  
+  # Anything not conveniently available via Conda goes under pip
+  - pip:
+      - stable-baselines3[extra]
+      - gym
+      - gymnasium
+      - box2d-py
+      - hydra-core==1.3.2
+      - omegaconf
+      - pyyaml
+      - wandb
+      - pytest==8.3.4

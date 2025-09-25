@@ -1,0 +1,31 @@
+# Minimal pip requirements derived from the working conda env
+
+# Core ML stack
+torch
+torchvision
+numpy
+scipy
+
+# Data & plotting
+pandas
+matplotlib
+pillow
+tqdm
+
+# Config & utils
+hydra-core==1.3.2
+omegaconf
+pyyaml
+psutil
+
+# Experiment tracking
+wandb
+
+# RL stack (repo uses gymnasium and some files import gym)
+stable-baselines3[extra]
+gym
+gymnasium
+box2d-py
+
+# Testing
+pytest==8.3.4
