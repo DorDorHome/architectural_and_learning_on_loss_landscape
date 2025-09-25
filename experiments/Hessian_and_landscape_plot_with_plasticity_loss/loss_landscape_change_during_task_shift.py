@@ -24,8 +24,9 @@ import json
 import time
 import random
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
 import hashlib
+import uuid
+from typing import Any, Dict, List, Tuple
 
 import numpy as np
 import torch
@@ -209,13 +210,17 @@ def _build_lla_cfg(base_cfg: ExperimentConfig, eval_batch_size: int = 128) -> Di
     return lla_cfg
 
 
-def _read_yaml_bytes_for_run_id() -> bytes:
-    """Read the task-shift YAML to compute a stable run_id. Returns bytes; empty if read fails."""
-    yaml_path = Path(__file__).with_name('cfg') / 'task_shift_config.yaml'
+def _rename_with_arch_task(path: Path, arch: str, task_idx: int) -> Path:
+    if not path.exists():
+        return path
+    stem = path.stem
+    new_name = f"{stem}_{arch}_task{task_idx}{path.suffix}"
+    new_path = path.with_name(new_name)
     try:
-        return yaml_path.read_bytes()
+        path.rename(new_path)
+        return new_path
     except Exception:
-        return b''
+        return path
 
 
 def _snapshot_eval_dataset(train_set):
@@ -267,12 +272,55 @@ class _SingleBatchDataset(torch.utils.data.Dataset):
         return self.x[idx], self.y[idx]
 
 
+def _make_unique_run_root(base_dir: Path, cfg: Any) -> tuple[Path, str]:
+    """Create a unique per-run directory under base_dir and return (path, run_id).
+
+    run_id format: YYYYmmdd-HHMMSS-<cfgsha8>-<rand6>
+    - cfgsha8: short SHA1 of the resolved YAML for traceability across runs
+    - rand6: guards against collisions when launching multiple runs within the same second
+    """
+    # Hash the full resolved config for reference (not for uniqueness)
+    try:
+        cfg_yaml = OmegaConf.to_yaml(cfg)
+    except Exception:
+        cfg_yaml = str(cfg)
+    cfg_sha = hashlib.sha1(cfg_yaml.encode("utf-8")).hexdigest()[:8]
+    ts = time.strftime("%Y%m%d-%H%M%S")
+
+    # Try a few times with a fresh random suffix if a rare collision occurs
+    for _ in range(5):
+        rand6 = uuid.uuid4().hex[:6]
+        run_id = f"{ts}-{cfg_sha}-{rand6}"
+        run_root = base_dir / f"run_{run_id}"
+        if not run_root.exists():
+            run_root.mkdir(parents=True, exist_ok=False)
+            # Save minimal metadata for traceability
+            try:
+                meta = {
+                    "run_id": run_id,
+                    "timestamp": ts,
+                    "cfg_sha1_8": cfg_sha,
+                    "arch": str(getattr(getattr(cfg, 'net', object()), 'type', 'unknown')),
+                }
+                (run_root / "run_meta.json").write_text(json.dumps(meta, indent=2))
+                (run_root / "config_snapshot.yaml").write_text(cfg_yaml)
+            except Exception:
+                pass
+            return run_root, run_id
+    # Fallback: include full uuid to avoid collision
+    run_id = f"{ts}-{cfg_sha}-{uuid.uuid4().hex}"
+    run_root = base_dir / f"run_{run_id}"
+    run_root.mkdir(parents=True, exist_ok=True)
+    return run_root, run_id
+
+
 def _run_lla_end_of_task(
     model: nn.Module,
     train_set,
     base_cfg: ExperimentConfig,
     out_root: Path,
     task_idx: int,
+    arch: str,
     do_planes: bool = True,
     do_sam: bool = False,
     do_spectrum: bool = True,
@@ -287,7 +335,7 @@ def _run_lla_end_of_task(
 
     # LLA cfg & output directory for this task
     lla_cfg = _build_lla_cfg(base_cfg, eval_batch_size=eval_bs)
-    task_dir = out_root / f"task_{task_idx:04d}"
+    task_dir = out_root / f"task_{task_idx:04d}_{arch}"
     task_dir.mkdir(parents=True, exist_ok=True)
 
     # Criterion for losses (same as lla pipeline)
@@ -306,15 +354,31 @@ def _run_lla_end_of_task(
             planes_dir = task_dir / 'planes'
             planes_dir.mkdir(exist_ok=True)
             plane_info = plot_plane(model, base_state, (v1, v2), eval_loader, lla_cfg, planes_dir, label='hessian')
+            # Rename to include arch/task in filename
+            for k in ['png', 'png3d', 'npy']:
+                if k in plane_info:
+                    p = Path(plane_info[k])
+                    _rename_with_arch_task(p, arch, task_idx)
             result['plane'] = plane_info
 
         if do_sam:
             sam_info = plot_sam_surface(model, base_state, (v1, v2), eval_loader, lla_cfg, task_dir)
+            for k in ['png', 'png3d', 'npy']:
+                if k in sam_info:
+                    p = Path(sam_info[k])
+                    _rename_with_arch_task(p, arch, task_idx)
             result['sam'] = sam_info
 
     # 2) Spectrum (top-k, Hutchinson, ESD)
     if do_spectrum:
         spec_info = compute_spectrum(model, eval_loader, lla_cfg, task_dir)
+        # Rename ESD plot/data and spectrum.json
+        for k in ['esd_png', 'esd_npz', 'json']:
+            p = Path(spec_info.get(k, spec_info.get('png' if k == 'esd_png' else '', ''))) if k in spec_info else None
+        # Best-effort rename for known files
+        for fname in ['spectrum_esd.png', 'spectrum_esd.npz', 'spectrum.json']:
+            p = task_dir / fname
+            _rename_with_arch_task(p, arch, task_idx)
         result['spectrum'] = spec_info
 
     # Back to train mode handled by caller
@@ -349,25 +413,11 @@ def main(cfg: ExperimentConfig) -> Any:
     learner = create_learner(cfg.learner, net, cfg.net)
     net.train()
 
-    # Derive run_id from YAML content and set output root to outputs/loss_landscape_taskshift/<run_id>
-    yaml_bytes = _read_yaml_bytes_for_run_id()
-    if not yaml_bytes:
-        try:
-            yaml_bytes = OmegaConf.to_yaml(cfg).encode('utf-8')
-        except Exception:
-            yaml_bytes = b''
-    h = hashlib.sha256(yaml_bytes).digest()
-    run_id = str(int.from_bytes(h[:8], byteorder='big', signed=False))
-    out_root = PROJECT_ROOT / 'outputs' / 'loss_landscape_taskshift' / run_id
-    out_root.mkdir(parents=True, exist_ok=True)
-    # Save a copy of the YAML used
-    try:
-        if yaml_bytes:
-            (out_root / 'task_shift_config.yaml').write_bytes(yaml_bytes)
-        else:
-            (out_root / 'resolved_config.yaml').write_text(OmegaConf.to_yaml(cfg))
-    except Exception as e:
-        print(f"[warn] failed to save YAML copy: {e}")
+    # Out root for artifacts (local only) — make per-run unique directory
+    arch = str(cfg.net.type)
+    base_out = PROJECT_ROOT / 'outputs' / 'loss_landscape_taskshift' / arch
+    out_root, run_id = _make_unique_run_root(base_out, cfg)
+    print(f"Saving artifacts under: {out_root} (run_id={run_id})")
 
     # wandb (numeric only)
     use_wandb = bool(getattr(cfg, 'use_wandb', False))
@@ -376,15 +426,12 @@ def main(cfg: ExperimentConfig) -> Any:
             import wandb  # type: ignore
             run_cfg = {
                 'seed': int(cfg.seed),
-                'arch': str(cfg.net.type),
+                'arch': arch,
                 'task_shift_mode': str(cfg.task_shift_mode),
                 'run_id': run_id,
+                'artifact_dir': str(out_root),
             }
-            wandb.init(project=str(cfg.wandb.project), config=run_cfg)
-            try:
-                wandb.log({'run_id': int(run_id)}, step=0)  # type: ignore[attr-defined]
-            except Exception:
-                pass
+            wandb.init(project=str(cfg.wandb.project), config=run_cfg, name=run_id)
         except Exception as e:
             print(f"[wandb] init failed: {e}. Proceeding without wandb.")
             use_wandb = False
@@ -550,6 +597,7 @@ def main(cfg: ExperimentConfig) -> Any:
                 base_cfg=cfg,
                 out_root=out_root,
                 task_idx=task_idx,
+                arch=arch,
                 do_planes=do_planes,
                 do_sam=do_sam,
                 do_spectrum=do_spectrum,
@@ -558,10 +606,10 @@ def main(cfg: ExperimentConfig) -> Any:
 
             # Parse top-k from saved spectrum.json if present
             topk_metrics: Dict[str, float] = {}
-            spec_json = out_root / f"task_{task_idx:04d}" / 'spectrum.json'
+            spec_json = out_root / f"task_{task_idx:04d}_{arch}" / 'spectrum.json'
             if not spec_json.exists():
                 # try renamed variant
-                for p in (out_root / f"task_{task_idx:04d}").glob('spectrum*.json'):
+                for p in (out_root / f"task_{task_idx:04d}_{arch}").glob('spectrum*.json'):
                     spec_json = p
                     break
             try:
@@ -585,8 +633,7 @@ def main(cfg: ExperimentConfig) -> Any:
                         rank_mean_delta = float(layer_summ.get('layer_rank_mean', 0.0) - prev_layer_rank_mean)
                     log_data: Dict[str, float | int | str] = {
                         'task_idx': task_idx,
-                        'arch': str(cfg.net.type),
-                        'run_id': int(run_id),
+                        'arch': arch,
                         'lla_runtime_sec': dt,
                         **layer_summ,
                         **weight_summ,
