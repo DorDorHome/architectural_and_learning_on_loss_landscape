@@ -1,0 +1,4 @@
+[submodule "experiments/Hessian_and_landscape_plot_with_plasticity_loss/external/loss-landscape-analysis"]
+	path = experiments/Hessian_and_landscape_plot_with_plasticity_loss/external/loss-landscape-analysis
+	url = https://github.com/GabdullinN/loss-landscape-analysis
+	branch = main
