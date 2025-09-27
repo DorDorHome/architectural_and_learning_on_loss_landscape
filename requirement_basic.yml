@@ -13,6 +13,9 @@ dependencies:
   - pillow
   - tqdm
   - psutil
+  # Build/tooling and Box2D bindings from conda to avoid pip build
+  - swig
+  - pybox2d
   # PyTorch from Conda (CPU/GPU resolved by Conda)
   - pytorch
   - torchvision
@@ -22,7 +25,6 @@ dependencies:
       - stable-baselines3[extra]
       - gym
       - gymnasium
-      - box2d-py
       - hydra-core==1.3.2
       - omegaconf
       - pyyaml

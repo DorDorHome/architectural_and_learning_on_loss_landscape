@@ -2,6 +2,12 @@ Hessian_and_landscape_plot_with_plasticity_loss
 
 Quick start
 
+- install:
+- this experiment requires a submodule. To use enable it, run the following at root to clone the submodule into experiments/Hessian_and_landscape_plot_with_plasticity_loss/external:
+
+git submodule update --init --recursive
+
+
 - Run the pipeline with the default config:
 
 	python lla_pipeline.py --config experiments/Hessian_and_landscape_plot_with_plasticity_loss/cfg/config.yaml --task all --outdir experiments/Hessian_and_landscape_plot_with_plasticity_loss/results
