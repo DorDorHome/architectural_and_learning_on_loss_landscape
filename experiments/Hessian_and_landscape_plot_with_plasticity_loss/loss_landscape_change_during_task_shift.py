@@ -53,17 +53,35 @@ from src.data_loading.shifting_dataset import (
     create_stateless_dataset_wrapper,
 )  # type: ignore
 from src.algos.supervised.supervised_factory import create_learner  # type: ignore
-from src.utils.miscellaneous import compute_matrix_rank_summaries  # type: ignore
+# from src.utils.miscellaneous import compute_matrix_rank_summaries  # (legacy; removed by refactor)
+# Rank / feature tracking utilities (replace prior layer_rank/gini custom code)
+from src.utils.zeroth_order_features import compute_all_rank_measures_list, count_saturated_units_list  # type: ignore
+from src.utils.rank_drop_dynamics import compute_rank_dynamics_from_features  # type: ignore
+from src.utils.track_weights_norm import track_weight_stats  # type: ignore
 
-# Import LLA utilities (pure, no side-effects)
-from experiments.Hessian_and_landscape_plot_with_plasticity_loss.lla_pipeline import (
-    get_hessian_axes,
-    plot_plane,
-    compute_spectrum,
-    plot_sam_surface,
-    _get_eval_batch,
-    _criterion_from_cfg,
-)  # type: ignore
+# LLA submodule integration (replace previous custom pipeline usage)
+# Add submodule src path
+LLA_SUBMODULE_SRC = Path(__file__).parent / 'external' / 'loss-landscape-analysis' / 'src'
+if LLA_SUBMODULE_SRC.exists() and str(LLA_SUBMODULE_SRC) not in sys.path:
+    sys.path.insert(0, str(LLA_SUBMODULE_SRC))
+
+try:  # Import required LLA components
+    from src_lla.hessian.hessian import hessian_calc  # type: ignore
+    from src_lla.loss_landscapes.dev import vec_H_eigenvects  # type: ignore
+    from src_lla.loss_landscapes.main import random_plane  # type: ignore
+    from src_lla.loss_landscapes.metrics.metric import Metric  # type: ignore
+    LLA_AVAILABLE = True
+except Exception as e:  # fallback flag
+    print(f"[LLA] Submodule import failed ({e}); falling back to legacy pipeline (limited features).")
+    LLA_AVAILABLE = False
+
+# Legacy SAM surface still relies on old custom implementation; we keep it optional if needed.
+try:
+    from experiments.Hessian_and_landscape_plot_with_plasticity_loss.lla_pipeline import (
+        plot_sam_surface,  # type: ignore
+    )  # Only SAM retained for now
+except Exception:
+    plot_sam_surface = None  # type: ignore
 
 
 def _seed_everything(seed: int) -> None:
@@ -76,16 +94,6 @@ def _seed_everything(seed: int) -> None:
     torch.backends.cudnn.benchmark = False
 
 
-def _gini(x: torch.Tensor) -> float:
-    x = x.flatten().abs().sort().values
-    n = x.numel()
-    if n == 0:
-        return 0.0
-    cumx = torch.cumsum(x, dim=0)
-    g = (n + 1 - 2 * (cumx.sum() / x.sum())) / n if x.sum() > 0 else 0.0
-    return float(g)
-
-
 def _deep_update(dst: Dict[str, Any], src: Dict[str, Any]) -> Dict[str, Any]:
     """Deep-merge src into dst (in place) and return dst."""
     for k, v in src.items():
@@ -94,52 +102,6 @@ def _deep_update(dst: Dict[str, Any], src: Dict[str, Any]) -> Dict[str, Any]:
         else:
             dst[k] = v
     return dst
-
-
-def _collect_weight_stats(model: nn.Module) -> Dict[str, float]:
-    l2 = 0.0
-    l1 = 0.0
-    count = 0
-    for p in model.parameters():
-        if p.requires_grad:
-            l2 += float(p.detach().float().norm(p=2).item())
-            l1 += float(p.detach().float().abs().sum().item())
-            count += p.numel()
-    return {
-        'weight_l2_total': l2,
-        'weight_l1_total': l1,
-        'weight_params': float(count),
-        'weight_l2_avg_per_param': l2 / max(1.0, float(count)),
-        'weight_l1_avg_per_param': l1 / max(1.0, float(count)),
-    }
-
-
-def _collect_layer_rank_gini(model: nn.Module, prop: float = 0.99) -> Dict[str, float]:
-    ranks: List[float] = []
-    ginis: List[float] = []
-    for name, mod in model.named_modules():
-        if isinstance(mod, nn.Linear):
-            W = mod.weight.detach()
-            M = W  # (out,in)
-        elif isinstance(mod, nn.Conv2d):
-            W = mod.weight.detach()
-            M = W.view(W.shape[0], -1)  # out, in*k*k
-        else:
-            continue
-        try:
-            rank, eff_rank, approx_rank, approx_abs = compute_matrix_rank_summaries(M, prop=prop)
-            sv = torch.linalg.svdvals(M)
-            g = _gini(sv)
-            ranks.append(float(approx_rank.item()))
-            ginis.append(float(g))
-        except Exception:
-            continue
-    return {
-        'layer_rank_mean': float(np.mean(ranks)) if ranks else 0.0,
-        'layer_rank_median': float(np.median(ranks)) if ranks else 0.0,
-        'layer_gini_mean': float(np.mean(ginis)) if ginis else 0.0,
-        'layer_count': float(len(ranks)),
-    }
 
 
 def _build_lla_cfg(base_cfg: ExperimentConfig, eval_batch_size: int = 128) -> Dict[str, Any]:
@@ -208,6 +170,361 @@ def _build_lla_cfg(base_cfg: ExperimentConfig, eval_batch_size: int = 128) -> Di
     except Exception:
         pass
     return lla_cfg
+
+
+def _make_criterion(loss_name: str | None = 'cross_entropy') -> nn.Module:
+    if loss_name == 'mse':
+        return nn.MSELoss()
+    return nn.CrossEntropyLoss()
+
+
+class FixedBatchMetric(Metric):
+    """Metric implementation compatible with LLA's expectations for both
+    - Hessian construction (called as metric(None, model=..., return_pred=True))
+    - Plane evaluation (called as metric(model_wrapper))
+
+    Captures a fixed (x,y) batch for reproducibility & efficiency.
+    """
+
+    def __init__(self, x: torch.Tensor, y: torch.Tensor, device: str, criterion: nn.Module):
+        super().__init__()
+        self.x = x.detach().to(device)
+        self.y = y.detach().to(device)
+        self.device = device
+        self.criterion = criterion
+
+    def _forward(self, model: nn.Module) -> tuple[torch.Tensor, torch.Tensor]:
+        model.eval()
+        out = model(self.x)
+        if isinstance(self.criterion, nn.MSELoss):
+            if self.y.dtype in (torch.long, torch.int64):
+                y_oh = torch.nn.functional.one_hot(self.y, num_classes=out.shape[-1]).float()
+            else:
+                y_oh = self.y.float()
+            loss = self.criterion(out, y_oh)
+        else:
+            loss = self.criterion(out, self.y)
+        return loss, out
+
+    # Plane / landscape API call (wrapped model)
+    def __call__(self, model_wrapper, *args, **kwargs):  # type: ignore[override]
+        # If called with wrapped model (ModelWrapper) we extract underlying module
+        if hasattr(model_wrapper, 'modules') and len(model_wrapper.modules) == 1:  # plane evaluation path
+            model = model_wrapper.modules[0]
+            loss, _ = self._forward(model)
+            return loss.detach().cpu().item()
+        # Hessian path: signature metric(None, model=..., return_pred=True)
+        model = kwargs.get('model', None)
+        return_pred = kwargs.get('return_pred', False)
+        if model is None:
+            raise ValueError("Metric called without model.")
+        loss, out = self._forward(model)
+        if return_pred:
+            return loss, out
+        return loss
+
+
+def _first_batch(loader: DataLoader, device: str) -> tuple[torch.Tensor, torch.Tensor]:
+    batch = next(iter(loader))
+    x, y = batch
+    if isinstance(y, tuple):  # drifting_values case not supported for LLA Hessian; use original labels
+        # y is (drifting_values, original_labels); use original_labels for supervised loss
+        try:
+            _, orig = y
+            y = orig
+        except Exception:
+            y = y[0]
+    return x.to(device), y.to(device)
+
+
+def _smooth_esd(eigs: List[List[float]], weights: List[List[float]], grid: int = 200, sigma_scale: float = 0.02) -> dict:
+    all_e = np.array([e for sub in eigs for e in sub], dtype=np.float64)
+    all_w = np.array([w for sub in weights for w in sub], dtype=np.float64)
+    if all_e.size == 0:
+        return {
+            'lambda_grid': np.zeros(1),
+            'density': np.zeros(1),
+            'lam_min': 0.0,
+            'lam_max': 0.0,
+            'sigma': 0.0,
+            'degenerate': True,
+        }
+    lam_min = float(all_e.min())
+    lam_max = float(all_e.max())
+    span = lam_max - lam_min
+    if span <= 1e-12:
+        span = 1.0
+        lam_min -= 0.5
+        lam_max += 0.5
+    lambda_grid = np.linspace(lam_min, lam_max, grid, dtype=np.float64)
+    sigma = max(sigma_scale * (lam_max - lam_min), 1e-8)
+    dens = np.zeros_like(lambda_grid)
+    k = 1.0 / (np.sqrt(2 * np.pi) * sigma)
+    for ev, w in zip(all_e, all_w):
+        dens += w * k * np.exp(-0.5 * ((lambda_grid - ev) / sigma) ** 2)
+    area = np.trapz(dens, lambda_grid)
+    if area > 0:
+        dens /= area
+    degenerate = bool(len(np.unique(np.round(all_e, 8))) == 1)
+    return {
+        'lambda_grid': lambda_grid,
+        'density': dens,
+        'lam_min': float(lam_min),
+        'lam_max': float(lam_max),
+        'sigma': float(sigma),
+        'degenerate': degenerate,
+        'raw_eigs': all_e,
+        'raw_weights': all_w,
+    }
+
+
+def _compute_planes_and_spectrum_with_lla(
+    model: nn.Module,
+    eval_loader: DataLoader,
+    task_dir: Path,
+    lla_cfg: Dict[str, Any],
+    do_planes: bool,
+    do_spectrum: bool,
+) -> Dict[str, Any]:
+    """Core refactored LLA evaluation: Hessian eigenvectors, plane, spectrum (top-k, trace, ESD).
+    Returns dict with similar keys to legacy pipeline for downstream logging compatibility.
+    """
+    device = lla_cfg.get('device', 'cuda:0')
+    loss_name = lla_cfg.get('learner', {}).get('loss', 'cross_entropy')
+    criterion = _make_criterion(loss_name)
+    x, y = _first_batch(eval_loader, device)
+    metric = FixedBatchMetric(x, y, device, criterion)
+
+    out: Dict[str, Any] = {}
+    plane_dir = task_dir / 'planes'
+    plane_dir.mkdir(exist_ok=True)
+
+    spectrum_dir = task_dir  # keep in task root for backward compatibility
+
+    # Parameters from config or sensible LLA defaults
+    planes_cfg = lla_cfg.get('lla', {}).get('planes', {})
+    grid_res = int(planes_cfg.get('grid_resolution', 41))
+    # Derive distance: prefer explicit 'distance'; else infer symmetric half-range from 'span'
+    if 'distance' in planes_cfg:
+        distance = float(planes_cfg.get('distance'))
+    else:
+        span_cfg = planes_cfg.get('span', [-0.5, 0.5])
+        if isinstance(span_cfg, (list, tuple)) and len(span_cfg) == 2:
+            try:
+                distance = float(max(abs(float(span_cfg[0])), abs(float(span_cfg[1]))))
+            except Exception:
+                distance = 1.0
+        else:
+            distance = 1.0
+    normalization = planes_cfg.get('normalization', 'filter')
+
+    top_k = int(lla_cfg.get('lla', {}).get('spectrum', {}).get('top_k', 5))
+    power_iters = int(lla_cfg.get('lla', {}).get('spectrum', {}).get('power_iters', 100))
+    trace_probes = int(lla_cfg.get('lla', {}).get('spectrum', {}).get('hutchinson_probes', 32))
+    esd_cfg = lla_cfg.get('lla', {}).get('spectrum', {}).get('esd', {})
+    lanczos_steps = int(esd_cfg.get('lanczos_steps', lla_cfg.get('lla', {}).get('spectrum', {}).get('slq_m', 80)))
+    esd_probes = int(esd_cfg.get('num_probes', lla_cfg.get('lla', {}).get('spectrum', {}).get('slq_probes', 8)))
+    esd_bins = int(esd_cfg.get('bins', lla_cfg.get('lla', {}).get('spectrum', {}).get('slq_grid', 200)))
+    sigma_scale = float(esd_cfg.get('sigma_scale', 0.02))
+
+    t_all0 = time.time()
+    hess = hessian_calc(model, metric)
+
+    # Top eigen-stuff
+    t_eig0 = time.time()
+    eigvals, eigvecs = hess.eigs_calc(top_n=max(2, top_k), n_iter=power_iters)
+    t_eigs = time.time() - t_eig0
+
+    # Trace via Hutchinson
+    t_tr0 = time.time()
+    trace_est = hess.tr_calc(n_iter=trace_probes)
+    t_trace = time.time() - t_tr0
+
+    # ESD via SLQ
+    t_esd0 = time.time()
+    esd_eigs, esd_weights = hess.esd_calc(n_iter=lanczos_steps, n_v=esd_probes)
+    esd_pack = _smooth_esd(esd_eigs, esd_weights, grid=esd_bins, sigma_scale=sigma_scale)
+    t_esd = time.time() - t_esd0
+
+    # Plane (Hessian-aligned)
+    plane_info: Dict[str, Any] | None = None
+    if do_planes:
+        try:
+            a1, a2 = vec_H_eigenvects(hess)
+            plane_arr = random_plane(
+                model,
+                metric,
+                distance=distance,
+                steps=grid_res,
+                normalization=normalization,
+                deepcopy_model=True,
+                a1=a1,
+                a2=a2,
+                mode='add',
+            )
+            plane_path = plane_dir / 'plane_hessian.npy'
+            np.save(plane_path, plane_arr)
+            # Visualizations: heatmap (centered), 3D surface, and contour
+            try:
+                import matplotlib
+                matplotlib.use('Agg')
+                import matplotlib.pyplot as plt
+                from matplotlib import cm
+                from mpl_toolkits.mplot3d import Axes3D  # noqa: F401 (needed for 3d projection)
+
+                # Build centered coordinate grid: (-distance .. distance)
+                # random_plane returns a square matrix of shape (steps, steps)
+                coords = np.linspace(-distance, distance, plane_arr.shape[0])
+                X, Y = np.meshgrid(coords, coords, indexing='xy')
+
+                # 1) Heatmap (centered)
+                fig_h, ax_h = plt.subplots(figsize=(5.2, 4.4))
+                im = ax_h.imshow(
+                    plane_arr,
+                    origin='lower',
+                    cmap='viridis',
+                    extent=[-distance, distance, -distance, distance],
+                    aspect='auto',
+                )
+                ax_h.set_xlabel('Direction 1 (center=0)')
+                ax_h.set_ylabel('Direction 2 (center=0)')
+                ax_h.set_title('Hessian-aligned plane (heatmap)')
+                cbar = fig_h.colorbar(im, ax=ax_h)
+                cbar.set_label('Loss')
+                heatmap_png = plane_dir / 'plane_hessian_heatmap.png'
+                fig_h.tight_layout()
+                fig_h.savefig(heatmap_png)
+                plt.close(fig_h)
+
+                # 2) 3D surface plot
+                fig3d = plt.figure(figsize=(6, 4.8))
+                ax3d = fig3d.add_subplot(111, projection='3d')
+                surf = ax3d.plot_surface(X, Y, plane_arr, cmap=cm.viridis, linewidth=0, antialiased=True)
+                ax3d.set_xlabel('Dir 1')
+                ax3d.set_ylabel('Dir 2')
+                ax3d.set_zlabel('Loss')
+                ax3d.set_title('Loss surface (Hessian plane)')
+                fig3d.colorbar(surf, shrink=0.6, aspect=12, pad=0.08).set_label('Loss')
+                surface_png = plane_dir / 'plane_hessian_surface3d.png'
+                fig3d.tight_layout()
+                fig3d.savefig(surface_png)
+                plt.close(fig3d)
+
+                # 3) Contour plot (optional for clearer level sets)
+                fig_c, ax_c = plt.subplots(figsize=(5.2, 4.4))
+                CS = ax_c.contour(X, Y, plane_arr, levels=20, cmap='viridis')
+                ax_c.clabel(CS, inline=True, fontsize=7)
+                ax_c.set_xlabel('Direction 1 (center=0)')
+                ax_c.set_ylabel('Direction 2 (center=0)')
+                ax_c.set_title('Loss contours (Hessian plane)')
+                contour_png = plane_dir / 'plane_hessian_contour.png'
+                fig_c.tight_layout()
+                fig_c.savefig(contour_png)
+                plt.close(fig_c)
+
+            except Exception as e:
+                print(f"[LLA][plane] plot failed: {e}")
+            plane_info = {
+                'grid_resolution': grid_res,
+                'distance': distance,
+                'normalization': normalization,
+                'npy': str(plane_path),
+                'heatmap_png': str(plane_dir / 'plane_hessian_heatmap.png'),
+                'surface3d_png': str(plane_dir / 'plane_hessian_surface3d.png'),
+                'contour_png': str(plane_dir / 'plane_hessian_contour.png'),
+            }
+        except Exception as e:
+            print(f"[LLA] Hessian plane failed: {e}")
+
+    # Build spectrum json (compat shape)
+    spec = {
+        'top_k': eigvals[:top_k],
+        'hutchinson_trace': float(trace_est),
+        'dim': sum(p.numel() for p in model.parameters() if p.requires_grad),
+        'k_used': top_k,
+        'probes': trace_probes,
+        'algorithm_topk': 'LLA_hessian_power_iteration',
+        'algorithm_trace': 'LLA_Hutchinson',
+        'algorithm_esd': 'LLA_SLQ',
+        'timing_seconds': {
+            'topk': t_eigs,
+            'hutchinson_trace': t_trace,
+            'esd_slq': t_esd,
+            'total': t_eigs + t_trace + t_esd,
+        },
+        'esd': {
+            'n_grid': esd_bins,
+            'probes': esd_probes,
+            'm': lanczos_steps,
+            'lam_min': float(esd_pack['lam_min']),
+            'lam_max': float(esd_pack['lam_max']),
+            'sigma': float(esd_pack['sigma']),
+            'degenerate': bool(esd_pack['degenerate']),
+        },
+    }
+
+    # Save ESD arrays
+    np.savez(
+        spectrum_dir / 'spectrum_esd.npz',
+        lambda_grid=esd_pack['lambda_grid'],
+        density=esd_pack['density'],
+        raw_eigs=esd_pack['raw_eigs'],
+        raw_weights=esd_pack['raw_weights'],
+    )
+    # Plot ESD (smoothed density)
+    try:
+        import matplotlib
+        matplotlib.use('Agg')
+        import matplotlib.pyplot as plt
+        fig, ax = plt.subplots(figsize=(5, 4))
+        ax.plot(esd_pack['lambda_grid'], esd_pack['density'])
+        ax.set_xlabel('eigenvalue')
+        ax.set_ylabel('density')
+        ax.set_title('ESD (LLA SLQ)')
+        fig.tight_layout()
+        esd_png = spectrum_dir / 'spectrum_esd.png'
+        fig.savefig(esd_png)
+        plt.close(fig)
+    except Exception as e:
+        print(f"[LLA][ESD] plotting failed: {e}")
+
+    # Plot raw eigenvalue histogram (weighted by SLQ weights)
+    try:
+        import matplotlib
+        matplotlib.use('Agg')
+        import matplotlib.pyplot as plt
+        fig_hg, ax_hg = plt.subplots(figsize=(5, 4))
+        raw_eigs = esd_pack.get('raw_eigs', np.array([]))
+        raw_weights = esd_pack.get('raw_weights', np.array([]))
+        if isinstance(raw_eigs, np.ndarray) and raw_eigs.size > 0:
+            weights = None
+            if isinstance(raw_weights, np.ndarray) and raw_weights.size == raw_eigs.size and raw_weights.sum() > 0:
+                weights = raw_weights / raw_weights.sum()
+            ax_hg.hist(raw_eigs, bins=min(50, max(10, int(np.sqrt(raw_eigs.size)))), weights=weights, color='steelblue', edgecolor='black')
+        ax_hg.set_xlabel('eigenvalue')
+        ax_hg.set_ylabel('weighted count' if (isinstance(raw_weights, np.ndarray) and raw_weights.size == raw_eigs.size) else 'count')
+        ax_hg.set_title('Spectrum histogram (SLQ samples)')
+        fig_hg.tight_layout()
+        hist_png = spectrum_dir / 'spectrum_hist.png'
+        fig_hg.savefig(hist_png)
+        plt.close(fig_hg)
+    except Exception as e:
+        print(f"[LLA][ESD] histogram plotting failed: {e}")
+
+    (spectrum_dir / 'spectrum.json').write_text(json.dumps(spec, indent=2))
+
+    # Clean up Hessian graph
+    try:
+        hess.reset()
+    except Exception:
+        pass
+
+    if plane_info is not None:
+        out['plane'] = plane_info
+    if do_spectrum:
+        out['spectrum'] = spec
+    out['total_runtime_sec'] = time.time() - t_all0
+    return out
 
 
 def _rename_with_arch_task(path: Path, arch: str, task_idx: int) -> Path:
@@ -333,55 +650,43 @@ def _run_lla_end_of_task(
     eval_bs = min(128, len(eval_ds)) if hasattr(eval_ds, '__len__') else 128
     eval_loader = DataLoader(eval_ds, batch_size=eval_bs, shuffle=False, num_workers=0, pin_memory=True)
 
-    # LLA cfg & output directory for this task
+    # LLA cfg & output directory
     lla_cfg = _build_lla_cfg(base_cfg, eval_batch_size=eval_bs)
     task_dir = out_root / f"task_{task_idx:04d}_{arch}"
     task_dir.mkdir(parents=True, exist_ok=True)
 
-    # Criterion for losses (same as lla pipeline)
-    criterion = _criterion_from_cfg(lla_cfg)
-    x, y = _get_eval_batch(eval_loader, device)
-
     result: Dict[str, Any] = {}
+    if not LLA_AVAILABLE:
+        print("[LLA] Submodule not available; skipping planes/spectrum (set up submodule to enable).")
+        return result
 
-    # 1) Hessian axes and plane
-    if do_planes or do_sam:
-        v1, v2, meta = get_hessian_axes(model, eval_loader, lla_cfg)
-        (task_dir / 'hessian_axes_meta.json').write_text(json.dumps(meta, indent=2))
-        # Freeze base state to avoid aliasing with live params during plane eval
-        base_state = {k: v.detach().clone() for k, v in model.state_dict().items()}
-        if do_planes:
-            planes_dir = task_dir / 'planes'
-            planes_dir.mkdir(exist_ok=True)
-            plane_info = plot_plane(model, base_state, (v1, v2), eval_loader, lla_cfg, planes_dir, label='hessian')
-            # Rename to include arch/task in filename
-            for k in ['png', 'png3d', 'npy']:
-                if k in plane_info:
-                    p = Path(plane_info[k])
-                    _rename_with_arch_task(p, arch, task_idx)
-            result['plane'] = plane_info
-
-        if do_sam:
-            sam_info = plot_sam_surface(model, base_state, (v1, v2), eval_loader, lla_cfg, task_dir)
-            for k in ['png', 'png3d', 'npy']:
-                if k in sam_info:
-                    p = Path(sam_info[k])
-                    _rename_with_arch_task(p, arch, task_idx)
-            result['sam'] = sam_info
-
-    # 2) Spectrum (top-k, Hutchinson, ESD)
-    if do_spectrum:
-        spec_info = compute_spectrum(model, eval_loader, lla_cfg, task_dir)
-        # Rename ESD plot/data and spectrum.json
-        for k in ['esd_png', 'esd_npz', 'json']:
-            p = Path(spec_info.get(k, spec_info.get('png' if k == 'esd_png' else '', ''))) if k in spec_info else None
-        # Best-effort rename for known files
-        for fname in ['spectrum_esd.png', 'spectrum_esd.npz', 'spectrum.json']:
+    try:
+        res = _compute_planes_and_spectrum_with_lla(
+            model=model,
+            eval_loader=eval_loader,
+            task_dir=task_dir,
+            lla_cfg=lla_cfg,
+            do_planes=do_planes,
+            do_spectrum=do_spectrum,
+        )
+        result.update(res)
+        # Rename outputs to include arch & task for consistency
+        for fname in ['spectrum_esd.png', 'spectrum_hist.png', 'spectrum_esd.npz', 'spectrum.json']:
             p = task_dir / fname
             _rename_with_arch_task(p, arch, task_idx)
-        result['spectrum'] = spec_info
+        if 'plane' in result:
+            for key in ['heatmap_png', 'surface3d_png', 'contour_png', 'npy']:
+                if key in result['plane']:
+                    try:
+                        _rename_with_arch_task(Path(result['plane'][key]), arch, task_idx)
+                    except Exception:
+                        pass
+    except Exception as e:
+        print(f"[LLA] End-of-task LLA evaluation failed: {e}")
 
-    # Back to train mode handled by caller
+    if do_sam:
+        print("[LLA][SAM] SAM surface not yet refactored to LLA; skipping (previous implementation removed).")
+
     return result
 
 
@@ -556,10 +861,78 @@ def main(cfg: ExperimentConfig) -> Any:
 
             # End-of-task: compute numeric summaries and LLA metrics (once per task)
             pbar_tasks.set_postfix_str("LLA end-of-task…")
-            # Layer-wise rank/gini and weight norms
-            rank_cfg_prop = float(getattr(cfg, 'prop_for_approx_or_l1_rank', 0.99)) if hasattr(cfg, 'prop_for_approx_or_l1_rank') else 0.99
-            layer_summ = _collect_layer_rank_gini(net, prop=rank_cfg_prop)
-            weight_summ = _collect_weight_stats(net)
+            # ---------------- Rank / feature based summaries (mirror reference script) ----------------
+            rank_summary_list: List[Dict[str, float]] = []
+            list_of_features_for_every_layers: List[torch.Tensor] = []
+            # Use learner.previous_features if available; else regenerate from last batch
+            try:
+                if hasattr(learner, 'previous_features') and isinstance(learner.previous_features, list):
+                    list_of_features_for_every_layers = [f.detach() for f in learner.previous_features]
+                elif last_batch_inp_cpu is not None:
+                    net.eval()
+                    with torch.no_grad():
+                        inp_dev = last_batch_inp_cpu.to(cfg.net.device)
+                        if hasattr(net, 'predict'):
+                            _, list_of_features_for_every_layers = net.predict(inp_dev)  # type: ignore
+                        else:
+                            _ = net(inp_dev)
+                # Flatten to (batch, dim)
+                list_of_features_for_every_layers = [feat.view(feat.size(0), -1) for feat in list_of_features_for_every_layers if isinstance(feat, torch.Tensor)]
+                if list_of_features_for_every_layers:
+                    rank_summary_list = compute_all_rank_measures_list(
+                        features=list_of_features_for_every_layers,
+                        use_pytorch_entropy_for_effective_rank=getattr(cfg, 'use_pytorch_entropy_for_effective_rank', False),
+                        prop_for_approx_or_l1_rank=getattr(cfg, 'prop_for_approx_or_l1_rank', 0.99),
+                        numerical_rank_epsilon=getattr(cfg, 'numerical_rank_epsilon', 1e-6),
+                    )
+            except Exception as e:
+                print(f"[rank] end-of-task feature extraction failed: {e}")
+            # Dead units
+            dead_units_for_features: List[int] = []
+            if getattr(cfg, 'track_dead_units', False) and list_of_features_for_every_layers:
+                try:
+                    dead_units_for_features = count_saturated_units_list(
+                        features_list=list_of_features_for_every_layers,
+                        activation_type=cfg.net.netparams.activation,
+                        threshold=getattr(cfg, 'threshold_for_non_saturating_act', 0.0),
+                    )
+                except Exception as e:
+                    print(f"[dead-units] failed: {e}")
+            # Actual rank (optional)
+            actual_rank_list: List[int] = []
+            if getattr(cfg, 'track_actual_rank', False) and list_of_features_for_every_layers:
+                try:
+                    for feat in list_of_features_for_every_layers:
+                        try:
+                            actual_rank_list.append(int(torch.linalg.matrix_rank(feat.cpu().detach())))
+                        except Exception:
+                            actual_rank_list.append(0)
+                except Exception as e:
+                    print(f"[actual-rank] failed: {e}")
+            # Rank dynamics
+            rank_dynamics: Dict[str, float] = {}
+            rank_dynamics_enabled = bool(getattr(cfg, 'enable_rank_dynamics', getattr(cfg, 'track_rank_drop', True)))
+            if rank_dynamics_enabled and list_of_features_for_every_layers and rank_summary_list:
+                try:
+                    rank_dynamics = compute_rank_dynamics_from_features(
+                        feature_list=list_of_features_for_every_layers,
+                        rank_summary_list=rank_summary_list,
+                        batch_size=getattr(cfg, 'specified_batch_size', getattr(cfg, 'batch_size', 0)),
+                        mode=getattr(cfg, 'rank_drop_mode', 'ratio'),
+                        use_theoretical_max_first=getattr(cfg, 'from_theoretical_max_first_feature_rank', False),
+                    )
+                except Exception as e:
+                    print(f"[rank-dynamics] failed: {e}")
+            # Weight magnitudes (naming: <layer>_mean_abs_weight)
+            weight_summ: Dict[str, float] = {}
+            try:
+                if getattr(cfg, 'track_weight_magnitude', True):
+                    weight_stats = track_weight_stats(net, layer_identifiers=getattr(cfg, 'layers_identifier', None))
+                    for name, val in weight_stats.items():
+                        key = name if name.endswith('_mean_abs_weight') else f'{name}_mean_abs_weight'
+                        weight_summ[key] = float(val)
+            except Exception as e:
+                print(f"[weights] tracking failed: {e}")
 
             # LLA: spectrum/planes/SAM selection from YAML toggles
             lla_cfg_block = getattr(cfg, 'lla', {})
@@ -625,38 +998,58 @@ def main(cfg: ExperimentConfig) -> Any:
             if use_wandb:
                 try:
                     import wandb  # type: ignore
-                    rank_drop_gini = None
-                    rank_mean_delta = None
-                    if prev_layer_gini_mean is not None:
-                        rank_drop_gini = float(prev_layer_gini_mean - layer_summ.get('layer_gini_mean', 0.0))
-                    if prev_layer_rank_mean is not None:
-                        rank_mean_delta = float(layer_summ.get('layer_rank_mean', 0.0) - prev_layer_rank_mean)
                     log_data: Dict[str, float | int | str] = {
                         'task_idx': task_idx,
                         'arch': arch,
                         'lla_runtime_sec': dt,
-                        **layer_summ,
                         **weight_summ,
                         **topk_metrics,
                     }
+                    # Per-layer rank metrics
+                    # Try semantic layer names first (mirror reference script behavior)
+                    semantic_logged = False
+                    try:
+                        if hasattr(learner, 'get_layer_names'):
+                            layer_names = learner.get_layer_names()
+                            for i, layer_name in enumerate(layer_names):
+                                if i < len(rank_summary_list):
+                                    rs = rank_summary_list[i]
+                                    log_data[f'{layer_name}_effective_rank'] = rs['effective_rank']
+                                    log_data[f'{layer_name}_approximate_rank'] = rs['approximate_rank']
+                                    log_data[f'{layer_name}_l1_distribution_rank'] = rs['l1_distribution_rank']
+                                    log_data[f'{layer_name}_numerical_rank'] = rs['numerical_rank']
+                            semantic_logged = True
+                    except Exception as e_sem:
+                        print(f"[rank] semantic layer naming failed: {e_sem}; falling back to indexed names.")
+                    if not semantic_logged:
+                        for i, rs in enumerate(rank_summary_list):
+                            log_data[f'layer_{i}_effective_rank'] = rs['effective_rank']
+                            log_data[f'layer_{i}_approximate_rank'] = rs['approximate_rank']
+                            log_data[f'layer_{i}_l1_distribution_rank'] = rs['l1_distribution_rank']
+                            log_data[f'layer_{i}_numerical_rank'] = rs['numerical_rank']
+                    # Dead units
+                    for i, dead in enumerate(dead_units_for_features):
+                        log_data[f'layer_{i}_num_dead_units'] = int(dead)
+                    # Actual ranks
+                    for i, ar in enumerate(actual_rank_list):
+                        log_data[f'layer_{i}_actual_rank'] = int(ar)
+                    # Rank dynamics metrics
+                    for k, v in rank_dynamics.items():
+                        log_data[k] = float(v)
                     if last_epoch_loss_mean is not None:
                         log_data['task_last_epoch_loss'] = float(last_epoch_loss_mean)
                     if last_epoch_accuracy is not None:
                         log_data['task_last_epoch_accuracy'] = float(last_epoch_accuracy)
-                    if rank_drop_gini is not None:
-                        log_data['rank_drop_gini'] = rank_drop_gini
-                    if rank_mean_delta is not None:
-                        log_data['layer_rank_mean_delta'] = rank_mean_delta
-                    # align end-of-task metrics with the global epoch timeline
+                    # Align end-of-task metrics with global epoch timeline
                     end_of_task_step = int((task_idx + 1) * epochs_per_task - 1)
                     log_data['global_epoch'] = end_of_task_step
                     wandb.log(log_data, step=end_of_task_step)  # type: ignore[attr-defined]
                 except Exception as e:
                     print(f"[wandb] log failed: {e}")
 
-            # proceed to next task
-            prev_layer_gini_mean = layer_summ.get('layer_gini_mean', None)
-            prev_layer_rank_mean = layer_summ.get('layer_rank_mean', None)
+            # proceed to next task (no gini/rank mean retained anymore)
+            prev_layer_gini_mean = None
+            prev_layer_rank_mean = None
 
             pbar_tasks.update(1)
     print("Task-shift training with end-of-task LLA analyses complete.")
