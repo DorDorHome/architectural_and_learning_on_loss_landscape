@@ -17,7 +17,7 @@ use_json: False
 wandb:
   project: 'loss_landscape_taskshift_${task_shift_mode}' # Dedicated project for task-shift LLA runs
   entity: ''
-  notes: 'Experiment with advanced optimizers.'
+  notes: 'experiments with correlations between loss of plasticity and loss landscape and spectral properties of Hessian.'
 
 # task switching:
 task_shift_mode: "continuous_input_deformation" # "continuous_input_deformation" (turn on weight decay, turn off gradient clipping), "drifting_values"(for this, turn on gradient clip, turn off weight decay )
