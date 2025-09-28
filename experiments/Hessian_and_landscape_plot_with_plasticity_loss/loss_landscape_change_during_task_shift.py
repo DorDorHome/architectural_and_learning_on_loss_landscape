@@ -1087,6 +1087,17 @@ def main(cfg: ExperimentConfig) -> Any:
                     topk = spec.get('top_k', [])
                     for i, v in enumerate(topk):
                         topk_metrics[f'hessian_top_eig_{i+1}'] = float(v)
+                    trace_estimate = spec.get('hutchinson_trace', None)
+                    if trace_estimate is not None:
+                        topk_metrics['hessian_trace_estimate'] = float(trace_estimate)
+                    diagnostics = spec.get('diagnostics', {})
+                    if isinstance(diagnostics, dict):
+                        trace_fraction = diagnostics.get('trace_fraction_topk', None)
+                        if trace_fraction is not None:
+                            topk_metrics['hessian_trace_fraction_topk'] = float(trace_fraction)
+                        partial_topk_sum = diagnostics.get('partial_topk_sum', None)
+                        if partial_topk_sum is not None:
+                            topk_metrics['hessian_partial_topk_sum'] = float(partial_topk_sum)
             except Exception:
                 pass
 

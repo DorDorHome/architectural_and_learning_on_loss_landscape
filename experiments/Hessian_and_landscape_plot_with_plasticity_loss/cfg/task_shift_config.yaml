@@ -161,8 +161,8 @@ lla:
   planes:
     # Optional per-component toggle (legacy). Prefer lla.enable_planes above.
     enable: true
-    grid_resolution: 76
-    span: [5, 5] # same as 
+    grid_resolution: 101
+    span: [8, 8] # same as 
     # distance: 1.5 # same as span [distance, distance]
     normalization: 'filter'
     bn:
@@ -173,7 +173,7 @@ lla:
     # Optional per-component toggle (legacy). Prefer lla.enable_spectrum above.
     enable: true
     power_iters: 20     # power iterations for Hessian eigenvectors (v1,v2)
-    top_k: 5
+    top_k: 10
     hutchinson_probes: 6
     esd:
       num_probes: 24 #initially 6
