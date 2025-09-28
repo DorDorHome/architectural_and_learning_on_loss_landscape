@@ -463,6 +463,82 @@ def _compute_planes_and_spectrum_with_lla(
         },
     }
 
+    # -------------------- Diagnostics (top-k vs Rayleigh vs SLQ bulk) --------------------
+    diagnostics: Dict[str, Any] = {}
+    try:
+        # Normalize eigvals to a plain python list of floats for robust downstream processing
+        try:
+            eigvals_list: List[float] = [float(v) for v in eigvals]
+        except Exception:
+            eigvals_list = []
+        # Attempt to read rayleigh eigenvalues produced by plane helper if present
+        axes_meta_path = task_dir / 'hessian_axes_meta.json'
+        rayleigh_top1 = None
+        if axes_meta_path.exists():
+            try:
+                axes_meta = json.loads(axes_meta_path.read_text())
+                rayleigh_top1 = float(axes_meta.get('rayleigh_top1', None))
+                diagnostics['rayleigh_top1'] = rayleigh_top1
+                if 'rayleigh_top2' in axes_meta:
+                    diagnostics['rayleigh_top2'] = float(axes_meta['rayleigh_top2'])
+            except Exception:
+                pass
+        # r1: alignment of top eigenvalue between Rayleigh and power iteration
+        if rayleigh_top1 is not None and len(eigvals_list) > 0:
+            top1 = eigvals_list[0]
+            diagnostics['r1_rayleigh_alignment'] = float(abs(top1 - rayleigh_top1) / (abs(top1) + 1e-12))
+        else:
+            diagnostics['r1_rayleigh_alignment'] = None
+        # r2: SLQ capture of top eigenvalue (max raw SLQ sample vs eigvals[0])
+        raw_eigs_all = esd_pack.get('raw_eigs', np.array([]))  # type: ignore[assignment]
+        if isinstance(raw_eigs_all, np.ndarray) and raw_eigs_all.size > 0 and len(eigvals_list) > 0:
+            top1 = eigvals_list[0]
+            try:
+                max_raw = float(raw_eigs_all.max())
+                diagnostics['r2_slq_top_alignment'] = float(abs(max_raw - top1) / (abs(top1) + 1e-12))
+                diagnostics['slq_max_raw_eig'] = max_raw
+                diagnostics['slq_min_raw_eig'] = float(raw_eigs_all.min())
+                diagnostics['slq_std_raw_eig'] = float(np.std(raw_eigs_all))
+            except Exception:
+                diagnostics['r2_slq_top_alignment'] = None
+        else:
+            diagnostics['r2_slq_top_alignment'] = None
+        # trace consistency fraction
+        partial_trace = float(np.sum(eigvals_list[:top_k])) if len(eigvals_list) > 0 else 0.0
+        diagnostics['partial_topk_sum'] = partial_trace
+        diagnostics['trace_fraction_topk'] = float(partial_trace / (float(trace_est) + 1e-12))
+        # bulk width vs top eigenvalue
+        if isinstance(raw_eigs_all, np.ndarray) and raw_eigs_all.size > 0 and len(eigvals_list) > 0:
+            top1 = eigvals_list[0]
+            diagnostics['bulk_std_over_top1'] = float(np.std(raw_eigs_all) / (abs(top1) + 1e-12))
+        # probe variance (approximate) – per-probe mean & std of max value
+        try:
+            per_probe_max = [max(p) if len(p) > 0 else 0.0 for p in esd_eigs]
+            per_probe_mean = [float(np.mean(p)) if len(p) > 0 else 0.0 for p in esd_eigs]
+            diagnostics['probe_max_mean'] = float(np.mean(per_probe_max))
+            diagnostics['probe_max_std'] = float(np.std(per_probe_max))
+            diagnostics['probe_mean_mean'] = float(np.mean(per_probe_mean))
+            diagnostics['probe_mean_std'] = float(np.std(per_probe_mean))
+        except Exception:
+            pass
+    except Exception as e_diag:
+        diagnostics['diagnostics_error'] = f"{e_diag}"
+
+    spec['diagnostics'] = diagnostics
+
+    # Human-readable printout (concise)
+    try:
+        print("[LLA][Diagnostics] Top-k eigenvalues (power iter):", [float(v) for v in eigvals_list[:top_k]])
+        if diagnostics.get('rayleigh_top1') is not None:
+            print(f"[LLA][Diagnostics] Rayleigh top1: {diagnostics.get('rayleigh_top1')}  alignment r1: {diagnostics.get('r1_rayleigh_alignment')}")
+        print(f"[LLA][Diagnostics] SLQ raw eig max: {diagnostics.get('slq_max_raw_eig')}  r2 alignment: {diagnostics.get('r2_slq_top_alignment')}")
+        print(f"[LLA][Diagnostics] Trace fraction (top_k / trace): {diagnostics.get('trace_fraction_topk')}")
+        print(f"[LLA][Diagnostics] bulk std / top1: {diagnostics.get('bulk_std_over_top1')}")
+        if 'probe_max_std' in diagnostics:
+            print(f"[LLA][Diagnostics] probe max mean/std: {diagnostics.get('probe_max_mean')} / {diagnostics.get('probe_max_std')}")
+    except Exception:
+        pass
+
     # Save ESD arrays
     np.savez(
         spectrum_dir / 'spectrum_esd.npz',
@@ -476,14 +552,28 @@ def _compute_planes_and_spectrum_with_lla(
         import matplotlib
         matplotlib.use('Agg')
         import matplotlib.pyplot as plt
+        # Linear-scale density with top-k overlay
         fig, ax = plt.subplots(figsize=(5, 4))
-        ax.plot(esd_pack['lambda_grid'], esd_pack['density'])
+        ax.plot(esd_pack['lambda_grid'], esd_pack['density'], label='SLQ density')
+        # Overlay vertical lines for top-k
+        try:
+            for i, v in enumerate(eigvals[:top_k]):
+                ax.axvline(float(v), color='r', linestyle='--', alpha=0.6, label='top-k eigvals' if i == 0 else None)
+        except Exception:
+            pass
         ax.set_xlabel('eigenvalue')
         ax.set_ylabel('density')
-        ax.set_title('ESD (LLA SLQ)')
+        ax.set_title('ESD (SLQ) + top-k')
+        ax.legend(loc='best', fontsize=7)
         fig.tight_layout()
         esd_png = spectrum_dir / 'spectrum_esd.png'
         fig.savefig(esd_png)
+        # Log-scale variant
+        try:
+            ax.set_yscale('log')
+            fig.savefig(spectrum_dir / 'spectrum_esd_log.png')
+        except Exception:
+            pass
         plt.close(fig)
     except Exception as e:
         print(f"[LLA][ESD] plotting failed: {e}")
@@ -501,9 +591,15 @@ def _compute_planes_and_spectrum_with_lla(
             if isinstance(raw_weights, np.ndarray) and raw_weights.size == raw_eigs.size and raw_weights.sum() > 0:
                 weights = raw_weights / raw_weights.sum()
             ax_hg.hist(raw_eigs, bins=min(50, max(10, int(np.sqrt(raw_eigs.size)))), weights=weights, color='steelblue', edgecolor='black')
+            # Overlay top-k vertical lines
+            try:
+                for v in eigvals[:top_k]:
+                    ax_hg.axvline(float(v), color='r', linestyle='--', alpha=0.6)
+            except Exception:
+                pass
         ax_hg.set_xlabel('eigenvalue')
         ax_hg.set_ylabel('weighted count' if (isinstance(raw_weights, np.ndarray) and raw_weights.size == raw_eigs.size) else 'count')
-        ax_hg.set_title('Spectrum histogram (SLQ samples)')
+        ax_hg.set_title('Spectrum histogram (SLQ + top-k)')
         fig_hg.tight_layout()
         hist_png = spectrum_dir / 'spectrum_hist.png'
         fig_hg.savefig(hist_png)
