@@ -58,6 +58,7 @@ from src.algos.supervised.supervised_factory import create_learner  # type: igno
 from src.utils.zeroth_order_features import compute_all_rank_measures_list, count_saturated_units_list  # type: ignore
 from src.utils.rank_drop_dynamics import compute_rank_dynamics_from_features  # type: ignore
 from src.utils.track_weights_norm import track_weight_stats  # type: ignore
+from src.utils.task_shift_logging import build_logging_config_dict  # type: ignore
 
 # LLA submodule integration (replace previous custom pipeline usage)
 # Add submodule src path
@@ -832,7 +833,17 @@ def main(cfg: ExperimentConfig) -> Any:
                 'run_id': run_id,
                 'artifact_dir': str(out_root),
             }
-            wandb.init(project=str(cfg.wandb.project), config=run_cfg, name=run_id)
+            try:
+                cfg_dict = build_logging_config_dict(cfg)
+            except Exception as e_sanitize:
+                print(f"Warning: task shift logging sanitization failed, falling back to full config. Error: {e_sanitize}")
+                cfg_dict = OmegaConf.to_container(cfg, resolve=True)
+            # Attach run metadata without mutating original cfg
+            cfg_for_wandb: Dict[str, Any] = dict(cfg_dict)
+            run_meta = dict(cfg_for_wandb.get('run_meta', {}))
+            run_meta.update(run_cfg)
+            cfg_for_wandb['run_meta'] = run_meta
+            wandb.init(project=str(cfg.wandb.project), config=cfg_for_wandb, name=run_id)
         except Exception as e:
             print(f"[wandb] init failed: {e}. Proceeding without wandb.")
             use_wandb = False
