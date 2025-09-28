@@ -6,7 +6,7 @@ seed: None
 debug_mode: False  # Disable debug mode for performance
 device: 'cuda:0'
 epochs: 50 #epoch per task switch
-batch_size: 256
+batch_size: 1024
 num_tasks: 500 # number of tasks to train on. Each task will be trained on num_classes_per_task
 num_workers: 2  # Reduced from 12 to match old script performance
 
@@ -161,8 +161,8 @@ lla:
   planes:
     # Optional per-component toggle (legacy). Prefer lla.enable_planes above.
     enable: true
-    grid_resolution: 61
-    span: [-3, 3] # same as 
+    grid_resolution: 76
+    span: [5, 5] # same as 
     # distance: 1.5 # same as span [distance, distance]
     normalization: 'filter'
     bn:
@@ -176,9 +176,9 @@ lla:
     top_k: 5
     hutchinson_probes: 6
     esd:
-      num_probes: 6
-      lanczos_steps: 30
-      bins: 200
+      num_probes: 24 #initially 6
+      lanczos_steps: 60 #initially 30
+      bins: 300 #intially 200
   sam:
     # Optional per-component toggle (legacy). Prefer lla.enable_sam above.
     enable: true
