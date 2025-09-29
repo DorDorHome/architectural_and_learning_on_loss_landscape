@@ -26,6 +26,7 @@ import random
 from pathlib import Path
 import hashlib
 import uuid
+import logging
 from typing import Any, Dict, List, Tuple
 
 import numpy as np
@@ -60,6 +61,9 @@ from src.utils.rank_drop_dynamics import compute_rank_dynamics_from_features  # 
 from src.utils.track_weights_norm import track_weight_stats  # type: ignore
 from src.utils.task_shift_logging import build_logging_config_dict  # type: ignore
 
+
+LOGGER = logging.getLogger(__name__)
+
 # LLA submodule integration (replace previous custom pipeline usage)
 # Add submodule src path
 LLA_SUBMODULE_SRC = Path(__file__).parent / 'external' / 'loss-landscape-analysis' / 'src'
@@ -73,7 +77,23 @@ try:  # Import required LLA components
     from src_lla.loss_landscapes.metrics.metric import Metric  # type: ignore
     LLA_AVAILABLE = True
 except Exception as e:  # fallback flag
-    print(f"[LLA] Submodule import failed ({e}); falling back to legacy pipeline (limited features).")
+    LOGGER.warning(
+        "[LLA] Submodule import failed (%s); falling back to legacy pipeline (limited features).",
+        e,
+    )
+
+    class Metric:  # type: ignore[empty-body]
+        """Fallback stub when LLA submodule is unavailable."""
+
+        def __init__(self, *args: Any, **kwargs: Any) -> None:  # noqa: D401
+            """No-op initializer to satisfy Metric interface expectations."""
+
+        def __call__(self, *args: Any, **kwargs: Any):  # noqa: D401
+            """Raise to indicate the Metric can't be used without LLA."""
+            raise RuntimeError(
+                "LLA submodule is unavailable; Metric operations are disabled."
+            )
+
     LLA_AVAILABLE = False
 
 # Legacy SAM surface still relies on old custom implementation; we keep it optional if needed.
