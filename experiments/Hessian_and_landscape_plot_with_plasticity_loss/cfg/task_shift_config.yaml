@@ -15,7 +15,7 @@ num_workers: 2  # Reduced from 12 to match old script performance
 use_wandb: True
 use_json: False
 wandb:
-  project: 'loss_landscape_taskshift_${task_shift_mode}' # Dedicated project for task-shift LLA runs
+  project: 'loss_landscape_taskshift_${task_shift_mode}_better_log' # Dedicated project for task-shift LLA runs
   entity: ''
   notes: 'experiments with correlations between loss of plasticity and loss landscape and spectral properties of Hessian.'
 
