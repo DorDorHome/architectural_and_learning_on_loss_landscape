@@ -4,7 +4,7 @@ run_id: 0
 seed: None
 # debug:
 debug_mode: False  # Disable debug mode for performance
-device: 'cuda:3'
+device: 'cuda:0'
 epochs: 50 #epoch per task switch
 batch_size: 1024
 num_tasks: 500 # number of tasks to train on. Each task will be trained on num_classes_per_task
@@ -15,7 +15,7 @@ num_workers: 2  # Reduced from 12 to match old script performance
 use_wandb: True
 use_json: False
 wandb:
-  project: 'loss_landscape_taskshift_${task_shift_mode}_better_log' # Dedicated project for task-shift LLA runs
+  project: 'loss_landscape_taskshift_${task_shift_mode}_better_log_2' # Dedicated project for task-shift LLA runs
   entity: ''
   notes: 'experiments with correlations between loss of plasticity and loss landscape and spectral properties of Hessian.'
 
@@ -84,7 +84,8 @@ layers_identifier: None
 data:
   dataset: 'MNIST'
   use_torchvision: True
-  data_path: '/hdda/datasets' #'/hdda/datasets'
+  # edit the following path to your dataset path, e.g. '/hdda/datasets' or '/home/sfchan/dataset'
+  data_path: '/home/sfchan/dataset' 
   num_classes: 10
 
 # network architecture:
@@ -162,13 +163,14 @@ lla:
     # Optional per-component toggle (legacy). Prefer lla.enable_planes above.
     enable: true
     grid_resolution: 101
-    span: [10, 10] # same as 
+    span: [2, 2] # same as 
     # distance: 1.5 # same as span [distance, distance]
     normalization: 'filter'
     bn:
       exclude_bn_and_bias: false
     chunk_size: 128
     max_eval_points_cap: 4096
+    loss_cap_offset: 200.0
   spectrum:
     # Optional per-component toggle (legacy). Prefer lla.enable_spectrum above.
     enable: true

@@ -27,7 +27,7 @@ from pathlib import Path
 import hashlib
 import uuid
 import logging
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, cast
 
 import numpy as np
 import torch
@@ -71,9 +71,7 @@ if LLA_SUBMODULE_SRC.exists() and str(LLA_SUBMODULE_SRC) not in sys.path:
     sys.path.insert(0, str(LLA_SUBMODULE_SRC))
 
 try:  # Import required LLA components
-    from src_lla.hessian.hessian import hessian_calc  # type: ignore
-    from src_lla.loss_landscapes.dev import vec_H_eigenvects  # type: ignore
-    from src_lla.loss_landscapes.main import random_plane  # type: ignore
+    from src_lla import viz_esd, viz_lla  # type: ignore
     from src_lla.loss_landscapes.metrics.metric import Metric  # type: ignore
     LLA_AVAILABLE = True
 except Exception as e:  # fallback flag
@@ -159,6 +157,7 @@ def _build_lla_cfg(base_cfg: ExperimentConfig, eval_batch_size: int = 128) -> Di
                 'bn': {'eval_mode_only': True, 'exclude_bn_and_bias': False},
                 'chunk_size': 128,
                 'max_eval_points_cap': 4096,
+                'loss_cap_offset': 200.0,
             },
             'spectrum': {
                 'power_iters': 20,
@@ -258,45 +257,76 @@ def _first_batch(loader: DataLoader, device: str) -> tuple[torch.Tensor, torch.T
     return x.to(device), y.to(device)
 
 
-def _smooth_esd(eigs: List[List[float]], weights: List[List[float]], grid: int = 200, sigma_scale: float = 0.02) -> dict:
-    all_e = np.array([e for sub in eigs for e in sub], dtype=np.float64)
-    all_w = np.array([w for sub in weights for w in sub], dtype=np.float64)
-    if all_e.size == 0:
-        return {
-            'lambda_grid': np.zeros(1),
-            'density': np.zeros(1),
-            'lam_min': 0.0,
-            'lam_max': 0.0,
-            'sigma': 0.0,
-            'degenerate': True,
-        }
-    lam_min = float(all_e.min())
-    lam_max = float(all_e.max())
-    span = lam_max - lam_min
-    if span <= 1e-12:
-        span = 1.0
-        lam_min -= 0.5
-        lam_max += 0.5
-    lambda_grid = np.linspace(lam_min, lam_max, grid, dtype=np.float64)
-    sigma = max(sigma_scale * (lam_max - lam_min), 1e-8)
-    dens = np.zeros_like(lambda_grid)
-    k = 1.0 / (np.sqrt(2 * np.pi) * sigma)
-    for ev, w in zip(all_e, all_w):
-        dens += w * k * np.exp(-0.5 * ((lambda_grid - ev) / sigma) ** 2)
-    area = np.trapz(dens, lambda_grid)
-    if area > 0:
-        dens /= area
-    degenerate = bool(len(np.unique(np.round(all_e, 8))) == 1)
-    return {
-        'lambda_grid': lambda_grid,
-        'density': dens,
-        'lam_min': float(lam_min),
-        'lam_max': float(lam_max),
-        'sigma': float(sigma),
-        'degenerate': degenerate,
-        'raw_eigs': all_e,
-        'raw_weights': all_w,
-    }
+def _save_plane_artifacts(plane_arr: np.ndarray, plane_dir: Path, distance: float) -> Dict[str, str]:
+    artifacts: Dict[str, str] = {}
+    try:
+        import matplotlib
+        matplotlib.use('Agg')
+        import matplotlib.pyplot as plt
+        from matplotlib import cm
+        from mpl_toolkits.mplot3d import Axes3D  # noqa: F401
+    except Exception as e:
+        print(f"[LLA][plane] matplotlib unavailable: {e}")
+        return artifacts
+
+    coords = np.linspace(-distance, distance, plane_arr.shape[0])
+    X, Y = np.meshgrid(coords, coords, indexing='xy')
+
+    try:
+        heatmap_png = plane_dir / 'plane_hessian_heatmap.png'
+        fig_h, ax_h = plt.subplots(figsize=(5.2, 4.4))
+        im = ax_h.imshow(
+            plane_arr,
+            origin='lower',
+            cmap='viridis',
+            extent=[-distance, distance, -distance, distance],
+            aspect='auto',
+        )
+        ax_h.set_xlabel('Direction 1 (center=0)')
+        ax_h.set_ylabel('Direction 2 (center=0)')
+        ax_h.set_title('Hessian-aligned plane (heatmap)')
+        cbar = fig_h.colorbar(im, ax=ax_h)
+        cbar.set_label('Loss')
+        fig_h.tight_layout()
+        fig_h.savefig(str(heatmap_png))
+        artifacts['heatmap_png'] = str(heatmap_png)
+        plt.close(fig_h)
+    except Exception as e:
+        print(f"[LLA][plane] heatmap plot failed: {e}")
+
+    try:
+        surface_png = plane_dir / 'plane_hessian_surface3d.png'
+        fig3d = plt.figure(figsize=(6, 4.8))
+        ax3d = fig3d.add_subplot(111, projection='3d')
+        surf = ax3d.plot_surface(X, Y, plane_arr, cmap=cm.viridis, linewidth=0, antialiased=True)
+        ax3d.set_xlabel('Dir 1')
+        ax3d.set_ylabel('Dir 2')
+        ax3d.set_zlabel('Loss')
+        ax3d.set_title('Loss surface (Hessian plane)')
+        fig3d.colorbar(surf, shrink=0.6, aspect=12, pad=0.08).set_label('Loss')
+        fig3d.tight_layout()
+        fig3d.savefig(str(surface_png))
+        artifacts['surface3d_png'] = str(surface_png)
+        plt.close(fig3d)
+    except Exception as e:
+        print(f"[LLA][plane] surface plot failed: {e}")
+
+    try:
+        contour_png = plane_dir / 'plane_hessian_contour.png'
+        fig_c, ax_c = plt.subplots(figsize=(5.2, 4.4))
+        CS = ax_c.contour(X, Y, plane_arr, levels=20, cmap='viridis')
+        ax_c.clabel(CS, inline=True, fontsize=7)
+        ax_c.set_xlabel('Direction 1 (center=0)')
+        ax_c.set_ylabel('Direction 2 (center=0)')
+        ax_c.set_title('Loss contours (Hessian plane)')
+        fig_c.tight_layout()
+        fig_c.savefig(str(contour_png))
+        artifacts['contour_png'] = str(contour_png)
+        plt.close(fig_c)
+    except Exception as e:
+        print(f"[LLA][plane] contour plot failed: {e}")
+
+    return artifacts
 
 
 def _compute_planes_and_spectrum_with_lla(
@@ -307,9 +337,8 @@ def _compute_planes_and_spectrum_with_lla(
     do_planes: bool,
     do_spectrum: bool,
 ) -> Dict[str, Any]:
-    """Core refactored LLA evaluation: Hessian eigenvectors, plane, spectrum (top-k, trace, ESD).
-    Returns dict with similar keys to legacy pipeline for downstream logging compatibility.
-    """
+    """Run high-level LLA helpers (viz_lla, viz_esd) to produce plane and spectrum artifacts."""
+
     device = lla_cfg.get('device', 'cuda:0')
     loss_name = lla_cfg.get('learner', {}).get('loss', 'cross_entropy')
     criterion = _make_criterion(loss_name)
@@ -319,13 +348,10 @@ def _compute_planes_and_spectrum_with_lla(
     out: Dict[str, Any] = {}
     plane_dir = task_dir / 'planes'
     plane_dir.mkdir(exist_ok=True)
+    spectrum_dir = task_dir
 
-    spectrum_dir = task_dir  # keep in task root for backward compatibility
-
-    # Parameters from config or sensible LLA defaults
     planes_cfg = lla_cfg.get('lla', {}).get('planes', {})
     grid_res = int(planes_cfg.get('grid_resolution', 41))
-    # Derive distance: prefer explicit 'distance'; else infer symmetric half-range from 'span'
     if 'distance' in planes_cfg:
         distance = float(planes_cfg.get('distance'))
     else:
@@ -339,316 +365,146 @@ def _compute_planes_and_spectrum_with_lla(
             distance = 1.0
     normalization = planes_cfg.get('normalization', 'filter')
 
-    top_k = int(lla_cfg.get('lla', {}).get('spectrum', {}).get('top_k', 5))
-    power_iters = int(lla_cfg.get('lla', {}).get('spectrum', {}).get('power_iters', 100))
-    trace_probes = int(lla_cfg.get('lla', {}).get('spectrum', {}).get('hutchinson_probes', 32))
-    esd_cfg = lla_cfg.get('lla', {}).get('spectrum', {}).get('esd', {})
-    lanczos_steps = int(esd_cfg.get('lanczos_steps', lla_cfg.get('lla', {}).get('spectrum', {}).get('slq_m', 80)))
-    esd_probes = int(esd_cfg.get('num_probes', lla_cfg.get('lla', {}).get('spectrum', {}).get('slq_probes', 8)))
-    esd_bins = int(esd_cfg.get('bins', lla_cfg.get('lla', {}).get('spectrum', {}).get('slq_grid', 200)))
-    sigma_scale = float(esd_cfg.get('sigma_scale', 0.02))
+    spectrum_cfg = lla_cfg.get('lla', {}).get('spectrum', {})
+    top_k = int(spectrum_cfg.get('top_k', 5))
+    power_iters = int(spectrum_cfg.get('power_iters', 100))
+    trace_probes = int(spectrum_cfg.get('hutchinson_probes', 32))
+    esd_cfg = spectrum_cfg.get('esd', {}) if isinstance(spectrum_cfg.get('esd', {}), dict) else {}
+    lanczos_steps = int(esd_cfg.get('lanczos_steps', 100))
+    esd_probes = int(esd_cfg.get('num_probes', 1))
+    max_v = int(esd_cfg.get('max_v', max(10, esd_probes)))
+    n_kh = float(esd_cfg.get('n_kh', 0.5))
 
     t_all0 = time.time()
-    hess = hessian_calc(model, metric)
 
-    # Top eigen-stuff
-    t_eig0 = time.time()
-    eigvals, eigvecs = hess.eigs_calc(top_n=max(2, top_k), n_iter=power_iters)
-    t_eigs = time.time() - t_eig0
-
-    # Trace via Hutchinson
-    t_tr0 = time.time()
-    trace_est = hess.tr_calc(n_iter=trace_probes)
-    t_trace = time.time() - t_tr0
-
-    # ESD via SLQ
-    t_esd0 = time.time()
-    esd_eigs, esd_weights = hess.esd_calc(n_iter=lanczos_steps, n_v=esd_probes)
-    esd_pack = _smooth_esd(esd_eigs, esd_weights, grid=esd_bins, sigma_scale=sigma_scale)
-    t_esd = time.time() - t_esd0
-
-    # Plane (Hessian-aligned)
-    plane_info: Dict[str, Any] | None = None
+    # -------------------- Loss landscape via viz_lla --------------------
     if do_planes:
         try:
-            a1, a2 = vec_H_eigenvects(hess)
-            plane_arr = random_plane(
+            plane_array = viz_lla(
                 model,
                 metric,
-                distance=distance,
+                device=device,
+                dist=distance,
                 steps=grid_res,
+                axes='hessian',
                 normalization=normalization,
-                deepcopy_model=True,
-                a1=a1,
-                a2=a2,
-                mode='add',
+                cur_name='plane',
+                viz_dir=str(plane_dir),
+                res_dir=str(plane_dir),
+                to_save=False,
+                to_viz=False,
+                return_loss=True,
             )
-            plane_path = plane_dir / 'plane_hessian.npy'
-            np.save(plane_path, plane_arr)
-            # Visualizations: heatmap (centered), 3D surface, and contour
-            try:
-                import matplotlib
-                matplotlib.use('Agg')
-                import matplotlib.pyplot as plt
-                from matplotlib import cm
-                from mpl_toolkits.mplot3d import Axes3D  # noqa: F401 (needed for 3d projection)
-
-                # Build centered coordinate grid: (-distance .. distance)
-                # random_plane returns a square matrix of shape (steps, steps)
-                coords = np.linspace(-distance, distance, plane_arr.shape[0])
-                X, Y = np.meshgrid(coords, coords, indexing='xy')
-
-                # 1) Heatmap (centered)
-                fig_h, ax_h = plt.subplots(figsize=(5.2, 4.4))
-                im = ax_h.imshow(
-                    plane_arr,
-                    origin='lower',
-                    cmap='viridis',
-                    extent=[-distance, distance, -distance, distance],
-                    aspect='auto',
-                )
-                ax_h.set_xlabel('Direction 1 (center=0)')
-                ax_h.set_ylabel('Direction 2 (center=0)')
-                ax_h.set_title('Hessian-aligned plane (heatmap)')
-                cbar = fig_h.colorbar(im, ax=ax_h)
-                cbar.set_label('Loss')
-                heatmap_png = plane_dir / 'plane_hessian_heatmap.png'
-                fig_h.tight_layout()
-                fig_h.savefig(heatmap_png)
-                plt.close(fig_h)
-
-                # 2) 3D surface plot
-                fig3d = plt.figure(figsize=(6, 4.8))
-                ax3d = fig3d.add_subplot(111, projection='3d')
-                surf = ax3d.plot_surface(X, Y, plane_arr, cmap=cm.viridis, linewidth=0, antialiased=True)
-                ax3d.set_xlabel('Dir 1')
-                ax3d.set_ylabel('Dir 2')
-                ax3d.set_zlabel('Loss')
-                ax3d.set_title('Loss surface (Hessian plane)')
-                fig3d.colorbar(surf, shrink=0.6, aspect=12, pad=0.08).set_label('Loss')
-                surface_png = plane_dir / 'plane_hessian_surface3d.png'
-                fig3d.tight_layout()
-                fig3d.savefig(surface_png)
-                plt.close(fig3d)
-
-                # 3) Contour plot (optional for clearer level sets)
-                fig_c, ax_c = plt.subplots(figsize=(5.2, 4.4))
-                CS = ax_c.contour(X, Y, plane_arr, levels=20, cmap='viridis')
-                ax_c.clabel(CS, inline=True, fontsize=7)
-                ax_c.set_xlabel('Direction 1 (center=0)')
-                ax_c.set_ylabel('Direction 2 (center=0)')
-                ax_c.set_title('Loss contours (Hessian plane)')
-                contour_png = plane_dir / 'plane_hessian_contour.png'
-                fig_c.tight_layout()
-                fig_c.savefig(contour_png)
-                plt.close(fig_c)
-
-            except Exception as e:
-                print(f"[LLA][plane] plot failed: {e}")
-            plane_info = {
+            plane_info: Dict[str, Any] = {
                 'grid_resolution': grid_res,
                 'distance': distance,
                 'normalization': normalization,
-                'npy': str(plane_path),
-                'heatmap_png': str(plane_dir / 'plane_hessian_heatmap.png'),
-                'surface3d_png': str(plane_dir / 'plane_hessian_surface3d.png'),
-                'contour_png': str(plane_dir / 'plane_hessian_contour.png'),
             }
+            if plane_array is not None:
+                plane_arr_np = np.asarray(plane_array, dtype=np.float64)
+                if plane_arr_np.size > 0:
+                    loss_min = float(np.nanmin(plane_arr_np))
+                    loss_cap_offset = planes_cfg.get('loss_cap_offset', 200.0)
+                    if isinstance(loss_cap_offset, (int, float)) and float(loss_cap_offset) > 0:
+                        cap_threshold = loss_min + float(loss_cap_offset)
+                        plane_arr_np = np.minimum(plane_arr_np, cap_threshold)
+                        plane_info['loss_cap_threshold'] = cap_threshold
+                    plane_info['loss_min'] = loss_min
+                plane_path = plane_dir / 'plane_hessian.npy'
+                np.save(plane_path, plane_arr_np)
+                plane_info['npy'] = str(plane_path)
+                plane_info.update(_save_plane_artifacts(plane_arr_np, plane_dir, distance))
+            out['plane'] = plane_info
         except Exception as e:
-            print(f"[LLA] Hessian plane failed: {e}")
+            print(f"[LLA] viz_lla failed: {e}")
 
-    # Build spectrum json (compat shape)
-    spec = {
-        'top_k': eigvals[:top_k],
-        'hutchinson_trace': float(trace_est),
-        'dim': sum(p.numel() for p in model.parameters() if p.requires_grad),
-        'k_used': top_k,
-        'probes': trace_probes,
-        'algorithm_topk': 'LLA_hessian_power_iteration',
-        'algorithm_trace': 'LLA_Hutchinson',
-        'algorithm_esd': 'LLA_SLQ',
-        'timing_seconds': {
-            'topk': t_eigs,
-            'hutchinson_trace': t_trace,
-            'esd_slq': t_esd,
-            'total': t_eigs + t_trace + t_esd,
-        },
-        'esd': {
-            'n_grid': esd_bins,
-            'probes': esd_probes,
-            'm': lanczos_steps,
-            'lam_min': float(esd_pack['lam_min']),
-            'lam_max': float(esd_pack['lam_max']),
-            'sigma': float(esd_pack['sigma']),
-            'degenerate': bool(esd_pack['degenerate']),
-        },
-    }
-
-    # -------------------- Diagnostics (top-k vs Rayleigh vs SLQ bulk) --------------------
-    diagnostics: Dict[str, Any] = {}
-    try:
-        # Normalize eigvals to a plain python list of floats for robust downstream processing
-        try:
-            eigvals_list: List[float] = [float(v) for v in eigvals]
-        except Exception:
-            eigvals_list = []
-        # Attempt to read rayleigh eigenvalues produced by plane helper if present
-        axes_meta_path = task_dir / 'hessian_axes_meta.json'
-        rayleigh_top1 = None
-        if axes_meta_path.exists():
-            try:
-                axes_meta = json.loads(axes_meta_path.read_text())
-                rayleigh_top1 = float(axes_meta.get('rayleigh_top1', None))
-                diagnostics['rayleigh_top1'] = rayleigh_top1
-                if 'rayleigh_top2' in axes_meta:
-                    diagnostics['rayleigh_top2'] = float(axes_meta['rayleigh_top2'])
-            except Exception:
-                pass
-        # r1: alignment of top eigenvalue between Rayleigh and power iteration
-        if rayleigh_top1 is not None and len(eigvals_list) > 0:
-            top1 = eigvals_list[0]
-            diagnostics['r1_rayleigh_alignment'] = float(abs(top1 - rayleigh_top1) / (abs(top1) + 1e-12))
-        else:
-            diagnostics['r1_rayleigh_alignment'] = None
-        # r2: SLQ capture of top eigenvalue (max raw SLQ sample vs eigvals[0])
-        raw_eigs_all = esd_pack.get('raw_eigs', np.array([]))  # type: ignore[assignment]
-        if isinstance(raw_eigs_all, np.ndarray) and raw_eigs_all.size > 0 and len(eigvals_list) > 0:
-            top1 = eigvals_list[0]
-            try:
-                max_raw = float(raw_eigs_all.max())
-                diagnostics['r2_slq_top_alignment'] = float(abs(max_raw - top1) / (abs(top1) + 1e-12))
-                diagnostics['slq_max_raw_eig'] = max_raw
-                diagnostics['slq_min_raw_eig'] = float(raw_eigs_all.min())
-                diagnostics['slq_std_raw_eig'] = float(np.std(raw_eigs_all))
-            except Exception:
-                diagnostics['r2_slq_top_alignment'] = None
-        else:
-            diagnostics['r2_slq_top_alignment'] = None
-        # trace consistency fraction
-        partial_trace = float(np.sum(eigvals_list[:top_k])) if len(eigvals_list) > 0 else 0.0
-        diagnostics['partial_topk_sum'] = partial_trace
-        diagnostics['trace_fraction_topk'] = float(partial_trace / (float(trace_est) + 1e-12))
-        # bulk width vs top eigenvalue
-        if isinstance(raw_eigs_all, np.ndarray) and raw_eigs_all.size > 0 and len(eigvals_list) > 0:
-            top1 = eigvals_list[0]
-            diagnostics['bulk_std_over_top1'] = float(np.std(raw_eigs_all) / (abs(top1) + 1e-12))
-        # probe variance (approximate) – per-probe mean & std of max value
-        try:
-            per_probe_max = [max(p) if len(p) > 0 else 0.0 for p in esd_eigs]
-            per_probe_mean = [float(np.mean(p)) if len(p) > 0 else 0.0 for p in esd_eigs]
-            diagnostics['probe_max_mean'] = float(np.mean(per_probe_max))
-            diagnostics['probe_max_std'] = float(np.std(per_probe_max))
-            diagnostics['probe_mean_mean'] = float(np.mean(per_probe_mean))
-            diagnostics['probe_mean_std'] = float(np.std(per_probe_mean))
-        except Exception:
-            pass
-    except Exception as e_diag:
-        diagnostics['diagnostics_error'] = f"{e_diag}"
-
-    spec['diagnostics'] = diagnostics
-
-    # Human-readable printout (concise)
-    try:
-        print("[LLA][Diagnostics] Top-k eigenvalues (power iter):", [float(v) for v in eigvals_list[:top_k]])
-        if diagnostics.get('rayleigh_top1') is not None:
-            print(f"[LLA][Diagnostics] Rayleigh top1: {diagnostics.get('rayleigh_top1')}  alignment r1: {diagnostics.get('r1_rayleigh_alignment')}")
-        print(f"[LLA][Diagnostics] SLQ raw eig max: {diagnostics.get('slq_max_raw_eig')}  r2 alignment: {diagnostics.get('r2_slq_top_alignment')}")
-        print(f"[LLA][Diagnostics] Trace fraction (top_k / trace): {diagnostics.get('trace_fraction_topk')}")
-        print(f"[LLA][Diagnostics] bulk std / top1: {diagnostics.get('bulk_std_over_top1')}")
-        if 'probe_max_std' in diagnostics:
-            print(f"[LLA][Diagnostics] probe max mean/std: {diagnostics.get('probe_max_mean')} / {diagnostics.get('probe_max_std')}")
-    except Exception:
-        pass
-
-    # Save ESD arrays
-    np.savez(
-        spectrum_dir / 'spectrum_esd.npz',
-        lambda_grid=esd_pack['lambda_grid'],
-        density=esd_pack['density'],
-        raw_eigs=esd_pack['raw_eigs'],
-        raw_weights=esd_pack['raw_weights'],
-    )
-    # Plot ESD (smoothed density)
-    try:
-        import matplotlib
-        matplotlib.use('Agg')
-        import matplotlib.pyplot as plt
-        # Linear-scale density with top-k overlay
-        fig, ax = plt.subplots(figsize=(5, 4))
-        ax.plot(esd_pack['lambda_grid'], esd_pack['density'], label='SLQ density')
-        # Overlay vertical lines for top-k
-        try:
-            for i, v in enumerate(eigvals[:top_k]):
-                ax.axvline(float(v), color='r', linestyle='--', alpha=0.6, label='top-k eigvals' if i == 0 else None)
-        except Exception:
-            pass
-        ax.set_xlabel('eigenvalue')
-        ax.set_ylabel('density')
-        ax.set_title('ESD (SLQ) + top-k')
-        ax.legend(loc='best', fontsize=7)
-        fig.tight_layout()
-        esd_png = spectrum_dir / 'spectrum_esd.png'
-        fig.savefig(esd_png)
-        # Log-scale variant
-        try:
-            ax.set_yscale('log')
-            fig.savefig(spectrum_dir / 'spectrum_esd_log.png')
-        except Exception:
-            pass
-        plt.close(fig)
-    except Exception as e:
-        print(f"[LLA][ESD] plotting failed: {e}")
-
-    # Plot raw eigenvalue histogram (weighted by SLQ weights)
-    try:
-        import matplotlib
-        matplotlib.use('Agg')
-        import matplotlib.pyplot as plt
-        fig_hg, ax_hg = plt.subplots(figsize=(5, 4))
-        raw_eigs = esd_pack.get('raw_eigs', np.array([]))
-        raw_weights = esd_pack.get('raw_weights', np.array([]))
-        if isinstance(raw_eigs, np.ndarray) and raw_eigs.size > 0:
-            weights = None
-            if isinstance(raw_weights, np.ndarray) and raw_weights.size == raw_eigs.size and raw_weights.sum() > 0:
-                weights = raw_weights / raw_weights.sum()
-            ax_hg.hist(raw_eigs, bins=min(50, max(10, int(np.sqrt(raw_eigs.size)))), weights=weights, color='steelblue', edgecolor='black')
-            # Overlay top-k vertical lines
-            try:
-                for v in eigvals[:top_k]:
-                    ax_hg.axvline(float(v), color='r', linestyle='--', alpha=0.6)
-            except Exception:
-                pass
-        ax_hg.set_xlabel('eigenvalue')
-        ax_hg.set_ylabel('weighted count' if (isinstance(raw_weights, np.ndarray) and raw_weights.size == raw_eigs.size) else 'count')
-        ax_hg.set_title('Spectrum histogram (SLQ + top-k)')
-        fig_hg.tight_layout()
-        hist_png = spectrum_dir / 'spectrum_hist.png'
-        fig_hg.savefig(hist_png)
-        plt.close(fig_hg)
-    except Exception as e:
-        print(f"[LLA][ESD] histogram plotting failed: {e}")
-
-    (spectrum_dir / 'spectrum.json').write_text(json.dumps(spec, indent=2))
-
-    # Clean up Hessian graph
-    try:
-        hess.reset()
-    except Exception:
-        pass
-
-    if plane_info is not None:
-        out['plane'] = plane_info
+    # -------------------- Spectrum via viz_esd --------------------
     if do_spectrum:
-        out['spectrum'] = spec
+        try:
+            eigvals, eigvecs, trace_est, re_val, khn_val = viz_esd(
+                model,
+                metric,
+                eigs=True,
+                top_n=max(2, top_k),
+                eigs_n_iter=power_iters,
+                trace=True,
+                trace_n_iter=trace_probes,
+                esd=True,
+                esd_n_iter=lanczos_steps,
+                n_v=max(1, esd_probes),
+                max_v=max_v,
+                to_save=True,
+                to_viz=False,
+                exp_name='spectrum',
+                viz_dir=str(spectrum_dir),
+                res_dir=str(spectrum_dir),
+                calc_crit=True,
+                n_kh=n_kh,
+            )
+
+            eigvals_list = [float(v) for v in eigvals] if eigvals is not None else []
+            trace_float = float(trace_est) if trace_est is not None else None
+            partial_topk_sum = float(np.sum(eigvals_list[:top_k])) if eigvals_list else None
+            diagnostics: Dict[str, Any] = {}
+            if partial_topk_sum is not None:
+                diagnostics['partial_topk_sum'] = partial_topk_sum
+            if partial_topk_sum is not None and trace_float is not None:
+                diagnostics['trace_fraction_topk'] = float(partial_topk_sum / (trace_float + 1e-12))
+            if re_val is not None:
+                diagnostics['hesd_re'] = float(re_val)
+            if khn_val is not None:
+                diagnostics['hesd_khn'] = float(khn_val)
+
+            spec_summary: Dict[str, Any] = {
+                'top_k': eigvals_list[:top_k],
+                'hutchinson_trace': trace_float,
+                'dim': sum(p.numel() for p in model.parameters() if p.requires_grad),
+                'k_used': top_k,
+                'probes': trace_probes,
+                'n_v': max(1, esd_probes),
+                'algorithm': 'viz_esd',
+                'diagnostics': diagnostics,
+            }
+
+            spectrum_json = spectrum_dir / 'spectrum.json'
+            spectrum_json.write_text(json.dumps(spec_summary, indent=2))
+
+            spectrum_paths: Dict[str, str] = {}
+            hesd_png = spectrum_dir / 'spectrum_esd.png'
+            if hesd_png.exists():
+                spectrum_paths['esd_png'] = str(hesd_png)
+            eigenvalues_log = spectrum_dir / 'eigenvalues_spectrum.log'
+            if eigenvalues_log.exists():
+                spectrum_paths['eigenvalues_log'] = str(eigenvalues_log)
+            trace_log = spectrum_dir / 'trace_spectrum.log'
+            if trace_log.exists():
+                spectrum_paths['trace_log'] = str(trace_log)
+            criteria_log = spectrum_dir / 'hessian_criteria_spectrum.log'
+            if criteria_log.exists():
+                spectrum_paths['criteria_log'] = str(criteria_log)
+            eigvec_pickle = spectrum_dir / 'eigenvectors_spectrum.pickle'
+            if eigvec_pickle.exists():
+                spectrum_paths['eigenvectors_pickle'] = str(eigvec_pickle)
+
+            out['spectrum'] = spec_summary
+            out['spectrum_json_path'] = str(spectrum_json)
+            if spectrum_paths:
+                out['spectrum_paths'] = spectrum_paths
+        except Exception as e:
+            print(f"[LLA] viz_esd failed: {e}")
+
     out['total_runtime_sec'] = time.time() - t_all0
     return out
 
 
-def _rename_with_arch_task(path: Path, arch: str, task_idx: int) -> Path:
+def _rename_with_arch_task(path: Path, arch: str, task_idx: int, phase: str | None = None) -> Path:
     if not path.exists():
         return path
     stem = path.stem
-    new_name = f"{stem}_{arch}_task{task_idx}{path.suffix}"
+    new_name = f"{stem}_{arch}_task{task_idx}"
+    if phase:
+        new_name += f"_{phase}"
+    new_name += path.suffix
     new_path = path.with_name(new_name)
     try:
         path.rename(new_path)
@@ -748,31 +604,40 @@ def _make_unique_run_root(base_dir: Path, cfg: Any) -> tuple[Path, str]:
     return run_root, run_id
 
 
-def _run_lla_end_of_task(
+def _run_lla_evaluation(
     model: nn.Module,
-    train_set,
+    eval_source,
     base_cfg: ExperimentConfig,
     out_root: Path,
     task_idx: int,
     arch: str,
+    eval_phase: str,
     do_planes: bool = True,
     do_sam: bool = False,
     do_spectrum: bool = True,
 ) -> Dict[str, Any]:
+    """Run LLA evaluation (planes/spectrum/SAM optional) for a specific task/phase."""
+
     device = str(base_cfg.net.device)
     model.eval()
 
     # Build eval loader (single-batch)
-    eval_ds = _snapshot_eval_dataset(train_set)
+    eval_ds = _snapshot_eval_dataset(eval_source)
     eval_bs = min(128, len(eval_ds)) if hasattr(eval_ds, '__len__') else 128
     eval_loader = DataLoader(eval_ds, batch_size=eval_bs, shuffle=False, num_workers=0, pin_memory=True)
 
     # LLA cfg & output directory
     lla_cfg = _build_lla_cfg(base_cfg, eval_batch_size=eval_bs)
-    task_dir = out_root / f"task_{task_idx:04d}_{arch}"
-    task_dir.mkdir(parents=True, exist_ok=True)
+    phase_slug = eval_phase.strip().lower().replace(" ", "_") or "phase"
+    task_root = out_root / f"task_{task_idx:04d}_{arch}"
+    phase_dir = task_root / phase_slug
+    task_dir = phase_dir  # Back-compat for downstream logic expecting task_dir
+    phase_dir.mkdir(parents=True, exist_ok=True)
 
-    result: Dict[str, Any] = {}
+    result: Dict[str, Any] = {
+        'phase': phase_slug,
+        'output_dir': str(phase_dir),
+    }
     if not LLA_AVAILABLE:
         print("[LLA] Submodule not available; skipping planes/spectrum (set up submodule to enable).")
         return result
@@ -788,23 +653,105 @@ def _run_lla_end_of_task(
         )
         result.update(res)
         # Rename outputs to include arch & task for consistency
-        for fname in ['spectrum_esd.png', 'spectrum_hist.png', 'spectrum_esd.npz', 'spectrum.json']:
+        renamed_spectrum: Dict[str, str] = {}
+        spectrum_files = [
+            'spectrum_esd.png',
+            'spectrum_hist.png',
+            'spectrum_esd.npz',
+            'spectrum.json',
+            'eigenvalues_spectrum.log',
+            'eigenvectors_spectrum.pickle',
+            'trace_spectrum.log',
+            'hessian_criteria_spectrum.log',
+        ]
+        for fname in spectrum_files:
             p = task_dir / fname
-            _rename_with_arch_task(p, arch, task_idx)
+            new_path = _rename_with_arch_task(p, arch, task_idx, phase_slug)
+            if new_path.exists():
+                renamed_spectrum[fname] = str(new_path)
+        if renamed_spectrum:
+            result.setdefault('spectrum_paths', {}).update(renamed_spectrum)
+            if 'spectrum.json' in renamed_spectrum:
+                result['spectrum_json_path'] = renamed_spectrum['spectrum.json']
         if 'plane' in result:
             for key in ['heatmap_png', 'surface3d_png', 'contour_png', 'npy']:
                 if key in result['plane']:
                     try:
-                        _rename_with_arch_task(Path(result['plane'][key]), arch, task_idx)
+                        renamed = _rename_with_arch_task(Path(result['plane'][key]), arch, task_idx, phase_slug)
+                        if renamed.exists():
+                            result['plane'][key] = str(renamed)
                     except Exception:
                         pass
     except Exception as e:
-        print(f"[LLA] End-of-task LLA evaluation failed: {e}")
+        print(f"[LLA] LLA evaluation failed: {e}")
 
     if do_sam:
         print("[LLA][SAM] SAM surface not yet refactored to LLA; skipping (previous implementation removed).")
 
     return result
+
+
+def _collect_spectrum_metrics(spec_json_path: str | Path | None, do_spectrum: bool, prefix: str) -> Dict[str, float]:
+    metrics: Dict[str, float] = {}
+    if not do_spectrum or spec_json_path is None:
+        return metrics
+    try:
+        spec_path = Path(spec_json_path)
+    except TypeError:
+        return metrics
+    if not spec_path.exists():
+        return metrics
+    try:
+        spec_data = json.loads(spec_path.read_text())
+    except Exception:
+        return metrics
+
+    try:
+        topk_iter = list(spec_data.get('top_k', []))
+    except Exception:
+        topk_iter = []
+    for idx, value in enumerate(topk_iter):
+        try:
+            metrics[f'{prefix}/hessian_top_eig_{idx+1}'] = float(value)
+        except Exception:
+            continue
+
+    trace_estimate = spec_data.get('hutchinson_trace', None)
+    if trace_estimate is not None:
+        try:
+            metrics[f'{prefix}/hessian_trace_estimate'] = float(trace_estimate)
+        except Exception:
+            pass
+
+    diagnostics_obj = spec_data.get('diagnostics', {})
+    if isinstance(diagnostics_obj, dict):
+        diagnostics = cast(Dict[str, Any], diagnostics_obj)
+        trace_fraction = diagnostics.get('trace_fraction_topk', None)
+        if trace_fraction is not None:
+            try:
+                metrics[f'{prefix}/hessian_trace_fraction_topk'] = float(trace_fraction)
+            except Exception:
+                pass
+        partial_topk_sum = diagnostics.get('partial_topk_sum', None)
+        if partial_topk_sum is not None:
+            try:
+                metrics[f'{prefix}/hessian_partial_topk_sum'] = float(partial_topk_sum)
+            except Exception:
+                pass
+        hesd_re = diagnostics.get('hesd_re', None)
+        if hesd_re is not None:
+            try:
+                metrics[f'{prefix}/hesd_re'] = float(hesd_re)
+            except Exception:
+                pass
+        hesd_khn = diagnostics.get('hesd_khn', None)
+        if hesd_khn is not None:
+            try:
+                metrics[f'{prefix}/hesd_khn'] = float(hesd_khn)
+            except Exception:
+                pass
+
+    return metrics
 
 
 # Use a local copy of the optimizer experiment's config to keep this experiment self-contained
@@ -837,7 +784,7 @@ def main(cfg: ExperimentConfig) -> Any:
 
     # Out root for artifacts (local only) — make per-run unique directory
     arch = str(cfg.net.type)
-    base_out = PROJECT_ROOT / 'outputs' / 'loss_landscape_taskshift' / arch
+    base_out = PROJECT_ROOT / 'outputs' / 'loss_landscape_at_new_and_old_tasks' / arch
     out_root, run_id = _make_unique_run_root(base_out, cfg)
     print(f"Saving artifacts under: {out_root} (run_id={run_id})")
 
@@ -890,23 +837,80 @@ def main(cfg: ExperimentConfig) -> Any:
     num_tasks = int(cfg.num_tasks)
 
     # Training across tasks
-    prev_layer_gini_mean: float | None = None
-    prev_layer_rank_mean: float | None = None
     # holders for the exact last training batch of the task
     last_batch_inp_cpu: torch.Tensor | None = None
     last_batch_target_cpu: Any | None = None
+    if is_stateful:
+        current_train_set = dataset_wrapper if dataset_wrapper is not None else train_set
+        if dataset_wrapper is not None and hasattr(dataset_wrapper, 'update_task'):
+            dataset_wrapper.update_task()
+        current_train_set = dataset_wrapper if dataset_wrapper is not None else train_set
+    else:
+        current_train_set = create_stateless_dataset_wrapper(cfg, train_set, 0) or train_set
+    next_train_set = None
     # Outer progress bar over tasks; inner over epochs per task
     with tqdm(total=num_tasks, desc='Tasks', position=0, leave=True, dynamic_ncols=True) as pbar_tasks:
         for task_idx in range(num_tasks):
+            if task_idx > 0:
+                if is_stateful:
+                    current_train_set = dataset_wrapper if dataset_wrapper is not None else train_set
+                else:
+                    current_train_set = next_train_set or train_set
+
             pbar_tasks.set_description(f"Tasks {task_idx+1}/{num_tasks}")
 
-            # Build task dataset
-            if is_stateful:
-                if hasattr(dataset_wrapper, 'update_task'):
-                    dataset_wrapper.update_task()
-                current_train_set = dataset_wrapper if dataset_wrapper is not None else train_set
-            else:
-                current_train_set = create_stateless_dataset_wrapper(cfg, train_set, task_idx) or train_set
+            # Reset last batch holders for this task
+            last_batch_inp_cpu = None
+            last_batch_target_cpu = None
+
+            # LLA toggles are evaluated once per task to determine which analyses to run
+            lla_cfg_block = getattr(cfg, 'lla', {})
+
+            def _get_toggle(name: str, section: str, default: bool) -> bool:
+                try:
+                    if hasattr(lla_cfg_block, name):
+                        val = getattr(lla_cfg_block, name)
+                        if isinstance(val, bool):
+                            return val
+                    sec = getattr(lla_cfg_block, section, None)
+                    if sec is not None and hasattr(sec, 'enable'):
+                        sec_val = getattr(sec, 'enable')
+                        if isinstance(sec_val, bool):
+                            return sec_val
+                except Exception:
+                    pass
+                return default
+
+            do_planes = _get_toggle('enable_planes', 'planes', True)
+            do_spectrum = _get_toggle('enable_spectrum', 'spectrum', True)
+            do_sam = _get_toggle('enable_sam', 'sam', False)
+
+            # Optional LLA evaluation before any training on this task
+            pre_eval_result: Dict[str, Any] | None = None
+            pre_runtime: float | None = None
+            pre_metrics: Dict[str, float] = {}
+            if do_planes or do_spectrum or do_sam:
+                pbar_tasks.set_postfix_str("LLA pre-training…")
+                pre_start = time.time()
+                pre_eval_result = _run_lla_evaluation(
+                    model=net,
+                    eval_source=current_train_set,
+                    base_cfg=cfg,
+                    out_root=out_root,
+                    task_idx=task_idx,
+                    arch=arch,
+                    eval_phase='pre_training',
+                    do_planes=do_planes,
+                    do_sam=do_sam,
+                    do_spectrum=do_spectrum,
+                )
+                pre_runtime = float(pre_eval_result.get('total_runtime_sec', time.time() - pre_start))
+                pre_metrics = _collect_spectrum_metrics(
+                    pre_eval_result.get('spectrum_json_path'),
+                    do_spectrum,
+                    prefix='pre_training',
+                )
+                pbar_tasks.set_postfix_str("LLA pre-training complete")
 
             train_loader = torch.utils.data.DataLoader(
                 current_train_set,
@@ -1061,76 +1065,46 @@ def main(cfg: ExperimentConfig) -> Any:
             except Exception as e:
                 print(f"[weights] tracking failed: {e}")
 
-            # LLA: spectrum/planes/SAM selection from YAML toggles
-            lla_cfg_block = getattr(cfg, 'lla', {})
-            # Prefer top-level toggles; fall back to per-section 'enable'
-            def _get_toggle(name: str, section: str, default: bool) -> bool:
-                try:
-                    if hasattr(lla_cfg_block, name):
-                        val = getattr(lla_cfg_block, name)
-                        if isinstance(val, bool):
-                            return val
-                    sec = getattr(lla_cfg_block, section, None)
-                    if sec is not None and hasattr(sec, 'enable'):
-                        sec_val = getattr(sec, 'enable')
-                        if isinstance(sec_val, bool):
-                            return sec_val
-                except Exception:
-                    pass
-                return default
-
-            do_planes = _get_toggle('enable_planes', 'planes', True)
-            do_spectrum = _get_toggle('enable_spectrum', 'spectrum', True)
-            do_sam = _get_toggle('enable_sam', 'sam', False)
-
             # Build eval dataset from the exact last train batch if available; else snapshot current train set
             if last_batch_inp_cpu is not None and last_batch_target_cpu is not None:
                 eval_source_ds = _SingleBatchDataset(last_batch_inp_cpu, last_batch_target_cpu)
             else:
                 eval_source_ds = current_train_set
 
-            # LLA: spectrum and/or planes/SAM (plots saved locally)
-            t0 = time.time()
-            _ = _run_lla_end_of_task(
+            # LLA: spectrum and/or planes/SAM (plots saved locally) — post-training on current task
+            pbar_tasks.set_postfix_str("LLA post-training…")
+            post_start = time.time()
+            post_eval_result = _run_lla_evaluation(
                 model=net,
-                train_set=eval_source_ds,
+                eval_source=eval_source_ds,
                 base_cfg=cfg,
                 out_root=out_root,
                 task_idx=task_idx,
                 arch=arch,
+                eval_phase='post_training',
                 do_planes=do_planes,
                 do_sam=do_sam,
                 do_spectrum=do_spectrum,
             )
-            dt = time.time() - t0
+            post_runtime = float(post_eval_result.get('total_runtime_sec', time.time() - post_start))
+            post_metrics = _collect_spectrum_metrics(
+                post_eval_result.get('spectrum_json_path'),
+                do_spectrum,
+                prefix='post_training',
+            )
 
-            # Parse top-k from saved spectrum.json if present
-            topk_metrics: Dict[str, float] = {}
-            spec_json = out_root / f"task_{task_idx:04d}_{arch}" / 'spectrum.json'
-            if not spec_json.exists():
-                # try renamed variant
-                for p in (out_root / f"task_{task_idx:04d}_{arch}").glob('spectrum*.json'):
-                    spec_json = p
-                    break
-            try:
-                if spec_json.exists() and do_spectrum:
-                    spec = json.loads(spec_json.read_text())
-                    topk = spec.get('top_k', [])
-                    for i, v in enumerate(topk):
-                        topk_metrics[f'hessian_top_eig_{i+1}'] = float(v)
-                    trace_estimate = spec.get('hutchinson_trace', None)
-                    if trace_estimate is not None:
-                        topk_metrics['hessian_trace_estimate'] = float(trace_estimate)
-                    diagnostics = spec.get('diagnostics', {})
-                    if isinstance(diagnostics, dict):
-                        trace_fraction = diagnostics.get('trace_fraction_topk', None)
-                        if trace_fraction is not None:
-                            topk_metrics['hessian_trace_fraction_topk'] = float(trace_fraction)
-                        partial_topk_sum = diagnostics.get('partial_topk_sum', None)
-                        if partial_topk_sum is not None:
-                            topk_metrics['hessian_partial_topk_sum'] = float(partial_topk_sum)
-            except Exception:
-                pass
+            # Prepare next task dataset (no evaluation here; next iteration will evaluate before training)
+            if task_idx < num_tasks - 1:
+                if is_stateful:
+                    if dataset_wrapper is not None and hasattr(dataset_wrapper, 'update_task'):
+                        dataset_wrapper.update_task()
+                    next_train_set = dataset_wrapper if dataset_wrapper is not None else train_set
+                else:
+                    next_train_set = create_stateless_dataset_wrapper(cfg, train_set, task_idx + 1) or train_set
+                pbar_tasks.set_postfix_str("LLA post-training complete; next task prepared")
+            else:
+                next_train_set = None
+                pbar_tasks.set_postfix_str("LLA post-training complete")
 
             # Log numeric metrics to wandb (images/checkpoints are NOT logged)
             if use_wandb:
@@ -1139,10 +1113,11 @@ def main(cfg: ExperimentConfig) -> Any:
                     log_data: Dict[str, float | int | str] = {
                         'task_idx': task_idx,
                         'arch': arch,
-                        'lla_runtime_sec': dt,
+                        'lla_runtime_sec': float(post_runtime),
+                        'post_training/lla_runtime_sec': float(post_runtime),
                         **weight_summ,
-                        **topk_metrics,
                     }
+                    log_data.update(post_metrics)
                     # Per-layer rank metrics
                     # Try semantic layer names first (mirror reference script behavior)
                     semantic_logged = False
@@ -1178,6 +1153,11 @@ def main(cfg: ExperimentConfig) -> Any:
                         log_data['task_last_epoch_loss'] = float(last_epoch_loss_mean)
                     if last_epoch_accuracy is not None:
                         log_data['task_last_epoch_accuracy'] = float(last_epoch_accuracy)
+                    if pre_runtime is not None:
+                        log_data['pre_training/lla_runtime_sec'] = float(pre_runtime)
+                        log_data['pre_training/task_idx'] = int(task_idx)
+                    if pre_metrics:
+                        log_data.update(pre_metrics)
                     # Align end-of-task metrics with global epoch timeline
                     end_of_task_step = int((task_idx + 1) * epochs_per_task - 1)
                     log_data['global_epoch'] = end_of_task_step
@@ -1185,12 +1165,8 @@ def main(cfg: ExperimentConfig) -> Any:
                 except Exception as e:
                     print(f"[wandb] log failed: {e}")
 
-            # proceed to next task (no gini/rank mean retained anymore)
-            prev_layer_gini_mean = None
-            prev_layer_rank_mean = None
-
             pbar_tasks.update(1)
-    print("Task-shift training with end-of-task LLA analyses complete.")
+    print("Task-shift training with pre- and post-task LLA analyses complete.")
 
 
 if __name__ == "__main__":
