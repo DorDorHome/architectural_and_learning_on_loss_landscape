@@ -442,6 +442,14 @@ def _compute_planes_and_spectrum_with_lla(
                 n_kh=n_kh,
             )
 
+            # Eigenvector pickles produced by viz_esd are very large; remove them immediately to conserve disk space.
+            eigvec_pickle_path = spectrum_dir / 'eigenvectors_spectrum.pickle'
+            if eigvec_pickle_path.exists():
+                try:
+                    eigvec_pickle_path.unlink()
+                except Exception as cleanup_err:
+                    print(f"[LLA] Failed to delete eigenvectors pickle: {cleanup_err}")
+
             eigvals_list = [float(v) for v in eigvals] if eigvals is not None else []
             trace_float = float(trace_est) if trace_est is not None else None
             partial_topk_sum = float(np.sum(eigvals_list[:top_k])) if eigvals_list else None
@@ -482,9 +490,6 @@ def _compute_planes_and_spectrum_with_lla(
             criteria_log = spectrum_dir / 'hessian_criteria_spectrum.log'
             if criteria_log.exists():
                 spectrum_paths['criteria_log'] = str(criteria_log)
-            eigvec_pickle = spectrum_dir / 'eigenvectors_spectrum.pickle'
-            if eigvec_pickle.exists():
-                spectrum_paths['eigenvectors_pickle'] = str(eigvec_pickle)
 
             out['spectrum'] = spec_summary
             out['spectrum_json_path'] = str(spectrum_json)
@@ -660,7 +665,6 @@ def _run_lla_evaluation(
             'spectrum_esd.npz',
             'spectrum.json',
             'eigenvalues_spectrum.log',
-            'eigenvectors_spectrum.pickle',
             'trace_spectrum.log',
             'hessian_criteria_spectrum.log',
         ]
