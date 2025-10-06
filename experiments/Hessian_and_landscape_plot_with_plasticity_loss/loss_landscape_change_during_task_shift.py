@@ -193,6 +193,7 @@ def _build_lla_cfg(base_cfg: ExperimentConfig, eval_batch_size: int = 128) -> Di
 
 
 def _make_criterion(loss_name: str | None = 'cross_entropy') -> nn.Module:
+    """Return a criterion instance aligned with the configured learner loss."""
     if loss_name == 'mse':
         return nn.MSELoss()
     return nn.CrossEntropyLoss()
@@ -207,6 +208,7 @@ class FixedBatchMetric(Metric):
     """
 
     def __init__(self, x: torch.Tensor, y: torch.Tensor, device: str, criterion: nn.Module):
+        """Cache a single evaluation batch on the requested device for reuse."""
         super().__init__()
         self.x = x.detach().to(device)
         self.y = y.detach().to(device)
@@ -214,6 +216,7 @@ class FixedBatchMetric(Metric):
         self.criterion = criterion
 
     def _forward(self, model: nn.Module) -> tuple[torch.Tensor, torch.Tensor]:
+        """Run a forward pass on the cached batch and return (loss, logits)."""
         model.eval()
         out = model(self.x)
         if isinstance(self.criterion, nn.MSELoss):
@@ -228,6 +231,7 @@ class FixedBatchMetric(Metric):
 
     # Plane / landscape API call (wrapped model)
     def __call__(self, model_wrapper, *args, **kwargs):  # type: ignore[override]
+        """Expose Metric-compatible call hooks for plane and Hessian evaluations."""
         # If called with wrapped model (ModelWrapper) we extract underlying module
         if hasattr(model_wrapper, 'modules') and len(model_wrapper.modules) == 1:  # plane evaluation path
             model = model_wrapper.modules[0]
@@ -245,6 +249,7 @@ class FixedBatchMetric(Metric):
 
 
 def _first_batch(loader: DataLoader, device: str) -> tuple[torch.Tensor, torch.Tensor]:
+    """Extract the first batch from a loader and move tensors onto the requested device."""
     batch = next(iter(loader))
     x, y = batch
     if isinstance(y, tuple):  # drifting_values case not supported for LLA Hessian; use original labels
@@ -258,6 +263,7 @@ def _first_batch(loader: DataLoader, device: str) -> tuple[torch.Tensor, torch.T
 
 
 def _save_plane_artifacts(plane_arr: np.ndarray, plane_dir: Path, distance: float) -> Dict[str, str]:
+    """Persist plane visualizations (heatmap/3D/contour) and return artifact paths."""
     artifacts: Dict[str, str] = {}
     try:
         import matplotlib
@@ -325,6 +331,221 @@ def _save_plane_artifacts(plane_arr: np.ndarray, plane_dir: Path, distance: floa
         plt.close(fig_c)
     except Exception as e:
         print(f"[LLA][plane] contour plot failed: {e}")
+
+    return artifacts
+
+
+def _extract_esd_arrays(esd_payload: Dict[str, Any]) -> tuple[np.ndarray | None, np.ndarray | None]:
+    """Extract eigenvalue and weight arrays from a viz_esd payload, enforcing uniform shapes."""
+    eigenvalues_runs = esd_payload.get('eigenvalues_runs')
+    weights_runs = esd_payload.get('weights_runs')
+    if not isinstance(eigenvalues_runs, (list, tuple)) or not isinstance(weights_runs, (list, tuple)):
+        return None, None
+    filtered_eigs: list[np.ndarray] = []
+    filtered_weights: list[np.ndarray] = []
+    for eigs, weights in zip(eigenvalues_runs, weights_runs):
+        try:
+            eig_arr = np.asarray(eigs, dtype=np.float64)
+            weight_arr = np.asarray(weights, dtype=np.float64)
+        except Exception:
+            continue
+        if eig_arr.size == 0 or weight_arr.size == 0:
+            continue
+        length = min(eig_arr.shape[0], weight_arr.shape[0])
+        if length == 0:
+            continue
+        filtered_eigs.append(eig_arr[:length])
+        filtered_weights.append(weight_arr[:length])
+    if not filtered_eigs:
+        return None, None
+    try:
+        eig_matrix = np.vstack(filtered_eigs)
+        weight_matrix = np.vstack(filtered_weights)
+        return eig_matrix, weight_matrix
+    except Exception:
+        return None, None
+
+
+def _compute_esd_signed_stats(esd_payload: Dict[str, Any], eps: float = 1e-8) -> Dict[str, float]:
+    """Compute summary statistics about signed eigenvalue mass using the viz_esd payload."""
+    stats: Dict[str, float] = {}
+    eig_matrix, weight_matrix = _extract_esd_arrays(esd_payload)
+    if eig_matrix is None or weight_matrix is None:
+        return stats
+    if eig_matrix.shape != weight_matrix.shape:
+        return stats
+
+    # Boolean masks partition the spectrum into negative/positive/near-zero regions and let us
+    # reuse the same broadcasting logic for both mass and count computations.
+    neg_mask = eig_matrix < -eps
+    pos_mask = eig_matrix > eps
+    zero_mask = ~(neg_mask | pos_mask)
+
+    neg_mass = float(np.mean(np.sum(weight_matrix * neg_mask, axis=1)))
+    pos_mass = float(np.mean(np.sum(weight_matrix * pos_mask, axis=1)))
+    zero_mass = float(np.mean(np.sum(weight_matrix * zero_mask, axis=1)))
+    total_mass = neg_mass + pos_mass + zero_mass
+    if total_mass <= 0:
+        total_mass = neg_mass + pos_mass + zero_mass + eps
+
+    stats['negative_weight_mass'] = neg_mass
+    stats['positive_weight_mass'] = pos_mass
+    stats['zero_weight_mass'] = zero_mass
+    stats['negative_fraction'] = neg_mass / max(eps, (neg_mass + pos_mass)) if (neg_mass + pos_mass) > eps else 0.0
+    stats['signed_weight_balance'] = pos_mass - neg_mass
+    stats['negative_mass_ratio_total'] = neg_mass / total_mass if total_mass > eps else 0.0
+
+    stats['negative_count'] = float(np.mean(np.sum(neg_mask, axis=1)))
+    stats['positive_count'] = float(np.mean(np.sum(pos_mask, axis=1)))
+    stats['zero_count'] = float(np.mean(np.sum(zero_mask, axis=1)))
+
+    min_eig = float(np.min(eig_matrix)) if eig_matrix.size else 0.0
+    max_eig = float(np.max(eig_matrix)) if eig_matrix.size else 0.0
+    stats['min_eigenvalue'] = min_eig
+    stats['max_eigenvalue'] = max_eig
+
+    density = esd_payload.get('density')
+    segments = esd_payload.get('segments')
+    try:
+        density_arr = np.asarray(density, dtype=np.float64)
+        segments_arr = np.asarray(segments, dtype=np.float64)
+        if density_arr.size and segments_arr.size and density_arr.shape == segments_arr.shape:
+            neg_region = segments_arr < -eps
+            pos_region = segments_arr > eps
+            if np.any(neg_region):
+                stats['negative_density_integral'] = float(np.trapz(density_arr[neg_region], segments_arr[neg_region]))
+                stats['negative_density_peak'] = float(np.max(density_arr[neg_region]))
+            if np.any(pos_region):
+                stats['positive_density_integral'] = float(np.trapz(density_arr[pos_region], segments_arr[pos_region]))
+                stats['positive_density_peak'] = float(np.max(density_arr[pos_region]))
+    except Exception:
+        pass
+
+    return stats
+
+
+def _save_esd_payload_npz(esd_payload: Dict[str, Any], out_path: Path) -> None:
+    """Persist raw viz_esd payload components in an NPZ for downstream post-processing."""
+    try:
+        # eigenvalues_runs / weights_runs are ragged lists; store them with dtype=object so we don't
+        # lose per-run lengths when round-tripping the NPZ archive.
+        eigenvalues_runs = np.array(esd_payload.get('eigenvalues_runs', []), dtype=object)
+        weights_runs = np.array(esd_payload.get('weights_runs', []), dtype=object)
+        density = np.asarray(esd_payload.get('density', []), dtype=np.float64)
+        segments = np.asarray(esd_payload.get('segments', []), dtype=np.float64)
+        np.savez(
+            out_path,
+            eigenvalues_runs=eigenvalues_runs,
+            weights_runs=weights_runs,
+            density=density,
+            segments=segments,
+        )
+    except Exception as e:
+        print(f"[LLA][spectrum] failed to save esd payload npz: {e}")
+
+
+def _save_density_plots(esd_payload: Dict[str, Any], output_dir: Path, exp_name: str = 'spectrum') -> Dict[str, str]:
+    """Render log-scale density plots (raw + smoothed) from viz_esd data across the full spectrum."""
+    artifacts: Dict[str, str] = {}
+    try:
+        import matplotlib
+        matplotlib.use('Agg')
+        import matplotlib.pyplot as plt
+    except Exception as e:
+        print(f"[LLA][spectrum] matplotlib unavailable for density plots: {e}")
+        return artifacts
+
+    eig_matrix, weight_matrix = _extract_esd_arrays(esd_payload)
+    try:
+        density = np.asarray(esd_payload.get('density', []), dtype=np.float64)
+        segments = np.asarray(esd_payload.get('segments', []), dtype=np.float64)
+    except Exception as e:
+        print(f"[LLA][spectrum] invalid density payload: {e}")
+        density = np.array([])
+        segments = np.array([])
+
+    # Determine plotting range from whichever data we have available.
+    x_min = float(np.min(segments)) if segments.size else None
+    x_max = float(np.max(segments)) if segments.size else None
+    if eig_matrix is not None and eig_matrix.size:
+        eig_min = float(np.min(eig_matrix))
+        eig_max = float(np.max(eig_matrix))
+        x_min = eig_min if x_min is None else min(x_min, eig_min)
+        x_max = eig_max if x_max is None else max(x_max, eig_max)
+
+    # Build a raw (unsmoothed) weighted histogram averaged across runs, if eigenvalues are available.
+    hist_centers: np.ndarray | None = None
+    hist_density: np.ndarray | None = None
+    if eig_matrix is not None and eig_matrix.size and weight_matrix is not None and weight_matrix.size:
+        num_runs, _ = eig_matrix.shape
+        # Match the number of bins to the smoothed density resolution when possible.
+        num_bins = int(segments.size) if segments.size else max(512, int(np.sqrt(eig_matrix.shape[1]) * 8))
+        if num_bins < 10:
+            num_bins = 10
+        if x_min is None or x_max is None:
+            x_min = float(np.min(eig_matrix))
+            x_max = float(np.max(eig_matrix))
+        bin_edges = np.linspace(x_min, x_max, num_bins + 1)
+        centers = 0.5 * (bin_edges[:-1] + bin_edges[1:])
+        aggregated = np.zeros_like(centers, dtype=np.float64)
+        for run_idx in range(num_runs):
+            try:
+                counts, _ = np.histogram(
+                    eig_matrix[run_idx],
+                    bins=bin_edges,
+                    weights=weight_matrix[run_idx],
+                )
+            except Exception:
+                continue
+            aggregated += counts
+        if num_runs > 0:
+            aggregated /= float(num_runs)
+        bin_width = float(bin_edges[1] - bin_edges[0]) if len(bin_edges) > 1 else 1.0
+        total_mass = float(np.sum(aggregated) * bin_width)
+        if total_mass > 0:
+            aggregated /= total_mass
+            hist_centers = centers
+            hist_density = aggregated
+
+    if hist_centers is not None and hist_density is not None:
+        try:
+            raw_path = output_dir / f'{exp_name}_esd_raw.png'
+            fig_raw, ax_raw = plt.subplots(figsize=(6.4, 4.8))
+            ax_raw.semilogy(hist_centers, hist_density + 1e-12, color='#253494', linewidth=1.3, label='Raw (weighted histogram)')
+            ax_raw.axvline(0.0, color='#d7301f', linestyle='--', linewidth=1.0, label='λ = 0')
+            ax_raw.set_xlabel('Eigenvalue λ')
+            ax_raw.set_ylabel('Density (Log Scale)')
+            ax_raw.set_title('Hessian ESD (raw)')
+            if x_min is not None and x_max is not None:
+                ax_raw.set_xlim(x_min, x_max)
+            ax_raw.legend(loc='upper right')
+            ax_raw.grid(True, which='both', linestyle=':', linewidth=0.5, alpha=0.5)
+            fig_raw.tight_layout()
+            fig_raw.savefig(str(raw_path))
+            artifacts['esd_raw_png'] = str(raw_path)
+            plt.close(fig_raw)
+        except Exception as e:
+            print(f"[LLA][spectrum] raw density plot failed: {e}")
+
+    if density.size and segments.size and density.shape == segments.shape:
+        try:
+            smooth_path = output_dir / f'{exp_name}_esd_smoothed.png'
+            fig_smooth, ax_smooth = plt.subplots(figsize=(6.4, 4.8))
+            ax_smooth.semilogy(segments, density + 1e-12, color='#2b8cbe', linewidth=1.5, label='Smoothed (Gaussian kernel)')
+            ax_smooth.axvline(0.0, color='#d7301f', linestyle='--', linewidth=1.0, label='λ = 0')
+            ax_smooth.set_xlabel('Eigenvalue λ')
+            ax_smooth.set_ylabel('Density (Log Scale)')
+            ax_smooth.set_title('Hessian ESD (smoothed)')
+            if x_min is not None and x_max is not None:
+                ax_smooth.set_xlim(x_min, x_max)
+            ax_smooth.legend(loc='upper right')
+            ax_smooth.grid(True, which='both', linestyle=':', linewidth=0.5, alpha=0.5)
+            fig_smooth.tight_layout()
+            fig_smooth.savefig(str(smooth_path))
+            artifacts['esd_smoothed_png'] = str(smooth_path)
+            plt.close(fig_smooth)
+        except Exception as e:
+            print(f"[LLA][spectrum] smoothed density plot failed: {e}")
 
     return artifacts
 
@@ -421,7 +642,7 @@ def _compute_planes_and_spectrum_with_lla(
     # -------------------- Spectrum via viz_esd --------------------
     if do_spectrum:
         try:
-            eigvals, eigvecs, trace_est, re_val, khn_val = viz_esd(
+            viz_output = viz_esd(
                 model,
                 metric,
                 eigs=True,
@@ -440,7 +661,14 @@ def _compute_planes_and_spectrum_with_lla(
                 res_dir=str(spectrum_dir),
                 calc_crit=True,
                 n_kh=n_kh,
+                return_data=True,
             )
+            if isinstance(viz_output, tuple) and len(viz_output) == 2:
+                viz_results, esd_payload = viz_output
+            else:
+                viz_results = viz_output
+                esd_payload = None
+            eigvals, eigvecs, trace_est, re_val, khn_val = viz_results
 
             # Eigenvector pickles produced by viz_esd are very large; remove them immediately to conserve disk space.
             eigvec_pickle_path = spectrum_dir / 'eigenvectors_spectrum.pickle'
@@ -463,6 +691,20 @@ def _compute_planes_and_spectrum_with_lla(
             if khn_val is not None:
                 diagnostics['hesd_khn'] = float(khn_val)
 
+            esd_artifacts: Dict[str, str] = {}
+            esd_stats: Dict[str, float] = {}
+            if isinstance(esd_payload, dict):
+                try:
+                    esd_npz_path = spectrum_dir / 'spectrum_esd_raw.npz'
+                    _save_esd_payload_npz(esd_payload, esd_npz_path)
+                    esd_artifacts['esd_npz'] = str(esd_npz_path)
+                except Exception as e:
+                    print(f"[LLA][spectrum] failed to persist esd payload: {e}")
+                esd_stats = _compute_esd_signed_stats(esd_payload)
+                diagnostics.update(esd_stats)
+                density_artifacts = _save_density_plots(esd_payload, spectrum_dir, exp_name='spectrum')
+                esd_artifacts.update(density_artifacts)
+
             spec_summary: Dict[str, Any] = {
                 'top_k': eigvals_list[:top_k],
                 'hutchinson_trace': trace_float,
@@ -473,6 +715,10 @@ def _compute_planes_and_spectrum_with_lla(
                 'algorithm': 'viz_esd',
                 'diagnostics': diagnostics,
             }
+            if esd_stats:
+                spec_summary['signed_stats'] = esd_stats
+            if esd_artifacts:
+                spec_summary['esd_artifacts'] = esd_artifacts
 
             spectrum_json = spectrum_dir / 'spectrum.json'
             spectrum_json.write_text(json.dumps(spec_summary, indent=2))
@@ -481,6 +727,8 @@ def _compute_planes_and_spectrum_with_lla(
             hesd_png = spectrum_dir / 'spectrum_esd.png'
             if hesd_png.exists():
                 spectrum_paths['esd_png'] = str(hesd_png)
+            for key, path_str in esd_artifacts.items():
+                spectrum_paths[key] = path_str
             eigenvalues_log = spectrum_dir / 'eigenvalues_spectrum.log'
             if eigenvalues_log.exists():
                 spectrum_paths['eigenvalues_log'] = str(eigenvalues_log)
@@ -503,6 +751,7 @@ def _compute_planes_and_spectrum_with_lla(
 
 
 def _rename_with_arch_task(path: Path, arch: str, task_idx: int, phase: str | None = None) -> Path:
+    """Rename a file to include architecture, task index, and phase labels for traceability."""
     if not path.exists():
         return path
     stem = path.stem
@@ -554,13 +803,16 @@ class _SingleBatchDataset(torch.utils.data.Dataset):
     Supports classification labels or (drifting_values, original_labels) tuples.
     """
     def __init__(self, x: torch.Tensor, y: Any):
+        """Store tensors (or tuple targets) that represent a fixed evaluation batch."""
         self.x = x
         self.y = y
 
     def __len__(self) -> int:
+        """Return the number of examples in the captured batch."""
         return int(self.x.shape[0])
 
     def __getitem__(self, idx: int):
+        """Return the indexed example, preserving tuple targets if present."""
         if isinstance(self.y, tuple) and len(self.y) == 2:
             dv, ol = self.y
             return self.x[idx], (dv[idx], ol[idx])
@@ -662,7 +914,9 @@ def _run_lla_evaluation(
         spectrum_files = [
             'spectrum_esd.png',
             'spectrum_hist.png',
-            'spectrum_esd.npz',
+            'spectrum_esd_raw.png',
+            'spectrum_esd_smoothed.png',
+            'spectrum_esd_raw.npz',
             'spectrum.json',
             'eigenvalues_spectrum.log',
             'trace_spectrum.log',
@@ -696,6 +950,7 @@ def _run_lla_evaluation(
 
 
 def _collect_spectrum_metrics(spec_json_path: str | Path | None, do_spectrum: bool, prefix: str) -> Dict[str, float]:
+    """Load spectrum summary JSON and flatten key diagnostics into scalar metrics."""
     metrics: Dict[str, float] = {}
     if not do_spectrum or spec_json_path is None:
         return metrics
@@ -730,6 +985,7 @@ def _collect_spectrum_metrics(spec_json_path: str | Path | None, do_spectrum: bo
     diagnostics_obj = spec_data.get('diagnostics', {})
     if isinstance(diagnostics_obj, dict):
         diagnostics = cast(Dict[str, Any], diagnostics_obj)
+        # Diagnostics includes a mix of scalar Hessian criteria and our enriched signed-mass stats.
         trace_fraction = diagnostics.get('trace_fraction_topk', None)
         if trace_fraction is not None:
             try:
@@ -754,6 +1010,96 @@ def _collect_spectrum_metrics(spec_json_path: str | Path | None, do_spectrum: bo
                 metrics[f'{prefix}/hesd_khn'] = float(hesd_khn)
             except Exception:
                 pass
+        neg_fraction = diagnostics.get('negative_fraction')
+        if neg_fraction is not None:
+            try:
+                metrics[f'{prefix}/hessian_negative_fraction'] = float(neg_fraction)
+            except Exception:
+                pass
+        signed_balance = diagnostics.get('signed_weight_balance')
+        if signed_balance is not None:
+            try:
+                metrics[f'{prefix}/hessian_signed_mass_balance'] = float(signed_balance)
+            except Exception:
+                pass
+        neg_mass = diagnostics.get('negative_weight_mass')
+        if neg_mass is not None:
+            try:
+                metrics[f'{prefix}/hessian_negative_mass'] = float(neg_mass)
+            except Exception:
+                pass
+        pos_mass = diagnostics.get('positive_weight_mass')
+        if pos_mass is not None:
+            try:
+                metrics[f'{prefix}/hessian_positive_mass'] = float(pos_mass)
+            except Exception:
+                pass
+        zero_mass = diagnostics.get('zero_weight_mass')
+        if zero_mass is not None:
+            try:
+                metrics[f'{prefix}/hessian_zero_mass'] = float(zero_mass)
+            except Exception:
+                pass
+        neg_mass_ratio_total = diagnostics.get('negative_mass_ratio_total')
+        if neg_mass_ratio_total is not None:
+            try:
+                metrics[f'{prefix}/hessian_negative_mass_ratio_total'] = float(neg_mass_ratio_total)
+            except Exception:
+                pass
+        neg_count = diagnostics.get('negative_count')
+        if neg_count is not None:
+            try:
+                metrics[f'{prefix}/hessian_negative_count'] = float(neg_count)
+            except Exception:
+                pass
+        pos_count = diagnostics.get('positive_count')
+        if pos_count is not None:
+            try:
+                metrics[f'{prefix}/hessian_positive_count'] = float(pos_count)
+            except Exception:
+                pass
+        zero_count = diagnostics.get('zero_count')
+        if zero_count is not None:
+            try:
+                metrics[f'{prefix}/hessian_zero_count'] = float(zero_count)
+            except Exception:
+                pass
+        min_eig = diagnostics.get('min_eigenvalue')
+        if min_eig is not None:
+            try:
+                metrics[f'{prefix}/hessian_min_eigenvalue'] = float(min_eig)
+            except Exception:
+                pass
+        max_eig = diagnostics.get('max_eigenvalue')
+        if max_eig is not None:
+            try:
+                metrics[f'{prefix}/hessian_max_eigenvalue'] = float(max_eig)
+            except Exception:
+                pass
+        neg_density_integral = diagnostics.get('negative_density_integral')
+        if neg_density_integral is not None:
+            try:
+                metrics[f'{prefix}/hessian_negative_density_integral'] = float(neg_density_integral)
+            except Exception:
+                pass
+        pos_density_integral = diagnostics.get('positive_density_integral')
+        if pos_density_integral is not None:
+            try:
+                metrics[f'{prefix}/hessian_positive_density_integral'] = float(pos_density_integral)
+            except Exception:
+                pass
+        neg_density_peak = diagnostics.get('negative_density_peak')
+        if neg_density_peak is not None:
+            try:
+                metrics[f'{prefix}/hessian_negative_density_peak'] = float(neg_density_peak)
+            except Exception:
+                pass
+        pos_density_peak = diagnostics.get('positive_density_peak')
+        if pos_density_peak is not None:
+            try:
+                metrics[f'{prefix}/hessian_positive_density_peak'] = float(pos_density_peak)
+            except Exception:
+                pass
 
     return metrics
 
@@ -761,6 +1107,7 @@ def _collect_spectrum_metrics(spec_json_path: str | Path | None, do_spectrum: bo
 # Use a local copy of the optimizer experiment's config to keep this experiment self-contained
 @hydra.main(config_path="cfg", config_name="task_shift_config", version_base=None)
 def main(cfg: ExperimentConfig) -> Any:
+    """Entry point for task-shift training that wraps training and LLA evaluations."""
     # Seed
     if cfg.seed is None or not isinstance(cfg.seed, (int, float)):
         cfg.seed = random.randint(0, 2**32 - 1)
@@ -833,6 +1180,7 @@ def main(cfg: ExperimentConfig) -> Any:
         num_workers = 0
 
     def _seed_worker(worker_id: int):
+        """Per-worker seeding hook to keep dataloader shuffling deterministic."""
         worker_seed = torch.initial_seed() % 2**32
         np.random.seed(worker_seed)
         random.seed(worker_seed)
@@ -871,6 +1219,7 @@ def main(cfg: ExperimentConfig) -> Any:
             lla_cfg_block = getattr(cfg, 'lla', {})
 
             def _get_toggle(name: str, section: str, default: bool) -> bool:
+                """Resolve boolean toggles from the cfg.lla block with sensible defaults."""
                 try:
                     if hasattr(lla_cfg_block, name):
                         val = getattr(lla_cfg_block, name)

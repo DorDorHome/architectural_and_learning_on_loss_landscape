@@ -163,7 +163,7 @@ lla:
     # Optional per-component toggle (legacy). Prefer lla.enable_planes above.
     enable: true
     grid_resolution: 101
-    span: [2, 2] # same as 
+    span: [0.2, 0.2] # same as 
     # distance: 1.5 # same as span [distance, distance]
     normalization: 'filter'
     bn:
