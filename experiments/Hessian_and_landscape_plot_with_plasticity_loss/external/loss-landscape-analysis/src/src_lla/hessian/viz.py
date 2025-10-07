@@ -17,6 +17,61 @@ default_viz_dir = 'viz_results'
 default_res_dir = 'analysis_results'
 
 
+def _coerce_matrix(data):
+    try:
+        arr = np.array(data, dtype=object)
+    except Exception:
+        return np.zeros((0, 0))
+
+    if arr.size == 0:
+        return np.zeros((0, 0))
+
+    if arr.dtype == object:
+        try:
+            arr = [np.asarray(run, dtype=np.float64) for run in arr]
+            arr = np.stack(arr, axis=0)
+        except Exception:
+            arr = np.zeros((0, 0))
+    else:
+        arr = arr.astype(np.float64)
+
+    if arr.ndim == 1:
+        arr = arr[np.newaxis, :]
+
+    return arr
+
+
+def _get_smoothing_fraction(default=0.005):
+    env_val = os.getenv('LLA_ESD_SMOOTHING_FRAC')
+    if env_val is not None:
+        try:
+            frac = float(env_val)
+            if np.isfinite(frac) and frac > 0:
+                return frac
+        except Exception:
+            pass
+    return default
+
+
+def _resolve_smoothing(span, override_s2=None):
+    min_sigma = 1e-6
+    if override_s2 is not None:
+        try:
+            variance = float(override_s2)
+            if variance > 0:
+                sigma = np.sqrt(variance)
+                fraction = sigma / span if span > 0 else 0.0
+                return variance, sigma, fraction
+        except Exception:
+            pass
+
+    fraction = _get_smoothing_fraction()
+    effective_span = span if span > 0 else 1.0
+    sigma = max(effective_span * fraction, min_sigma)
+    variance = sigma ** 2
+    return variance, sigma, fraction
+
+
 def hessian_criteria(eigenvalues,weights,n):
     
     """
@@ -56,7 +111,7 @@ def gaussian_conv(x, s2):
     return np.exp(-x**2 / (2.0 * s2)) / np.sqrt(2 * np.pi * s2)
 
 
-def density_plot(eigenvalues, weights, num_bins=10000, s2=1e-5, ext=0.001):
+def density_plot(eigenvalues, weights, num_bins=10000, s2=None, ext=0.02, return_metadata=False):
     """
     evaluates parameters of density plot in histogram form 
 
@@ -68,13 +123,34 @@ def density_plot(eigenvalues, weights, num_bins=10000, s2=1e-5, ext=0.001):
     returns density and segments for plotting
     """
 
-    eigenvalues = np.array(eigenvalues)
-    weights = np.array(weights)
+    eigenvalues = _coerce_matrix(eigenvalues)
+    weights = _coerce_matrix(weights)
 
-    y_max = np.mean(np.max(eigenvalues, axis=1), axis=0) + ext
-    y_min = np.mean(np.min(eigenvalues, axis=1), axis=0) - ext
-    segments = np.linspace(y_min, y_max, num=num_bins)
-    s2 = s2 * max(1, (y_max - y_min))
+    if eigenvalues.size == 0 or weights.size == 0:
+        segments = np.linspace(-1.0, 1.0, num=num_bins)
+        density = np.zeros_like(segments)
+        if return_metadata:
+            return density, segments, {
+                'smoothing_sigma': 0.0,
+                'smoothing_variance': 0.0,
+                'smoothing_fraction': 0.0,
+            }
+        return density, segments
+
+    eig_min = float(np.min(eigenvalues))
+    eig_max = float(np.max(eigenvalues))
+    bound = max(abs(eig_min), abs(eig_max))
+    if not np.isfinite(bound):
+        bound = 1.0
+    if bound == 0.0:
+        bound = 1.0
+
+    pad = float(ext) if ext is not None else 0.0
+    if pad < 0:
+        pad = 0.0
+    segments = np.linspace(-bound - pad, bound + pad, num=num_bins)
+    span = segments[-1] - segments[0]
+    s2_effective, sigma, fraction = _resolve_smoothing(span, override_s2=s2)
 
     num_runs = eigenvalues.shape[0]
     bin_density = np.zeros((num_runs, num_bins))
@@ -83,10 +159,16 @@ def density_plot(eigenvalues, weights, num_bins=10000, s2=1e-5, ext=0.001):
     for i in range(num_runs):
         for j in range(num_bins):
             x = segments[j]
-            bin_val = gaussian_conv(x - eigenvalues[i, :], s2)
+            bin_val = gaussian_conv(x - eigenvalues[i, :], s2_effective)
             bin_density[i, j] = np.sum(bin_val * weights[i, :])
     density = np.mean(bin_density, axis=0)
     density = density / (np.sum(density) * (segments[1] - segments[0])) # normalized
+    if return_metadata:
+        return density, segments, {
+            'smoothing_sigma': float(sigma),
+            'smoothing_variance': float(s2_effective),
+            'smoothing_fraction': float(fraction),
+        }
     return density, segments
 
 
@@ -104,14 +186,19 @@ def esd_plot(eigenvalues, weights,to_save=False,to_viz=True,exp_name='esd_exampl
     :to_return whether to return density, segments (mainly for debugging)
     returns density, segments or none
     """
-    
-    density, segments = density_plot(eigenvalues, weights)
+
+    if to_return:
+        density_out = density_plot(eigenvalues, weights, return_metadata=True)
+        density, segments, metadata = density_out
+    else:
+        density, segments = density_plot(eigenvalues, weights)
+        metadata = None
     plt.semilogy(segments, density + 1.0e-7)
     plt.ylabel('Density (Log Scale)', fontsize=16, labelpad=10)
     plt.xlabel('Eigenvalues', fontsize=16, labelpad=10)
-    plt.axis([np.min(eigenvalues) - 1, np.max(eigenvalues) + 1, None, None])
+    plt.axis([segments[0], segments[-1], None, None])
     plt.tight_layout()
-    
+
     if to_save:    
         if not os.path.exists(viz_dir):
             os.makedirs(viz_dir)
@@ -126,11 +213,11 @@ def esd_plot(eigenvalues, weights,to_save=False,to_viz=True,exp_name='esd_exampl
         plt.close()
         
     if to_return: # this option is for debug purposes only
-        return density, segments
+        return density, segments, metadata
 
 
 def eval_save_esd(hessian,n_iter=100,n_v=1,max_v=10,mask_idx=None,to_save=False,to_viz=True,exp_name='esd_example',
-                  viz_dir=default_viz_dir,res_dir=default_res_dir,calc_crit=False,n_kh=0.5):
+                  viz_dir=default_viz_dir,res_dir=default_res_dir,calc_crit=False,n_kh=0.5,return_data=False):
 
     """
     calculates and plots hessian esd
@@ -144,11 +231,33 @@ def eval_save_esd(hessian,n_iter=100,n_v=1,max_v=10,mask_idx=None,to_save=False,
     :to_viz - whether to show to plots (in notebook)
     :viz_dir - path to directory for output files
     :exp_name - tag of experiment used in names of output files
+    :return_data - if True, return ESD payload alongside criteria
     returns tuple re, Khn or None, None
     """
-    
+
     eigs, weights = hessian.esd_calc(n_iter=n_iter,n_v=n_v,max_v=max_v,mask_idx=mask_idx)
-    esd_plot(eigs, weights, to_save=to_save,to_viz=to_viz,viz_dir=viz_dir,exp_name=exp_name)
+    density = None
+    segments = None
+    metadata = None
+    if return_data:
+        density_out = esd_plot(
+            eigs,
+            weights,
+            to_save=to_save,
+            to_viz=to_viz,
+            viz_dir=viz_dir,
+            exp_name=exp_name,
+            to_return=True,
+        )
+        if isinstance(density_out, tuple):
+            if len(density_out) == 3:
+                density, segments, metadata = density_out
+            elif len(density_out) == 2:
+                density, segments = density_out
+        else:
+            density = density_out
+    else:
+        esd_plot(eigs, weights, to_save=to_save,to_viz=to_viz,viz_dir=viz_dir,exp_name=exp_name)
 
     if calc_crit:
         re, Khn = hessian_criteria(eigs,weights,n_kh)
@@ -158,15 +267,37 @@ def eval_save_esd(hessian,n_iter=100,n_v=1,max_v=10,mask_idx=None,to_save=False,
                 os.makedirs(res_dir)
             with open(os.path.join(res_dir,'hessian_criteria_{}.log'.format(exp_name)), 'a') as log_file:
                     log_file.write('re: {}, Kh{}: {}\n'.format(re,n_kh,Khn))
-        
+
+        if return_data:
+            payload = {
+                'eigenvalues_runs': eigs,
+                'weights_runs': weights,
+                'density': density if density is not None else np.array([]),
+                'segments': segments if segments is not None else np.array([]),
+            }
+            if metadata:
+                payload.update(metadata)
+            return (re, Khn), payload
         return re, Khn
+
+    if return_data:
+        payload = {
+            'eigenvalues_runs': eigs,
+            'weights_runs': weights,
+            'density': density if density is not None else np.array([]),
+            'segments': segments if segments is not None else np.array([]),
+        }
+        if metadata:
+            payload.update(metadata)
+        return (None, None), payload
 
     return None, None
 
 
 def viz_esd(model,metric,eigs=False,top_n=2,eigs_n_iter=100,eigs_tol=1e-3,trace=False,trace_n_iter=100,trace_tol=1e-3,
             esd=True,esd_n_iter=100,n_v=1,max_v=10,mask_idx=None,to_save=False, 
-            to_viz=True,exp_name='esd_example',viz_dir=default_viz_dir,res_dir=default_res_dir,calc_crit=False,n_kh=0.5):
+            to_viz=True,exp_name='esd_example',viz_dir=default_viz_dir,res_dir=default_res_dir,calc_crit=False,n_kh=0.5,
+            return_data=False):
 
     """
     a funtions that collects different operations with hessian: eigs and esd
@@ -189,6 +320,7 @@ def viz_esd(model,metric,eigs=False,top_n=2,eigs_n_iter=100,eigs_tol=1e-3,trace=
     :viz_dir - path to directory to save output plots
     :res_dir - path to directory to save output results
     :exp_name - tag of experiment used in names of output files
+    :return_data - whether to return raw ESD payload in addition to metrics
     returns a list of possible results [eigenvalues,eigenvectors,re,Khn] 
     """
 
@@ -203,10 +335,28 @@ def viz_esd(model,metric,eigs=False,top_n=2,eigs_n_iter=100,eigs_tol=1e-3,trace=
         print('Warning! Invalid indexes encountered in mask index list, only positive numbers less than max model layer number are allowed!')
         print('Setting mask_idx to None')
         mask_idx = None
-    
+    esd_payload = None
+
     if esd:
-        re, Khn = eval_save_esd(hessian,n_iter=esd_n_iter,n_v=n_v,max_v=max_v,mask_idx=mask_idx,to_save=to_save,
-                            to_viz=to_viz,viz_dir=viz_dir,res_dir=res_dir,exp_name=exp_name,calc_crit=calc_crit,n_kh=n_kh)
+        esd_result = eval_save_esd(
+            hessian,
+            n_iter=esd_n_iter,
+            n_v=n_v,
+            max_v=max_v,
+            mask_idx=mask_idx,
+            to_save=to_save,
+            to_viz=to_viz,
+            viz_dir=viz_dir,
+            res_dir=res_dir,
+            exp_name=exp_name,
+            calc_crit=calc_crit,
+            n_kh=n_kh,
+            return_data=return_data,
+        )
+        if return_data:
+            (re, Khn), esd_payload = esd_result
+        else:
+            re, Khn = esd_result
 
         if calc_crit: # this is redundant since eval_save_esd will return None, None if not calc_crit
             results[3] = re
@@ -236,6 +386,9 @@ def viz_esd(model,metric,eigs=False,top_n=2,eigs_n_iter=100,eigs_tol=1e-3,trace=
         if results[2] is not None:
             with open(os.path.join(res_dir,'trace_{}.log'.format(exp_name)), 'a') as log_file:
                 log_file.write('{}\n'.format(results[2]))
-    
+
+    if return_data:
+        return results, esd_payload
+
     return results
 
