@@ -23,10 +23,12 @@ import sys
 import json
 import time
 import random
+import numbers
 from pathlib import Path
 import hashlib
 import uuid
 import logging
+from collections.abc import Sequence
 from typing import Any, Dict, List, Tuple, cast
 
 import numpy as np
@@ -61,6 +63,11 @@ from src.utils.rank_drop_dynamics import compute_rank_dynamics_from_features  # 
 from src.utils.track_weights_norm import track_weight_stats  # type: ignore
 from src.utils.task_shift_logging import build_logging_config_dict  # type: ignore
 
+try:  # Feature containers provide richer metadata for intermediate activations
+    from src.utils.feature_container import FeatureContainer  # type: ignore
+except Exception:  # pragma: no cover - optional dependency for older checkpoints
+    FeatureContainer = None  # type: ignore[assignment]
+
 
 LOGGER = logging.getLogger(__name__)
 
@@ -73,6 +80,9 @@ if LLA_SUBMODULE_SRC.exists() and str(LLA_SUBMODULE_SRC) not in sys.path:
 try:  # Import required LLA components
     from src_lla import viz_esd, viz_lla  # type: ignore
     from src_lla.loss_landscapes.metrics.metric import Metric  # type: ignore
+    from src_lla.hessian.hessian import hessian_calc  # type: ignore
+    from src_lla.loss_landscapes import random_plane  # type: ignore
+    from src_lla.loss_landscapes.model_interface.model_parameters import ModelParameters  # type: ignore
     LLA_AVAILABLE = True
 except Exception as e:  # fallback flag
     LOGGER.warning(
@@ -93,6 +103,9 @@ except Exception as e:  # fallback flag
             )
 
     LLA_AVAILABLE = False
+    hessian_calc = None  # type: ignore[assignment]
+    random_plane = None  # type: ignore[assignment]
+    ModelParameters = None  # type: ignore[assignment]
 
 # Legacy SAM surface still relies on old custom implementation; we keep it optional if needed.
 try:
@@ -262,7 +275,42 @@ def _first_batch(loader: DataLoader, device: str) -> tuple[torch.Tensor, torch.T
     return x.to(device), y.to(device)
 
 
-def _save_plane_artifacts(plane_arr: np.ndarray, plane_dir: Path, distance: float) -> Dict[str, str]:
+def _coerce_feature_list(features: Any) -> List[torch.Tensor]:
+    """Normalize assorted feature containers into a list of detached tensors."""
+
+    tensors: List[torch.Tensor] = []
+    if features is None:
+        return tensors
+
+    if FeatureContainer is not None and isinstance(features, FeatureContainer):
+        try:
+            iter_features = features.as_list()
+        except Exception:
+            iter_features = list(features)
+    elif isinstance(features, dict):
+        iter_features = list(features.values())
+    elif isinstance(features, (list, tuple)):
+        iter_features = list(features)
+    elif hasattr(features, '__iter__') and not isinstance(features, (str, bytes)):
+        try:
+            iter_features = list(features)
+        except TypeError:
+            return tensors
+    else:
+        return tensors
+
+    for feat in iter_features:
+        if isinstance(feat, torch.Tensor):
+            tensors.append(feat.detach())
+    return tensors
+
+
+def _save_plane_artifacts(
+    plane_arr: np.ndarray,
+    plane_dir: Path,
+    distance: float,
+    prefix: str = 'plane_hessian',
+) -> Dict[str, str]:
     """Persist plane visualizations (heatmap/3D/contour) and return artifact paths."""
     artifacts: Dict[str, str] = {}
     try:
@@ -279,7 +327,7 @@ def _save_plane_artifacts(plane_arr: np.ndarray, plane_dir: Path, distance: floa
     X, Y = np.meshgrid(coords, coords, indexing='xy')
 
     try:
-        heatmap_png = plane_dir / 'plane_hessian_heatmap.png'
+        heatmap_png = plane_dir / f'{prefix}_heatmap.png'
         fig_h, ax_h = plt.subplots(figsize=(5.2, 4.4))
         im = ax_h.imshow(
             plane_arr,
@@ -301,7 +349,7 @@ def _save_plane_artifacts(plane_arr: np.ndarray, plane_dir: Path, distance: floa
         print(f"[LLA][plane] heatmap plot failed: {e}")
 
     try:
-        surface_png = plane_dir / 'plane_hessian_surface3d.png'
+        surface_png = plane_dir / f'{prefix}_surface3d.png'
         fig3d = plt.figure(figsize=(6, 4.8))
         ax3d = fig3d.add_subplot(111, projection='3d')
         surf = ax3d.plot_surface(X, Y, plane_arr, cmap=cm.viridis, linewidth=0, antialiased=True)
@@ -318,7 +366,7 @@ def _save_plane_artifacts(plane_arr: np.ndarray, plane_dir: Path, distance: floa
         print(f"[LLA][plane] surface plot failed: {e}")
 
     try:
-        contour_png = plane_dir / 'plane_hessian_contour.png'
+        contour_png = plane_dir / f'{prefix}_contour.png'
         fig_c, ax_c = plt.subplots(figsize=(5.2, 4.4))
         CS = ax_c.contour(X, Y, plane_arr, levels=20, cmap='viridis')
         ax_c.clabel(CS, inline=True, fontsize=7)
@@ -473,6 +521,14 @@ def _save_density_plots(esd_payload: Dict[str, Any], output_dir: Path, exp_name:
         x_min = eig_min if x_min is None else min(x_min, eig_min)
         x_max = eig_max if x_max is None else max(x_max, eig_max)
 
+    if x_min is not None and x_max is not None:
+        bound = max(abs(x_min), abs(x_max))
+        if not np.isfinite(bound) or bound == 0.0:
+            bound = 1.0
+        pad = 0.02 * bound
+        x_min = -bound - pad
+        x_max = bound + pad
+
     # Build a raw (unsmoothed) weighted histogram averaged across runs, if eigenvalues are available.
     hist_centers: np.ndarray | None = None
     hist_density: np.ndarray | None = None
@@ -483,8 +539,14 @@ def _save_density_plots(esd_payload: Dict[str, Any], output_dir: Path, exp_name:
         if num_bins < 10:
             num_bins = 10
         if x_min is None or x_max is None:
-            x_min = float(np.min(eig_matrix))
-            x_max = float(np.max(eig_matrix))
+            local_min = float(np.min(eig_matrix))
+            local_max = float(np.max(eig_matrix))
+            bound = max(abs(local_min), abs(local_max))
+            if not np.isfinite(bound) or bound == 0.0:
+                bound = 1.0
+            pad = 0.02 * bound
+            x_min = -bound - pad
+            x_max = bound + pad
         bin_edges = np.linspace(x_min, x_max, num_bins + 1)
         centers = 0.5 * (bin_edges[:-1] + bin_edges[1:])
         aggregated = np.zeros_like(centers, dtype=np.float64)
@@ -550,6 +612,79 @@ def _save_density_plots(esd_payload: Dict[str, Any], output_dir: Path, exp_name:
     return artifacts
 
 
+def _compute_signed_hessian_axes(
+    model: nn.Module,
+    metric: FixedBatchMetric,
+    eigen_iter: int,
+    candidate_count: int,
+) -> tuple[ModelParameters | None, ModelParameters | None, Dict[str, Any]]:
+    """Derive eigenvector directions for the largest positive and most negative Hessian eigenvalues."""
+
+    info: Dict[str, Any] = {'candidate_count': int(candidate_count)}
+    if hessian_calc is None or ModelParameters is None:
+        info['status'] = 'hessian_unavailable'
+        return None, None, info
+
+    candidate_count = max(2, int(candidate_count))
+    eigen_iter = max(1, int(eigen_iter))
+
+    try:
+        hessian = hessian_calc(model, metric)
+        eigenvalues, eigenvectors = hessian.eigs_calc(top_n=candidate_count, n_iter=eigen_iter)
+    except Exception as exc:
+        info['status'] = 'eigs_calc_failed'
+        info['error'] = str(exc)
+        return None, None, info
+    finally:
+        try:
+            hessian.reset()
+        except Exception:
+            pass
+
+    # Normalize eigenvalue list and keep track of their indices for lookup.
+    processed: list[tuple[int, float]] = []
+    for idx, val in enumerate(eigenvalues or []):
+        try:
+            if val is None:
+                continue
+            processed.append((idx, float(val)))
+        except Exception:
+            continue
+
+    info['candidate_eigenvalues'] = [v for _, v in processed]
+    if not processed:
+        info['status'] = 'no_eigenvalues'
+        return None, None, info
+
+    pos_idx, pos_val = None, float('-inf')
+    neg_idx, neg_val = None, float('inf')
+    for idx, val in processed:
+        if val > pos_val:
+            pos_idx, pos_val = idx, val
+        if val < neg_val:
+            neg_idx, neg_val = idx, val
+
+    if pos_idx is None:
+        info['status'] = 'missing_positive'
+        info['positive_eigenvalue'] = None
+        info['negative_eigenvalue'] = neg_val if neg_idx is not None else None
+        return None, None, info
+    if neg_idx is None:
+        info['status'] = 'missing_negative'
+        info['positive_eigenvalue'] = pos_val
+        info['negative_eigenvalue'] = None
+        return None, None, info
+
+    info['positive_eigenvalue'] = pos_val
+    info['negative_eigenvalue'] = neg_val
+    info['status'] = 'ok'
+
+    pos_axis = ModelParameters(eigenvectors[pos_idx])
+    neg_axis = ModelParameters(eigenvectors[neg_idx])
+
+    return pos_axis, neg_axis, info
+
+
 def _compute_planes_and_spectrum_with_lla(
     model: nn.Module,
     eval_loader: DataLoader,
@@ -585,6 +720,16 @@ def _compute_planes_and_spectrum_with_lla(
         else:
             distance = 1.0
     normalization = planes_cfg.get('normalization', 'filter')
+    plane_order_raw = planes_cfg.get('order', 2)
+    plane_order = int(plane_order_raw) if plane_order_raw is not None else 2
+    plane_mode_raw = planes_cfg.get('mode', 'add')
+    plane_mode = str(plane_mode_raw) if plane_mode_raw is not None else 'add'
+    plane_raa = planes_cfg.get('raa', None)
+    plane_b_sqrt_raw = planes_cfg.get('b_sqrt', True)
+    if isinstance(plane_b_sqrt_raw, str):
+        plane_b_sqrt = plane_b_sqrt_raw.strip().lower() not in {'0', 'false', 'no', 'off'}
+    else:
+        plane_b_sqrt = bool(plane_b_sqrt_raw)
 
     spectrum_cfg = lla_cfg.get('lla', {}).get('spectrum', {})
     top_k = int(spectrum_cfg.get('top_k', 5))
@@ -595,6 +740,7 @@ def _compute_planes_and_spectrum_with_lla(
     esd_probes = int(esd_cfg.get('num_probes', 1))
     max_v = int(esd_cfg.get('max_v', max(10, esd_probes)))
     n_kh = float(esd_cfg.get('n_kh', 0.5))
+    signed_candidate_count = int(planes_cfg.get('signed_axes_top_n', max(4, top_k * 2)))
 
     t_all0 = time.time()
 
@@ -620,6 +766,8 @@ def _compute_planes_and_spectrum_with_lla(
                 'grid_resolution': grid_res,
                 'distance': distance,
                 'normalization': normalization,
+                'axes_source': 'largest_magnitude_eigenvectors',
+                'algorithm': 'viz_lla',
             }
             if plane_array is not None:
                 plane_arr_np = np.asarray(plane_array, dtype=np.float64)
@@ -631,13 +779,69 @@ def _compute_planes_and_spectrum_with_lla(
                         plane_arr_np = np.minimum(plane_arr_np, cap_threshold)
                         plane_info['loss_cap_threshold'] = cap_threshold
                     plane_info['loss_min'] = loss_min
-                plane_path = plane_dir / 'plane_hessian.npy'
+                plane_prefix = 'plane_hessian'
+                plane_path = plane_dir / f'{plane_prefix}.npy'
                 np.save(plane_path, plane_arr_np)
                 plane_info['npy'] = str(plane_path)
-                plane_info.update(_save_plane_artifacts(plane_arr_np, plane_dir, distance))
+                plane_info.update(_save_plane_artifacts(plane_arr_np, plane_dir, distance, prefix=plane_prefix))
             out['plane'] = plane_info
         except Exception as e:
             print(f"[LLA] viz_lla failed: {e}")
+
+    # -------------------- Signed extreme-eigenvector plane --------------------
+    if do_planes and random_plane is not None:
+        try:
+            pos_axis, neg_axis, signed_axes_info = _compute_signed_hessian_axes(
+                model,
+                metric,
+                eigen_iter=power_iters,
+                candidate_count=signed_candidate_count,
+            )
+            if pos_axis is not None and neg_axis is not None:
+                signed_plane_array = random_plane(
+                    model,
+                    metric,
+                    distance=distance,
+                    steps=grid_res,
+                    normalization=normalization,
+                    order=plane_order,
+                    a1=pos_axis,
+                    a2=neg_axis,
+                    mode=plane_mode,
+                    raa=plane_raa,
+                    b_sqrt=plane_b_sqrt,
+                )
+                signed_plane_info: Dict[str, Any] = {
+                    'grid_resolution': grid_res,
+                    'distance': distance,
+                    'normalization': normalization,
+                    'axes_source': 'extreme_signed_eigenvectors',
+                    'algorithm': 'random_plane',
+                }
+                signed_plane_info.update(signed_axes_info)
+                signed_arr_np = np.asarray(signed_plane_array, dtype=np.float64)
+                if signed_arr_np.size > 0:
+                    loss_min_signed = float(np.nanmin(signed_arr_np))
+                    loss_cap_offset = planes_cfg.get('loss_cap_offset', 200.0)
+                    if isinstance(loss_cap_offset, (int, float)) and float(loss_cap_offset) > 0:
+                        cap_threshold_signed = loss_min_signed + float(loss_cap_offset)
+                        signed_arr_np = np.minimum(signed_arr_np, cap_threshold_signed)
+                        signed_plane_info['loss_cap_threshold'] = cap_threshold_signed
+                    signed_plane_info['loss_min'] = loss_min_signed
+                signed_prefix = 'plane_hessian_signed'
+                signed_plane_path = plane_dir / f'{signed_prefix}.npy'
+                np.save(signed_plane_path, signed_arr_np)
+                signed_plane_info['npy'] = str(signed_plane_path)
+                signed_plane_info.update(
+                    _save_plane_artifacts(signed_arr_np, plane_dir, distance, prefix=signed_prefix)
+                )
+                out['plane_signed'] = signed_plane_info
+            else:
+                status = signed_axes_info.get('status', 'missing_signed_axes')
+                print(f"[LLA] Signed eigenvector plane skipped ({status}).")
+                out['plane_signed_diagnostics'] = signed_axes_info
+        except Exception as e:
+            print(f"[LLA] signed-eigenvector plane failed: {e}")
 
     # -------------------- Spectrum via viz_esd --------------------
     if do_spectrum:
@@ -931,13 +1135,16 @@ def _run_lla_evaluation(
             result.setdefault('spectrum_paths', {}).update(renamed_spectrum)
             if 'spectrum.json' in renamed_spectrum:
                 result['spectrum_json_path'] = renamed_spectrum['spectrum.json']
-        if 'plane' in result:
+        for plane_key in ['plane', 'plane_signed']:
+            plane_entry = result.get(plane_key)
+            if not isinstance(plane_entry, dict):
+                continue
             for key in ['heatmap_png', 'surface3d_png', 'contour_png', 'npy']:
-                if key in result['plane']:
+                if key in plane_entry:
                     try:
-                        renamed = _rename_with_arch_task(Path(result['plane'][key]), arch, task_idx, phase_slug)
+                        renamed = _rename_with_arch_task(Path(plane_entry[key]), arch, task_idx, phase_slug)
                         if renamed.exists():
-                            result['plane'][key] = str(renamed)
+                            plane_entry[key] = str(renamed)
                     except Exception:
                         pass
     except Exception as e:
@@ -1350,18 +1557,53 @@ def main(cfg: ExperimentConfig) -> Any:
             list_of_features_for_every_layers: List[torch.Tensor] = []
             # Use learner.previous_features if available; else regenerate from last batch
             try:
-                if hasattr(learner, 'previous_features') and isinstance(learner.previous_features, list):
-                    list_of_features_for_every_layers = [f.detach() for f in learner.previous_features]
-                elif last_batch_inp_cpu is not None:
-                    net.eval()
-                    with torch.no_grad():
-                        inp_dev = last_batch_inp_cpu.to(cfg.net.device)
-                        if hasattr(net, 'predict'):
-                            _, list_of_features_for_every_layers = net.predict(inp_dev)  # type: ignore
-                        else:
-                            _ = net(inp_dev)
-                # Flatten to (batch, dim)
-                list_of_features_for_every_layers = [feat.view(feat.size(0), -1) for feat in list_of_features_for_every_layers if isinstance(feat, torch.Tensor)]
+                feature_candidates = _coerce_feature_list(getattr(learner, 'previous_features', None))
+                if not feature_candidates and last_batch_inp_cpu is not None:
+                    net_was_training = net.training
+                    try:
+                        net.eval()
+                        with torch.no_grad():
+                            inp_dev = last_batch_inp_cpu.to(cfg.net.device)
+                            features_obj: Any | None = None
+                            if hasattr(net, 'predict'):
+                                predict_fn = getattr(net, 'predict')  # type: ignore[attr-defined]
+                                predict_calls = [
+                                    lambda: predict_fn(inp_dev),
+                                    lambda: predict_fn(inp_dev, return_feature_container=True),
+                                    lambda: predict_fn(inp_dev, return_feature_container=False),
+                                ]
+                                for call in predict_calls:
+                                    try:
+                                        predict_result = call()
+                                    except TypeError:
+                                        continue
+                                    except Exception as pred_exc:
+                                        LOGGER.debug("[rank] predict call failed: %s", pred_exc)
+                                        continue
+                                    else:
+                                        if isinstance(predict_result, tuple):
+                                            if len(predict_result) >= 2:
+                                                features_obj = predict_result[1]
+                                            elif len(predict_result) == 1:
+                                                features_obj = predict_result[0]
+                                        else:
+                                            features_obj = predict_result
+                                        break
+                            if features_obj is None:
+                                features_obj = getattr(net, 'previous_features', None)
+                            feature_candidates = _coerce_feature_list(features_obj)
+                            if not feature_candidates:
+                                try:
+                                    _ = net(inp_dev)
+                                    feature_candidates = _coerce_feature_list(getattr(net, 'previous_features', None))
+                                except Exception:
+                                    pass
+                    finally:
+                        if net_was_training:
+                            net.train()
+                list_of_features_for_every_layers = [
+                    feat.view(feat.size(0), -1) for feat in feature_candidates if isinstance(feat, torch.Tensor)
+                ]
                 if list_of_features_for_every_layers:
                     rank_summary_list = compute_all_rank_measures_list(
                         features=list_of_features_for_every_layers,
@@ -1369,8 +1611,11 @@ def main(cfg: ExperimentConfig) -> Any:
                         prop_for_approx_or_l1_rank=getattr(cfg, 'prop_for_approx_or_l1_rank', 0.99),
                         numerical_rank_epsilon=getattr(cfg, 'numerical_rank_epsilon', 1e-6),
                     )
+                elif getattr(cfg, 'track_rank', False):
+                    print(f"[rank] No feature snapshots captured for task {task_idx}; skipping rank metrics.")
             except Exception as e:
                 print(f"[rank] end-of-task feature extraction failed: {e}")
+                list_of_features_for_every_layers = []
             # Dead units
             dead_units_for_features: List[int] = []
             if getattr(cfg, 'track_dead_units', False) and list_of_features_for_every_layers:
@@ -1411,7 +1656,32 @@ def main(cfg: ExperimentConfig) -> Any:
             weight_summ: Dict[str, float] = {}
             try:
                 if getattr(cfg, 'track_weight_magnitude', True):
-                    weight_stats = track_weight_stats(net, layer_identifiers=getattr(cfg, 'layers_identifier', None))
+                    layer_identifiers_cfg = getattr(cfg, 'layers_identifier', None)
+                    layer_identifiers_clean: List[int | str] | None
+                    if layer_identifiers_cfg is None:
+                        layer_identifiers_clean = None
+                    elif isinstance(layer_identifiers_cfg, str):
+                        ident_str = layer_identifiers_cfg.strip()
+                        if ident_str == "" or ident_str.lower() in {'none', 'null'}:
+                            layer_identifiers_clean = None
+                        else:
+                            layer_identifiers_clean = [ident_str]
+                    elif isinstance(layer_identifiers_cfg, numbers.Integral):
+                        layer_identifiers_clean = [int(layer_identifiers_cfg)]
+                    elif isinstance(layer_identifiers_cfg, Sequence) and not isinstance(layer_identifiers_cfg, (str, bytes)):
+                        cleaned: List[int | str] = []
+                        for ident in layer_identifiers_cfg:
+                            if isinstance(ident, numbers.Integral):
+                                cleaned.append(int(ident))
+                            elif isinstance(ident, str):
+                                ident_str = ident.strip()
+                                if ident_str and ident_str.lower() not in {'none', 'null'}:
+                                    cleaned.append(ident_str)
+                        layer_identifiers_clean = cleaned or None
+                    else:
+                        layer_identifiers_clean = None
+
+                    weight_stats = track_weight_stats(net, layer_identifiers=layer_identifiers_clean)
                     for name, val in weight_stats.items():
                         key = name if name.endswith('_mean_abs_weight') else f'{name}_mean_abs_weight'
                         weight_summ[key] = float(val)

@@ -1,8 +1,0 @@
-{
-  "num_checkpoints": 1,
-  "checkpoints": [
-    "experiments/Hessian_and_landscape_plot_with_plasticity_loss/results_refactor_smoke/checkpoints/ckpt_final.pt"
-  ],
-  "model": "ConvNet",
-  "dataset": "CIFAR10"
-}

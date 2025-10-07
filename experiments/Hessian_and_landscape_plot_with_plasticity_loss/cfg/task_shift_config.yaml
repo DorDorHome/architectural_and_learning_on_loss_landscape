@@ -90,7 +90,7 @@ data:
 
 # network architecture:
 net:
-  type: "resnet_custom" # "resnet_custom" # "ConvNet_batch_norm", "ConvNet_FC_layer_norm", "ConvNet_conv_and_FC_layer_norm" "ConvNet_norm", "vgg_custom" #options: "ConvNet", "vgg_custom" , "resnet_custom" , 'full_rank_resnet_custom'
+  type: "ConvNet" # "resnet_custom" # "ConvNet_batch_norm", "ConvNet_FC_layer_norm", "ConvNet_conv_and_FC_layer_norm" "ConvNet_norm", "vgg_custom" #options: "ConvNet", "vgg_custom" , "resnet_custom" , 'full_rank_resnet_custom'
   network_class: "conv"
   device: ${device}
   netparams:
@@ -163,7 +163,7 @@ lla:
     # Optional per-component toggle (legacy). Prefer lla.enable_planes above.
     enable: true
     grid_resolution: 101
-    span: [0.2, 0.2] # same as 
+    span: [0.1, 0.1] # same as 
     # distance: 1.5 # same as span [distance, distance]
     normalization: 'filter'
     bn:
