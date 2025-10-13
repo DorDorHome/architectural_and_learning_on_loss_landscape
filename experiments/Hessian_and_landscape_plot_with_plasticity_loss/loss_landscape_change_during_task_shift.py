@@ -28,6 +28,7 @@ from pathlib import Path
 import hashlib
 import uuid
 import logging
+from collections import defaultdict
 from collections.abc import Sequence
 from typing import Any, Dict, List, Tuple, cast
 
@@ -99,21 +100,13 @@ except Exception as e:  # fallback flag
         def __call__(self, *args: Any, **kwargs: Any):  # noqa: D401
             """Raise to indicate the Metric can't be used without LLA."""
             raise RuntimeError(
-                "LLA submodule is unavailable; Metric operations are disabled."
+                "Loss Landscape Analysis submodule is unavailable; metrics cannot be computed."
             )
 
     LLA_AVAILABLE = False
     hessian_calc = None  # type: ignore[assignment]
     random_plane = None  # type: ignore[assignment]
     ModelParameters = None  # type: ignore[assignment]
-
-# Legacy SAM surface still relies on old custom implementation; we keep it optional if needed.
-try:
-    from experiments.Hessian_and_landscape_plot_with_plasticity_loss.lla_pipeline import (
-        plot_sam_surface,  # type: ignore
-    )  # Only SAM retained for now
-except Exception:
-    plot_sam_surface = None  # type: ignore
 
 
 def _seed_everything(seed: int) -> None:
@@ -128,6 +121,7 @@ def _seed_everything(seed: int) -> None:
 
 def _deep_update(dst: Dict[str, Any], src: Dict[str, Any]) -> Dict[str, Any]:
     """Deep-merge src into dst (in place) and return dst."""
+
     for k, v in src.items():
         if isinstance(v, dict) and isinstance(dst.get(k), dict):
             _deep_update(dst[k], v)
@@ -137,9 +131,8 @@ def _deep_update(dst: Dict[str, Any], src: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def _build_lla_cfg(base_cfg: ExperimentConfig, eval_batch_size: int = 128) -> Dict[str, Any]:
-    """Construct a minimal LLA config dict expected by lla_pipeline functions.
-    Keeps moderate defaults to avoid large per-task slowdowns.
-    """
+    """Construct a minimal LLA config dict expected by lla_pipeline functions."""
+
     device = str(base_cfg.device) if hasattr(base_cfg, 'device') else str(base_cfg.net.device)
     lla_cfg: Dict[str, Any] = {
         'device': device,
@@ -184,14 +177,13 @@ def _build_lla_cfg(base_cfg: ExperimentConfig, eval_batch_size: int = 128) -> Di
             },
         },
     }
-    # Allow evaluation-only overrides from YAML under cfg.lla
+
     try:
         user_lla = getattr(base_cfg, 'lla', None)
         if user_lla is not None:
             user_lla_dict = OmegaConf.to_container(user_lla, resolve=True)  # type: ignore[arg-type]
             if isinstance(user_lla_dict, dict):
                 _deep_update(lla_cfg['lla'], user_lla_dict)
-                # Map ESD keys to SLQ controls used by the analyzer if present
                 spec = lla_cfg['lla'].get('spectrum', {})
                 if isinstance(spec, dict):
                     esd = spec.get('esd', {}) if isinstance(spec.get('esd', {}), dict) else {}
@@ -202,6 +194,7 @@ def _build_lla_cfg(base_cfg: ExperimentConfig, eval_batch_size: int = 128) -> Di
                         lla_cfg['lla']['spectrum'] = spec
     except Exception:
         pass
+
     return lla_cfg
 
 
@@ -303,6 +296,67 @@ def _coerce_feature_list(features: Any) -> List[torch.Tensor]:
         if isinstance(feat, torch.Tensor):
             tensors.append(feat.detach())
     return tensors
+
+
+def _extract_features_with_hooks(
+    model: nn.Module,
+    inputs_cpu: torch.Tensor,
+    device: str,
+    module_types: tuple[type, ...] = (
+        nn.Conv1d,
+        nn.Conv2d,
+        nn.Conv3d,
+        nn.Linear,
+    ),
+) -> tuple[List[torch.Tensor], List[str]]:
+    """Capture intermediate activations via forward hooks as a fallback.
+
+    Returns a tuple of (feature_tensors, layer_names). Each tensor is detached
+    and moved to CPU. Layer names are made unique for repeated modules.
+    """
+
+    handles: List[Any] = []  # type: ignore[var-annotated]
+    captured: List[torch.Tensor] = []
+    layer_names: List[str] = []
+    call_counts: dict[str, int] = defaultdict(int)
+
+    def _register_hook(layer_name: str):
+        def _hook(module, _inp, output):  # type: ignore[no-untyped-def]
+            tensors: List[torch.Tensor] = []
+            if isinstance(output, torch.Tensor):
+                tensors = [output]
+            elif isinstance(output, (list, tuple)):
+                tensors = [t for t in output if isinstance(t, torch.Tensor)]
+            if not tensors:
+                return
+
+            call_counts[layer_name] += 1
+            call_index = call_counts[layer_name] - 1
+            for idx, tensor in enumerate(tensors):
+                suffix = f"{call_index}" if len(tensors) == 1 else f"{call_index}_{idx}"
+                layer_names.append(f"{layer_name}#{suffix}")
+                captured.append(tensor.detach().cpu())
+
+        return _hook
+
+    for name, module in model.named_modules():
+        if not name:
+            continue
+        if isinstance(module, module_types):
+            handles.append(module.register_forward_hook(_register_hook(name)))
+
+    prev_training = model.training
+    try:
+        model.eval()
+        with torch.no_grad():
+            model(inputs_cpu.to(device))
+    finally:
+        for h in handles:
+            h.remove()
+        if prev_training:
+            model.train()
+
+    return captured, layer_names
 
 
 def _save_plane_artifacts(
@@ -1555,9 +1609,17 @@ def main(cfg: ExperimentConfig) -> Any:
             # ---------------- Rank / feature based summaries (mirror reference script) ----------------
             rank_summary_list: List[Dict[str, float]] = []
             list_of_features_for_every_layers: List[torch.Tensor] = []
+            feature_layer_names: List[str] | None = None
+            feature_candidates: List[torch.Tensor] = []
             # Use learner.previous_features if available; else regenerate from last batch
             try:
-                feature_candidates = _coerce_feature_list(getattr(learner, 'previous_features', None))
+                primary_features = getattr(learner, 'previous_features', None)
+                if FeatureContainer is not None and isinstance(primary_features, FeatureContainer):
+                    try:
+                        feature_layer_names = list(primary_features.layer_names())
+                    except Exception:
+                        feature_layer_names = None
+                feature_candidates = _coerce_feature_list(primary_features)
                 if not feature_candidates and last_batch_inp_cpu is not None:
                     net_was_training = net.training
                     try:
@@ -1601,6 +1663,18 @@ def main(cfg: ExperimentConfig) -> Any:
                     finally:
                         if net_was_training:
                             net.train()
+                if not feature_candidates and last_batch_inp_cpu is not None:
+                    try:
+                        hook_features, hook_names = _extract_features_with_hooks(
+                            net,
+                            last_batch_inp_cpu,
+                            device=str(cfg.net.device),
+                        )
+                        feature_candidates = _coerce_feature_list(hook_features)
+                        if hook_names:
+                            feature_layer_names = hook_names
+                    except Exception as hook_exc:
+                        LOGGER.debug("[rank] hook-based feature extraction failed: %s", hook_exc)
                 list_of_features_for_every_layers = [
                     feat.view(feat.size(0), -1) for feat in feature_candidates if isinstance(feat, torch.Tensor)
                 ]
@@ -1652,6 +1726,7 @@ def main(cfg: ExperimentConfig) -> Any:
                     )
                 except Exception as e:
                     print(f"[rank-dynamics] failed: {e}")
+
             # Weight magnitudes (naming: <layer>_mean_abs_weight)
             weight_summ: Dict[str, float] = {}
             try:
@@ -1745,15 +1820,20 @@ def main(cfg: ExperimentConfig) -> Any:
                     # Try semantic layer names first (mirror reference script behavior)
                     semantic_logged = False
                     try:
+                        layer_names: List[str] | None = None
                         if hasattr(learner, 'get_layer_names'):
                             layer_names = learner.get_layer_names()
+                        if not layer_names and 'feature_layer_names' in locals() and feature_layer_names:
+                            layer_names = feature_layer_names
+                        if layer_names:
                             for i, layer_name in enumerate(layer_names):
                                 if i < len(rank_summary_list):
                                     rs = rank_summary_list[i]
-                                    log_data[f'{layer_name}_effective_rank'] = rs['effective_rank']
-                                    log_data[f'{layer_name}_approximate_rank'] = rs['approximate_rank']
-                                    log_data[f'{layer_name}_l1_distribution_rank'] = rs['l1_distribution_rank']
-                                    log_data[f'{layer_name}_numerical_rank'] = rs['numerical_rank']
+                                    safe_name = str(layer_name).replace(' ', '_')
+                                    log_data[f'{safe_name}_effective_rank'] = rs['effective_rank']
+                                    log_data[f'{safe_name}_approximate_rank'] = rs['approximate_rank']
+                                    log_data[f'{safe_name}_l1_distribution_rank'] = rs['l1_distribution_rank']
+                                    log_data[f'{safe_name}_numerical_rank'] = rs['numerical_rank']
                             semantic_logged = True
                     except Exception as e_sem:
                         print(f"[rank] semantic layer naming failed: {e_sem}; falling back to indexed names.")
