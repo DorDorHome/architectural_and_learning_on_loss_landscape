@@ -4,9 +4,9 @@ run_id: 0
 seed: None
 # debug:
 debug_mode: False  # Disable debug mode for performance
-device: 'cuda:0'
+device: 'cuda:1'
 epochs: 50 #epoch per task switch
-batch_size: 1024
+batch_size: 2048
 num_tasks: 500 # number of tasks to train on. Each task will be trained on num_classes_per_task
 num_workers: 2  # Reduced from 12 to match old script performance
 
@@ -85,7 +85,7 @@ data:
   dataset: 'MNIST'
   use_torchvision: True
   # edit the following path to your dataset path, e.g. '/hdda/datasets' or '/home/sfchan/dataset'
-  data_path: '/home/sfchan/dataset' 
+  data_path: '/hdda/datasets'
   num_classes: 10
 
 # network architecture:
