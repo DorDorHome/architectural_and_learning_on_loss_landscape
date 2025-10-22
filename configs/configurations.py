@@ -2,7 +2,7 @@
 
 from torch._C import device
 from dataclasses import dataclass, field 
-from typing import Optional, Union, List, Dict, Any
+from typing import Optional, Union, List, Dict, Any, Literal
 from hydra.core.config_store import ConfigStore
 import torch
 
@@ -94,6 +94,36 @@ class ContinuousBackpropConfig(BaseLearnerConfig):
     init: str = 'kaiming'
     accumulate: bool = False
     outgoing_random: bool = False
+    use_grad_clip: bool = False
+    grad_clip_max_norm: float = 1.0
+    class Config:
+        version_base = "1.1"
+
+
+@dataclass
+class RRContinuousBackpropConfig(ContinuousBackpropConfig):
+    type: str = 'rr_cbp'
+    rrcbp_enabled: bool = True
+    sigma_ema_beta: float = 0.99
+    sigma_ridge: float = 1e-4
+    max_proj_trials: int = 4
+    proj_eps: float = 1e-8
+    center_bias: str = 'mean'
+    nullspace_seed_epsilon: float = 0.0
+    diag_sigma_only: bool = False
+    orthonormalize_batch: bool = True
+    improve_conditioning_if_saturated: bool = True
+    log_rank_metrics_every: int = 0
+    covariance_dtype: Optional[str] = None
+    sigma_eig_floor: float = 1e-6
+    projector_reg_epsilon: float = 1e-6
+    tau: float = 1e-2
+    lambda_star: Optional[float] = None
+    use_lambda_star: bool = False
+    epsilon_micro_seed: float = 1e-4
+    use_micro_seed: bool = True
+    estimate_chi0_from_batch: bool = False
+    chi0_override: Optional[float] = None
     class Config:
         version_base = "1.1"
 
@@ -150,7 +180,7 @@ class ExperimentConfig:
     batch_size: int = 128
     data: DataConfig = field(default_factory=DataConfig)
     net: NetConfig = field(default_factory=lambda: NetConfig(type='ConvNet'))
-    learner: Union[BackpropConfig, ContinuousBackpropConfig] = field(default_factory=BackpropConfig)
+    learner: Union[BackpropConfig, ContinuousBackpropConfig, RRContinuousBackpropConfig] = field(default_factory=BackpropConfig)
     evaluation: Union[EvaluationConfig, None] = field(default_factory=EvaluationConfig)
     track_rank: bool = False
     prop_for_approx_or_l1_rank: float = 0.99

@@ -83,6 +83,14 @@ class ConvNetWithBatchNorm(nn.Module):
         else:
             return output, feature_tensors
 
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        Standard forward compatible with PyTorch modules expecting `forward`.
+        Returns only the network logits, matching `nn.Module` conventions.
+        """
+        output, _ = self.predict(x)
+        return output
+
     def get_layer_names(self):
         return self.feature_names.copy()
 

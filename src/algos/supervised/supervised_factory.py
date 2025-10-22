@@ -3,11 +3,14 @@
 
 # from typing import Union # for future implementation of configurations file that support dataclass for different objects.
 
-from omegaconf import DictConfig
+from omegaconf import DictConfig, OmegaConf
 import sys
 # import the Backprop class in basic_backprop.py file, contained in the supervised folder:
 from src.algos.supervised.basic_backprop import Backprop
 from src.algos.supervised.continuous_backprop_with_GnT import ContinuousBackprop_for_ConvNet, ContinualBackprop_for_FC
+from src.algos.supervised.rr_cbp_conv import RankRestoringCBP_for_ConvNet
+from src.algos.supervised.rr_cbp_fc import RankRestoringCBP_for_FC
+from configs.configurations import RRContinuousBackpropConfig
 from typing import Optional
 import warnings
 
@@ -63,6 +66,25 @@ def create_learner(config: DictConfig, net, netconfig=None):
             return ContinualBackprop_for_FC(net, config, netconfig)
         else:
             raise ValueError(f"Unsupported network_class '{net_cls}' for continuous_backprop (net.type={getattr(net,'type',None)})")
+    elif normalized_type == 'rr_cbp':
+        if not isinstance(config, RRContinuousBackpropConfig):
+            if isinstance(config, DictConfig):
+                config = RRContinuousBackpropConfig(**OmegaConf.to_container(config, resolve=True))
+            elif isinstance(config, dict):
+                config = RRContinuousBackpropConfig(**config)
+            else:
+                raise TypeError("RR-CBP requires RRContinuousBackpropConfig-compatible config")
+            try:
+                config.network_class = net_cls
+            except Exception:
+                pass
+        if net_cls == 'fc':
+            return RankRestoringCBP_for_FC(net, config, netconfig)
+        if net_cls == 'conv':
+            return RankRestoringCBP_for_ConvNet(net, config, netconfig)
+        raise ValueError(
+            f"Unsupported network_class '{net_cls}' for rank-restoring CBP (net.type={getattr(net, 'type', None)})"
+        )
     else:
         raise ValueError(f"Unsupported learner type: {learner_type}")
     # for support of torchvision models:

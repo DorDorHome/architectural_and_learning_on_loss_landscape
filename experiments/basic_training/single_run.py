@@ -6,41 +6,39 @@ Only use this is runs is one.
 
 """
 
-
-
 from typing import Any
 import sys
 import pathlib
-# sys.path.append("../..")
-# sys.path.append("../../..")
+
 PROJECT_ROOT = pathlib.Path(__file__).resolve().parent.parent.parent
 print(PROJECT_ROOT)
 sys.path.append(str(PROJECT_ROOT))
-from configs.configurations import ExperimentConfig
-# import json
-import os
-# import pickle
-# import argparse
-# import numpy as np
-from tqdm import tqdm
-import hydra 
-from omegaconf import OmegaConf # , DictConfig
-# import algorithm:
-from src.algos.supervised.basic_backprop import Backprop
-# import model factory:
 
-from src.models.model_factory import model_factory
+import os
+from tqdm import tqdm
+import hydra
+from omegaconf import DictConfig, OmegaConf
+
+import torch
+import torch.nn.functional as F
+import torchvision
+import torchvision.transforms as transforms
+
+from configs.configurations import (
+    ExperimentConfig,
+    BackpropConfig,
+    ContinuousBackpropConfig,
+    RRContinuousBackpropConfig,
+)
+from src.algos.supervised.basic_backprop import Backprop
+from src.algos.supervised.rr_cbp_fc import RankRestoringCBP_for_FC
 from src.data_loading.dataset_factory import dataset_factory
 from src.data_loading.transform_factory import transform_factory
-import torch.nn.functional as F
+from src.models.model_factory import model_factory
 from src.utils.miscellaneous import nll_accuracy
 from src.utils.zeroth_order_features import compute_all_rank_measures_list
-import torchvision.transforms as transforms
-import torchvision
-import torch
 
 
-# should be moved to util:
 def compute_accuracy(output, target):
     with torch.no_grad():
         _, predicted = torch.max(output, dim=1)
@@ -49,34 +47,74 @@ def compute_accuracy(output, target):
         return correct / total
 
 
-
-
 @hydra.main(config_path="cfg", config_name="basic_config")
-def main(cfg :ExperimentConfig):
+def main(cfg: ExperimentConfig):
     print(OmegaConf.to_yaml(cfg))
-    
-    #setup network architecture, 
-    
-    # net = ConvNet(cfg.net.netparams)
-    
+
     net = model_factory(cfg.net)
 
-    #verifty cfg.runs ==1:
+    if getattr(net, 'type', None) is None:
+        inferred_cls = getattr(cfg.net, 'network_class', None)
+        if inferred_cls is None and hasattr(cfg.net, 'type'):
+            net_type_str = str(cfg.net.type).lower()
+            if any(token in net_type_str for token in ['ffnn', 'mlp', 'fc']):
+                inferred_cls = 'fc'
+            elif any(token in net_type_str for token in ['conv', 'resnet', 'vgg']):
+                inferred_cls = 'conv'
+        if inferred_cls == 'fc':
+            setattr(net, 'type', 'FC')
+        elif inferred_cls == 'conv':
+            setattr(net, 'type', 'ConvNet')
+
     if cfg.runs != 1:
         raise ValueError("This script is only for single runs. Please set runs to 1 or use another script.")
 
-    # if the run_id attribute is not set, set it to 0
     if cfg.run_id is None:
         cfg.run_id = 0
-        
-    # setup learner:
-    # optimizer is setup in the learner
-    # loss function is setup in the learner
-    if cfg.learner.type == 'backprop':
+
+    learner_cfg = cfg.learner
+
+    learner_dict = None
+    if isinstance(learner_cfg, DictConfig):
+        learner_dict = OmegaConf.to_container(learner_cfg, resolve=True)
+        learner_type = learner_dict.get('type', '').lower()
+    else:
+        learner_type = getattr(learner_cfg, 'type', '').lower()
+
+    if learner_type == 'backprop':
+        if not isinstance(cfg.learner, BackpropConfig):
+            if learner_dict is None:
+                learner_dict = OmegaConf.to_container(cfg.learner, resolve=True)
+            cfg.learner = BackpropConfig(**learner_dict)
         learner = Backprop(net, cfg.learner)
-    if cfg.learner.type == 'cbp' and cfg.net.type == 'conv_net':
-        from src.algos.supervised.continuous_backprop_with_GnT import ContinualBackprop_for_ConvNet
-        learner = ContinualBackprop_for_ConvNet(net, cfg.learner)
+    elif learner_type in {'cbp', 'continuous_backprop'}:
+        from src.algos.supervised.continuous_backprop_with_GnT import (
+            ContinualBackprop_for_FC,
+            ContinuousBackprop_for_ConvNet,
+        )
+
+        if getattr(cfg.net, 'network_class', None) == 'conv' or str(cfg.net.type).lower() in {'conv_net', 'convnet'}:
+            if not isinstance(cfg.learner, ContinuousBackpropConfig):
+                if learner_dict is None:
+                    learner_dict = OmegaConf.to_container(cfg.learner, resolve=True)
+                cfg.learner = ContinuousBackpropConfig(**learner_dict)
+            learner = ContinuousBackprop_for_ConvNet(net, cfg.learner)
+        else:
+            if not isinstance(cfg.learner, ContinuousBackpropConfig):
+                if learner_dict is None:
+                    learner_dict = OmegaConf.to_container(cfg.learner, resolve=True)
+                cfg.learner = ContinuousBackpropConfig(**learner_dict)
+            learner = ContinualBackprop_for_FC(net, cfg.learner)
+    elif learner_type == 'rr_cbp':
+        if not isinstance(cfg.learner, RRContinuousBackpropConfig):
+            if learner_dict is None:
+                learner_dict = OmegaConf.to_container(cfg.learner, resolve=True)
+            cfg.learner = RRContinuousBackpropConfig(**learner_dict)
+        if getattr(net, 'type', None) != 'FC':
+            setattr(net, 'type', 'FC')
+        learner = RankRestoringCBP_for_FC(net, cfg.learner, cfg.net)
+    else:
+        raise ValueError(f"Unsupported learner type: {cfg.learner.type}")
     
     # setup data:
     # load the transfrom based on the dataset and model:
@@ -93,12 +131,6 @@ def main(cfg :ExperimentConfig):
     #     # raise an error if the data path is not provided
     #     raise ValueError("Data path is not provided.")
 
-        # trainset = np.load(dataset_path)
-        # trainloader = torch.utils.data.DataLoader(trainset, batch_size = cfg.batch_size, shuffle=True, num_workers=2, pin_memory = True)
-        
-
-
-    
     # setup evaluation:
     # wandb setup
     if cfg.use_wandb:

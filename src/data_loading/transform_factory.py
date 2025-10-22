@@ -113,7 +113,10 @@ def transform_factory(dataset_name: str, model_name: str):
             ])
             
         elif model_name in deep_ffnn_series:
-            transform = transforms.Compose([transforms.ToTensor()])
+            transform = transforms.Compose([
+                transforms.ToTensor(),
+                transforms.Lambda(lambda x: x.view(-1))
+            ])
             return transform
         else:
             raise ValueError(f"Unsupported model {model_name} for dataset {dataset_name}")

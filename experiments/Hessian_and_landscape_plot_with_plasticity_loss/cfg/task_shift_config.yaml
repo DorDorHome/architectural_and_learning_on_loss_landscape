@@ -90,7 +90,7 @@ data:
 
 # network architecture:
 net:
-  type: "ConvNet" # "resnet_custom" # "ConvNet_batch_norm", "ConvNet_FC_layer_norm", "ConvNet_conv_and_FC_layer_norm" "ConvNet_norm", "vgg_custom" #options: "ConvNet", "vgg_custom" , "resnet_custom" , 'full_rank_resnet_custom'
+  type: "ConvNet_batch_norm" # "resnet_custom" # "ConvNet_batch_norm", "ConvNet_FC_layer_norm", "ConvNet_conv_and_FC_layer_norm" "ConvNet_norm", "vgg_custom" #options: "ConvNet", "vgg_custom" , "resnet_custom" , 'full_rank_resnet_custom'
   network_class: "conv"
   device: ${device}
   netparams:
