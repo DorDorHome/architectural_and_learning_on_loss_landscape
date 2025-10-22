@@ -6,7 +6,7 @@ seed: None
 debug_mode: False  # Disable debug mode for performance
 device: 'cuda:0'
 epochs: 50 #epoch per task switch
-batch_size: 1024
+batch_size: 2048
 num_tasks: 500 # number of tasks to train on. Each task will be trained on num_classes_per_task
 num_workers: 2  # Reduced from 12 to match old script performance
 
@@ -90,7 +90,7 @@ data:
 
 # network architecture:
 net:
-  type: "ConvNet" # "resnet_custom" # "ConvNet_batch_norm", "ConvNet_FC_layer_norm", "ConvNet_conv_and_FC_layer_norm" "ConvNet_norm", "vgg_custom" #options: "ConvNet", "vgg_custom" , "resnet_custom" , 'full_rank_resnet_custom'
+  type: "ConvNet_batch_norm" # "resnet_custom" # "ConvNet_batch_norm", "ConvNet_FC_layer_norm", "ConvNet_conv_and_FC_layer_norm" "ConvNet_norm", "vgg_custom" #options: "ConvNet", "vgg_custom" , "resnet_custom" , 'full_rank_resnet_custom'
   network_class: "conv"
   device: ${device}
   netparams:

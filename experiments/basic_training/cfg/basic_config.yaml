@@ -1,71 +1,73 @@
 # represent experiments config:
 runs: 1
-run_id: None
-seed: 42
-device: 'cuda:0'
-epochs: 1000
-batch_size: 256 #128
+run_id: 0
+seed: 0
+device: 'cpu'
+epochs: 2
+batch_size: 64
 
 # for logging and tracking the experiments
-use_wandb: True
+use_wandb: False
 use_json: False
 log_freq_every_n_task: 1
 wandb:
   project: 'basic_training'
   entity: ''
-  # tags: ['shifting_tasks', 'Imagenet']
-  # notes: 'basic training on Imagenet with shifting tasks'
 
 
-
-#data to use
+# data to use
 data:
-  dataset: 'CIFAR10' #'ImageNet' #options: 'MNIST' #'CIFAR10', to implement: 'CIFAR100'. 'ImageNet' not supported yet.
-  use_torchvision: True # if using Imagnet, set to False 
-  data_path: '/hdda/datasets'    # '/home/sfchan/datasets' for 243, otherwise '/hdda/datasets'   #if specified, will override the dataset variable.
-  # for Imagnet, expected path is folder containing the downloaded Imagnet dataset, + '/data/classes/'
-  num_classes: 10 # should be consistent with the number of classes in the dataset
-
-
+  dataset: 'MNIST'
+  use_torchvision: True
+  data_path: './data'
+  num_classes: 10
 
 
 # network architecture:
 net:
-  type: "full_rank_resnet_custom" # "vgg_custom" #options: 'ConvNet', "vgg_custom" , "resnet_custom" , 'full_rank_resnet_custom'
+  type: 'deep_ffnn'
+  network_class: 'fc'
   netparams:
-    pretrained: False
-    num_classes: ${data.num_classes} 
-    initialization: 'kaiming'
-    activation: 'elu' # 'relu', 'leaky_relu' 'sigmoid' 'tanh' 'selu' 'swish' 'elu'
+    input_size: 784
+    num_features: 256
+    num_outputs: ${data.num_classes}
+    num_hidden_layers: 2
+    act_type: 'relu'
+    initialization: 'xavier'
 
 
-    
 # learning algorithm:
 learner:
-  type: 'backprop'  # Choices: 'backprop', 'cbp',# 'continual_backprop'
-  init: 'kaiming' # might not work for 'vgg_custom_norm'
-  # needed only for cbp:
-  # neurons_replacement_rate: 0.001
-  # decay_rate_utility_track: 0.9
-  # maturity_threshold: 100
-  # util_type: 'contribution'
-  # init: 'kaiming'
-  # accumulate: False
-  # outgoing_random: False
-
-  # needed for continual backprop and cbp:
+  type: 'rr_cbp'
+  network_class: ${net.network_class}
+  init: 'kaiming'
   device: ${device}
-  opt:  'sgd' # Choices: 'sgd',  'adam'
-  loss: 'cross_entropy' # Choices: 'cross_entropy', 'mse', for classification and regression respectively
-  step_size: 0.01 # for sgd try 0.01, adam try 0.001
-  beta_1: 0.95
+  opt: 'adam'
+  loss: 'cross_entropy'
+  step_size: 0.001
+  beta_1: 0.9
   beta_2: 0.999
-  weight_decay: 0.01
+  weight_decay: 0.0
   to_perturb: false
-  perturb_scale: 0.05
-  momentum: 0.9
+  perturb_scale: 0.0
+  momentum: 0.0
+  neurons_replacement_rate: 0.1
+  decay_rate_utility_track: 0.9
+  maturity_threshold: 10
+  util_type: 'contribution'
+  accumulate: False
+  diag_sigma_only: True
+  sigma_ema_beta: 0.0
+  sigma_ridge: 1e-3
+  max_proj_trials: 4
+  proj_eps: 1e-6
+  center_bias: 'mean'
+  nullspace_seed_epsilon: 0.0
+  orthonormalize_batch: True
+  improve_conditioning_if_saturated: True
+  log_rank_metrics_every: 1
 
-# evaluation, for plotting and saving the results of the
+# evaluation configuration
 evaluation:
   use_testset: False
   eval_freq_epoch: 1

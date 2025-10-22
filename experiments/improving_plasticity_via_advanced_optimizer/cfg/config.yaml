@@ -6,7 +6,7 @@ seed: None
 debug_mode: False  # Disable debug mode for performance
 device: 'cuda:0'
 epochs: 50 #epoch per task switch
-batch_size: 256
+batch_size: 1024
 num_tasks: 500 # number of tasks to train on. Each task will be trained on num_classes_per_task
 num_workers: 2  # Reduced from 12 to match old script performance
 
@@ -38,7 +38,7 @@ task_shift_param:
   # to the input images.
   continuous_input_deformation:
     # The type of drift to apply to the affine transformation parameters.
-    drift_mode: 'sinusoidal' # Options: 'linear', 'random_walk', 'sinusoidal'
+    drift_mode: 'random_walk' # Options: 'linear', 'random_walk', 'sinusoidal'
 
     # linearly, non-random drift
     linear:
@@ -50,7 +50,7 @@ task_shift_param:
       drift_std_dev: 0.05 # Standard deviation of the noise added at each step.
 
     sinusoidal:
-      amplitude: 5 # default 0.5 The magnitude of the sine wave oscillation.
+      amplitude: 0.5 # default 0.5 The magnitude of the sine wave oscillation.
       frequency: 0.1 # default 0.1 The frequency of the sine wave (lower is slower).
 
 
@@ -83,7 +83,7 @@ layers_identifier: None
 data:
   dataset: 'MNIST'
   use_torchvision: True
-  data_path: '/hdda/datasets'
+  data_path: '/home/sfchan/dataset'  #'/hdda/datasets' 
   num_classes: 10
 
 # network architecture:
@@ -112,7 +112,7 @@ net:
 
 # learning algorithm:
 learner:
-  type: 'backprop' #options: 'basic_continous_backprop', 'backprop' , 
+  type: 'rr_cbp' # 'rr_cbp' #options: 'backprop' 'basic_continous_backprop', 'backprop' , 
   network_class: ${net.network_class}  # Use the network class from the net configuration
   init: 'kaiming'
   device: ${device}
@@ -131,6 +131,17 @@ learner:
   util_type: 'contribution'
   accumulate: False
   outgoing_random: False
+# for rr_cbp specific params:
+  diag_sigma_only: false
+  sigma_ema_beta: 0.95 #original: 0.0
+  sigma_ridge: 1e-1
+  max_proj_trials: 4
+  proj_eps: 1e-6
+  center_bias: 'mean'
+  nullspace_seed_epsilon: 0.0
+  orthonormalize_batch: True
+  improve_conditioning_if_saturated: True
+  log_rank_metrics_every: 1
 
 
   # Gradient clipping options
