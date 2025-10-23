@@ -28,7 +28,14 @@ class SigmaGeometry:
         else:
             if self.sigma.dim() != 2:
                 raise ValueError("Full sigma expected to be a 2-D tensor")
-            eigvals, eigvecs = torch.linalg.eigh(self.sigma)
+            try:
+                eigvals, eigvecs = torch.linalg.eigh(self.sigma)
+            except RuntimeError:
+                # Fallback to CPU computation for numerical stability
+                sigma_cpu = self.sigma.detach().cpu().double()
+                eigvals, eigvecs = torch.linalg.eigh(sigma_cpu)
+                eigvals = eigvals.to(self.sigma.device, dtype=self.sigma.dtype)
+                eigvecs = eigvecs.to(self.sigma.device, dtype=self.sigma.dtype)
             eigvals = torch.clamp(eigvals, min=self.eps)
             self._eigvals = eigvals
             self._eigvecs = eigvecs
