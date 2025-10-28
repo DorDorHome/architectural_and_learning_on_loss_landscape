@@ -405,6 +405,14 @@ def main(cfg: ExperimentConfig) -> Any:
                                         data[f'{layer_name}_approximate_rank'] = rank_summary_list[i]['approximate_rank']
                                         data[f'{layer_name}_l1_distribution_rank'] = rank_summary_list[i]['l1_distribution_rank']
                                         data[f'{layer_name}_numerical_rank'] = rank_summary_list[i]['numerical_rank']
+                            else:
+                                # Learner doesn't have get_layer_names(), use indexed names
+                                for layer_idx in range(len(list_of_features_for_every_layers)):
+                                    # for each layer,
+                                    data[f'layer_{layer_idx}_effective_rank'] = rank_summary_list[layer_idx]['effective_rank']
+                                    data[f'layer_{layer_idx}_approximate_rank'] = rank_summary_list[layer_idx]['approximate_rank']
+                                    data[f'layer_{layer_idx}_l1_distribution_rank'] = rank_summary_list[layer_idx]['l1_distribution_rank']
+                                    data[f'layer_{layer_idx}_numerical_rank'] = rank_summary_list[layer_idx]['numerical_rank']
                         except Exception as e:
                             # Fallback: if semantic names fail, use indexed names
                             print(f"Semantic layer naming failed, using indexed names as fallback: {e}")

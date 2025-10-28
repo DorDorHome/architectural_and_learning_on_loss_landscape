@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import os
 import math
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Sequence, Tuple
@@ -213,10 +214,15 @@ class RR_GnT_for_FC(GnT_for_FC):
             elif kept_vectors.numel() > 0:
                 whitened = geometry.whiten_columns(kept_vectors)
                 gram_white = whitened.t() @ whitened
-                try:
-                    eigvals = torch.linalg.eigvalsh(gram_white)
-                except RuntimeError:
-                    eigvals = torch.linalg.eigvalsh(gram_white.double()).to(gram_white.dtype)
+                force_cpu_eigh = os.environ.get('SIGMA_FORCE_CPU_EIGH', '0') == '1'
+                if force_cpu_eigh and gram_white.device.type == 'cuda':
+                    eigvals = torch.linalg.eigvalsh(gram_white.detach().cpu())
+                    eigvals = eigvals.to(gram_white.device, dtype=gram_white.dtype)
+                else:
+                    try:
+                        eigvals = torch.linalg.eigvalsh(gram_white)
+                    except RuntimeError:
+                        eigvals = torch.linalg.eigvalsh(gram_white.cpu().double()).to(gram_white.dtype)
                 if eigvals.numel() > 0:
                     lambda_star = float(min(1.0, 2.0 * torch.clamp_min(eigvals.min(), 0.0).item()))
 
@@ -400,10 +406,15 @@ class RR_GnT_for_FC(GnT_for_FC):
             rank_val = float(torch.linalg.matrix_rank(gram.cpu().double(), tol=self.rr_config.proj_eps).item())
 
         lambda_min = float("nan")
-        try:
-            eigvals = torch.linalg.eigvalsh(gram)
-        except RuntimeError:
-            eigvals = torch.linalg.eigvalsh(gram.cpu().double()).to(gram.dtype)
+        force_cpu_eigh = os.environ.get('SIGMA_FORCE_CPU_EIGH', '0') == '1'
+        if force_cpu_eigh and gram.device.type == 'cuda':
+            eigvals = torch.linalg.eigvalsh(gram.detach().cpu())
+            eigvals = eigvals.to(gram.device, dtype=gram.dtype)
+        else:
+            try:
+                eigvals = torch.linalg.eigvalsh(gram)
+            except RuntimeError:
+                eigvals = torch.linalg.eigvalsh(gram.cpu().double()).to(gram.dtype)
         if eigvals.numel() > 0:
             lambda_min = float(torch.clamp_min(eigvals.min(), 0.0).item())
 

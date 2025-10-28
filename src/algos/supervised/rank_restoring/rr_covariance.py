@@ -43,8 +43,15 @@ class CovarianceState:
 
 def initialize_covariance(d_dim: int, device: torch.device, beta: float, ridge: float, diag_only: bool,
                            dtype: torch.dtype) -> CovarianceState:
-    if diag_only:
-        ema = torch.zeros(d_dim, device=device, dtype=dtype)
-    else:
-        ema = torch.zeros(d_dim, d_dim, device=device, dtype=dtype)
-    return CovarianceState(ema=ema, beta=beta, ridge=ridge, diag_only=diag_only)
+    try:
+        if diag_only:
+            ema = torch.zeros(d_dim, device=device, dtype=dtype)
+        else:
+            ema = torch.zeros(d_dim, d_dim, device=device, dtype=dtype)
+        return CovarianceState(ema=ema, beta=beta, ridge=ridge, diag_only=diag_only)
+    except RuntimeError as e:
+        if 'CUDA' in str(e) or 'cuda' in str(e):
+            from src.utils.gpu_health_check import raise_gpu_corruption_error
+            raise_gpu_corruption_error(device, e)
+        else:
+            raise
