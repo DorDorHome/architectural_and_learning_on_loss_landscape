@@ -7,6 +7,11 @@ Quick start
 
 git submodule update --init --recursive
 
+- updating the submodule to Upstream latest:
+git submodule update --remote --merge \
+  experiments/Hessian_and_landscape_plot_with_plasticity_loss/external/loss-landscape-analysis
+
+
 
 - Run the pipeline with the default config:
 
