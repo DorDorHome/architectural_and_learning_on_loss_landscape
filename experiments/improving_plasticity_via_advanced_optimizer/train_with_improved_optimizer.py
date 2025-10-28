@@ -86,6 +86,16 @@ def main(cfg: ExperimentConfig) -> Any:
     torch.backends.cudnn.deterministic = True  # Ensure deterministic behavior
     torch.backends.cudnn.benchmark = False  # Disable benchmark for reproducibility
 
+    # Apply cuda:1 workarounds if enabled in config
+    if hasattr(cfg, 'enable_cuda1_workarounds') and cfg.enable_cuda1_workarounds:
+        os.environ['SIGMA_FORCE_CPU_EIGH'] = '1'
+        os.environ['LLA_PREFER_GPU_EIGH'] = '0'
+        print("⚠️  cuda:1 workarounds enabled - using CPU eigendecomposition")
+        print("   (SIGMA_FORCE_CPU_EIGH=1, LLA_PREFER_GPU_EIGH=0)")
+        print("   Set enable_cuda1_workarounds=False in config to disable")
+
+
+
     print(OmegaConf.to_yaml(cfg))
     # set up the transform being used for the dataset, given the model architecture and dataset
     # expected cfg.data.dataset value is 'MNIST'
@@ -404,6 +414,14 @@ def main(cfg: ExperimentConfig) -> Any:
                                         data[f'{layer_name}_approximate_rank'] = rank_summary_list[i]['approximate_rank']
                                         data[f'{layer_name}_l1_distribution_rank'] = rank_summary_list[i]['l1_distribution_rank']
                                         data[f'{layer_name}_numerical_rank'] = rank_summary_list[i]['numerical_rank']
+                            else:
+                                # Learner doesn't have get_layer_names(), use indexed names
+                                for layer_idx in range(len(list_of_features_for_every_layers)):
+                                    # for each layer,
+                                    data[f'layer_{layer_idx}_effective_rank'] = rank_summary_list[layer_idx]['effective_rank']
+                                    data[f'layer_{layer_idx}_approximate_rank'] = rank_summary_list[layer_idx]['approximate_rank']
+                                    data[f'layer_{layer_idx}_l1_distribution_rank'] = rank_summary_list[layer_idx]['l1_distribution_rank']
+                                    data[f'layer_{layer_idx}_numerical_rank'] = rank_summary_list[layer_idx]['numerical_rank']
                         except Exception as e:
                             # Fallback: if semantic names fail, use indexed names
                             print(f"Semantic layer naming failed, using indexed names as fallback: {e}")

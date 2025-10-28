@@ -6,7 +6,7 @@ seed: None
 debug_mode: False  # Disable debug mode for performance
 device: 'cuda:0'
 epochs: 50 #epoch per task switch
-batch_size: 2048
+batch_size: 8192
 num_tasks: 500 # number of tasks to train on. Each task will be trained on num_classes_per_task
 num_workers: 2  # Reduced from 12 to match old script performance
 
@@ -47,7 +47,7 @@ task_shift_param:
       max_drift: 0.5
 
     random_walk:
-      drift_std_dev: 0.05 # Standard deviation of the noise added at each step.
+      drift_std_dev: 0.1 # Standard deviation of the noise added at each step.
 
     sinusoidal:
       amplitude: 5 # default 0.5 The magnitude of the sine wave oscillation.
@@ -70,7 +70,7 @@ prop_for_approx_or_l1_rank: 0.99 # for approximate rank, or 1 for l1 rank
 numerical_rank_epsilon: 0.01 # for numerical rank, or 0 for l1 rank
 
 # deal units checking:
-track_dead_units: False  # Disabled for performance
+track_dead_units: True  # Disabled for performance
 threshold_for_non_saturating_act: 0.01
 
 # for test, computationally expensive
@@ -85,7 +85,7 @@ data:
   dataset: 'MNIST'
   use_torchvision: True
   # edit the following path to your dataset path, e.g. '/hdda/datasets' or '/home/sfchan/dataset'
-  data_path: '/home/sfchan/dataset' 
+  data_path: '/hdda/datasets'
   num_classes: 10
 
 # network architecture:

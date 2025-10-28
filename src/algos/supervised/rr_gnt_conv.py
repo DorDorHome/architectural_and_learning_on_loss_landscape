@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import math
+import os
 from typing import Dict, List, Optional, Sequence, Tuple
 
 import torch
@@ -196,6 +197,20 @@ class RR_GnT_for_ConvNet(ConvGnT_for_ConvNet):
 
         weight_matrix = self._flatten_weight(layer)
         geometry = SigmaGeometry(sigma=sigma, diag_only=config.diag_sigma_only, eps=config.sigma_eig_floor)
+        
+        # Detect if sigma_geometry fell back to CPU due to GPU corruption
+        # If so, move all tensors to CPU to avoid device mismatch errors
+        sigma_device = geometry._sqrt.device if hasattr(geometry, '_sqrt') else sigma.device
+        force_cpu = sigma.is_cuda and sigma_device.type == 'cpu'
+        
+        if force_cpu:
+            import warnings
+            warnings.warn(f"GPU corruption detected in layer {layer_idx}. Skipping neuron replacement for this batch.")
+            # GPU is too corrupted to even transfer data - skip replacement entirely
+            # Return early with zero replacements
+            stats = self.layer_stats.setdefault(layer_idx, LayerReplacementStats())
+            return stats
+        
         kept_vectors = weight_matrix[keep_idx, :].t()
         projector = SigmaProjector(geometry=geometry, basis=kept_vectors, reg_epsilon=config.projector_reg_epsilon)
         stats = self.layer_stats.setdefault(layer_idx, LayerReplacementStats())
@@ -216,10 +231,15 @@ class RR_GnT_for_ConvNet(ConvGnT_for_ConvNet):
             elif kept_vectors.numel() > 0:
                 whitened = geometry.whiten_columns(kept_vectors)
                 gram_white = whitened.t() @ whitened
-                try:
-                    eigvals = torch.linalg.eigvalsh(gram_white)
-                except RuntimeError:
-                    eigvals = torch.linalg.eigvalsh(gram_white.double()).to(gram_white.dtype)
+                force_cpu_eigh = os.environ.get('SIGMA_FORCE_CPU_EIGH', '0') == '1'
+                if force_cpu_eigh and gram_white.device.type == 'cuda':
+                    eigvals = torch.linalg.eigvalsh(gram_white.detach().cpu())
+                    eigvals = eigvals.to(gram_white.device, dtype=gram_white.dtype)
+                else:
+                    try:
+                        eigvals = torch.linalg.eigvalsh(gram_white)
+                    except RuntimeError:
+                        eigvals = torch.linalg.eigvalsh(gram_white.cpu().double()).to(gram_white.dtype)
                 if eigvals.numel() > 0:
                     lambda_star = float(min(1.0, 2.0 * torch.clamp_min(eigvals.min(), 0.0).item()))
 
@@ -446,10 +466,29 @@ class RR_GnT_for_ConvNet(ConvGnT_for_ConvNet):
         stats: LayerReplacementStats,
     ) -> Dict[str, float]:
         weight = self._flatten_weight(self.net[layer_idx * 2])
-        if self.rr_config.diag_sigma_only:
-            gram = (weight * sigma.unsqueeze(0)) @ weight.t()
-        else:
-            gram = weight @ sigma @ weight.t()
+        
+        # Try to compute gram matrix, but if GPU is corrupted, return placeholder metrics
+        try:
+            if self.rr_config.diag_sigma_only:
+                gram = (weight * sigma.unsqueeze(0)) @ weight.t()
+            else:
+                gram = weight @ sigma @ weight.t()
+        except RuntimeError as e:
+            # GPU corruption detected during gram matrix computation
+            import warnings
+            warnings.warn(f"GPU corruption detected in rank metrics computation for layer {layer_idx}. "
+                         f"Returning placeholder metrics. Error: {e}")
+            # Return placeholder metrics to allow training to continue
+            return {
+                f'layer_{layer_idx}_rank': float('nan'),
+                f'layer_{layer_idx}_lambda_min': float('nan'),
+                f'layer_{layer_idx}_active_frac': 0.0,
+                f'layer_{layer_idx}_fallback': 1.0,
+                f'layer_{layer_idx}_success': 0.0,
+                f'layer_{layer_idx}_saturated': float(stats.saturated),
+                f'layer_{layer_idx}_Q_mean': float('nan'),
+                f'layer_{layer_idx}_Q_std': float('nan'),
+            }
 
         try:
             rank_val = float(torch.linalg.matrix_rank(gram, tol=self.rr_config.proj_eps).item())
@@ -457,10 +496,15 @@ class RR_GnT_for_ConvNet(ConvGnT_for_ConvNet):
             rank_val = float(torch.linalg.matrix_rank(gram.cpu().double(), tol=self.rr_config.proj_eps).item())
 
         lambda_min = float("nan")
-        try:
-            eigvals = torch.linalg.eigvalsh(gram)
-        except RuntimeError:
-            eigvals = torch.linalg.eigvalsh(gram.cpu().double()).to(gram.dtype)
+        force_cpu_eigh = os.environ.get('SIGMA_FORCE_CPU_EIGH', '0') == '1'
+        if force_cpu_eigh and gram.device.type == 'cuda':
+            eigvals = torch.linalg.eigvalsh(gram.detach().cpu())
+            eigvals = eigvals.to(gram.device, dtype=gram.dtype)
+        else:
+            try:
+                eigvals = torch.linalg.eigvalsh(gram)
+            except RuntimeError:
+                eigvals = torch.linalg.eigvalsh(gram.cpu().double()).to(gram.dtype)
         if eigvals.numel() > 0:
             lambda_min = float(torch.clamp_min(eigvals.min(), 0.0).item())
 

@@ -5,6 +5,7 @@
 # (c) Kryptonite, 2024
 
 
+import os
 import torch
 import copy
 import numpy as np
@@ -17,6 +18,21 @@ from src_lla.hessian.utils import list_prod, update_vect, list_norm, get_params_
 def tol_check(a1,a2,a3,c,tol):
     return abs(a1 - a2) / (abs(a3) + c) < tol
     
+
+def _cpu_eigh_with_cast(matrix: torch.Tensor):
+    """Compute torch.linalg.eigh on CPU in float64, returning tensors on the original device/dtype."""
+    matrix_cpu = matrix.detach().to("cpu", dtype=torch.float64)
+    eigenvalues_cpu, eigenvectors_cpu = torch.linalg.eigh(matrix_cpu)
+    return (
+        eigenvalues_cpu.to(matrix.device, dtype=matrix.dtype),
+        eigenvectors_cpu.to(matrix.device, dtype=matrix.dtype),
+    )
+
+
+def _should_prefer_gpu_eigh():
+    env_value = os.environ.get("LLA_PREFER_GPU_EIGH", "0").lower()
+    return env_value in ("1", "true", "yes", "y")
+
 
 class hessian_calc():
     def __init__(self, model, metric): 
@@ -213,6 +229,10 @@ class hessian_calc():
         all_eigs = []
         all_weights = []
 
+        prefer_gpu_eigh = _should_prefer_gpu_eigh()
+        if prefer_gpu_eigh and self.device.type != "cuda":
+            prefer_gpu_eigh = False
+
         for k in range(n_v):
 
             # Laczos algorithm initialization: generate the initial vector
@@ -241,10 +261,23 @@ class hessian_calc():
                     T[i, i + 1] = betas[i]
 
             # compute eigenvalue, eigenvector pairs
-            eigenvalues, eigenvectors = torch.linalg.eigh(T)
+            if T.device.type == "cuda" and not prefer_gpu_eigh:
+                eigenvalues, eigenvectors = _cpu_eigh_with_cast(T)
+            else:
+                try:
+                    eigenvalues, eigenvectors = torch.linalg.eigh(T)
+                except RuntimeError as err:
+                    if T.device.type == "cuda":
+                        eigenvalues, eigenvectors = _cpu_eigh_with_cast(T)
+                        print('[LLA][warn] torch.linalg.eigh on GPU failed; falling back to CPU. Details:', err)
+                    else:
+                        raise
 
-            eigs = eigenvalues.real
-            weights = torch.pow(eigenvectors[0,:], 2)
+            eigs = eigenvalues.real if torch.is_complex(eigenvalues) else eigenvalues
+            first_vec = eigenvectors[0, :]
+            if torch.is_complex(first_vec):
+                first_vec = first_vec.real
+            weights = torch.pow(first_vec, 2)
             all_eigs.append(list(eigs.cpu().numpy()))
             all_weights.append(list(weights.cpu().numpy()))
 

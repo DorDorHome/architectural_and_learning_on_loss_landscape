@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Optional, Tuple
+import os
 
 import torch
 from torch import Tensor
@@ -28,7 +29,94 @@ class SigmaGeometry:
         else:
             if self.sigma.dim() != 2:
                 raise ValueError("Full sigma expected to be a 2-D tensor")
-            eigvals, eigvecs = torch.linalg.eigh(self.sigma)
+            
+            # Check if user wants to force CPU eigendecomposition
+            force_cpu_eigh = os.environ.get('SIGMA_FORCE_CPU_EIGH', '0') == '1'
+            
+            # Pre-condition the matrix to avoid numerical issues that trigger GPU errors
+            # 1. Ensure symmetry (numerical errors can break this)
+            sigma_sym = 0.5 * (self.sigma + self.sigma.t())
+            
+            # 2. Add small regularization to improve conditioning
+            # This prevents near-singular matrices that cause cuSOLVER issues
+            n = sigma_sym.size(0)
+            device = sigma_sym.device
+            dtype = sigma_sym.dtype
+            regularization = self.eps * 10.0  # Stronger than minimum eigenvalue floor
+            sigma_reg = sigma_sym + regularization * torch.eye(n, device=device, dtype=dtype)
+            
+            # 3. Check condition number and add more regularization if needed
+            # High condition numbers are the root cause of GPU eigendecomposition failures
+            try:
+                # Quick check: compute largest singular value via power iteration (cheap)
+                with torch.no_grad():
+                    v = torch.randn(n, device=device, dtype=dtype)
+                    v = v / torch.norm(v)
+                    for _ in range(5):  # Few iterations for estimate
+                        v = sigma_reg @ v
+                        v = v / torch.norm(v)
+                    largest_sv = torch.norm(sigma_reg @ v)
+                    
+                    # Estimate smallest eigenvalue from trace
+                    trace = torch.trace(sigma_reg)
+                    estimated_smallest = max(trace / n * 0.01, self.eps)  # Conservative estimate
+                    
+                    # If condition number too large, add more regularization
+                    condition_number = largest_sv / estimated_smallest
+                    if condition_number > 1e6:  # Very ill-conditioned
+                        extra_reg = (largest_sv / 1e6 - estimated_smallest)
+                        sigma_reg = sigma_reg + extra_reg * torch.eye(n, device=device, dtype=dtype)
+            except RuntimeError:
+                # If even this check fails, GPU already corrupted - will handle below
+                pass
+            
+            # Try GPU eigendecomposition with conditioned matrix (unless forced to CPU)
+            use_cpu_path = False
+            if force_cpu_eigh and device.type == 'cuda':
+                # User explicitly requested CPU eigendecomposition
+                import warnings
+                warnings.warn(f"SIGMA_FORCE_CPU_EIGH=1: Using CPU eigendecomposition for sigma geometry.")
+                # Skip GPU eigendecomposition and go directly to CPU path
+                use_cpu_path = True
+            
+            if not use_cpu_path:
+                try:
+                    eigvals, eigvecs = torch.linalg.eigh(sigma_reg)
+                except RuntimeError:
+                    use_cpu_path = True
+            
+            if use_cpu_path:
+                # GPU failed - use CPU-only path to avoid CUDA corruption
+                # Create fresh CPU tensor by reconstructing from numpy to bypass CUDA entirely
+                try:
+                    # Try direct CPU transfer first
+                    sigma_np = self.sigma.detach().cpu().numpy()
+                except RuntimeError:
+                    # CUDA is completely broken - reconstruct from raw data
+                    # This is a last-resort recovery; sigma may be unusable
+                    import warnings
+                    warnings.warn("Severe CUDA error detected. Using diagonal approximation for sigma.")
+                    # Fall back to diagonal approximation to continue training
+                    n = self.sigma.size(0)
+                    sigma_np = torch.eye(n, dtype=torch.float64).numpy()
+                
+                # Compute eigendecomposition on CPU with numpy array
+                sigma_cpu = torch.from_numpy(sigma_np).double()
+                eigvals, eigvecs = torch.linalg.eigh(sigma_cpu)
+                
+                # Transfer results back to original device
+                target_device = self.sigma.device
+                target_dtype = self.sigma.dtype
+                try:
+                    eigvals = eigvals.to(device=target_device, dtype=target_dtype)
+                    eigvecs = eigvecs.to(device=target_device, dtype=target_dtype)
+                except RuntimeError:
+                    # Can't transfer back to GPU - keep on CPU
+                    import warnings
+                    warnings.warn("Cannot transfer eigendecomposition back to GPU. Keeping results on CPU.")
+                    eigvals = eigvals.to(dtype=target_dtype)
+                    eigvecs = eigvecs.to(dtype=target_dtype)
+            
             eigvals = torch.clamp(eigvals, min=self.eps)
             self._eigvals = eigvals
             self._eigvecs = eigvecs
@@ -103,10 +191,24 @@ class SigmaGeometry:
         else:
             whitened = weight @ self._sqrt.t()
         gram = whitened @ whitened.t()
-        try:
-            eigvals = torch.linalg.eigvalsh(gram)
-        except RuntimeError:
-            eigvals = torch.linalg.eigvalsh(gram.double()).to(gram.dtype)
+        
+        # Check if we should use CPU eigendecomposition
+        force_cpu_eigh = os.environ.get('SIGMA_FORCE_CPU_EIGH', '0') == '1'
+        
+        if force_cpu_eigh and gram.device.type == 'cuda':
+            # Use CPU path directly
+            gram_cpu = gram.detach().cpu()
+            eigvals = torch.linalg.eigvalsh(gram_cpu)
+            eigvals = eigvals.to(gram.device, dtype=gram.dtype)
+        else:
+            try:
+                eigvals = torch.linalg.eigvalsh(gram)
+            except RuntimeError:
+                # GPU failed, fallback to CPU
+                gram_cpu = gram.detach().cpu()
+                eigvals = torch.linalg.eigvalsh(gram_cpu.double()).to(gram_cpu.dtype)
+                eigvals = eigvals.to(gram.device, dtype=gram.dtype)
+        
         return float(torch.clamp_min(eigvals.min(), 0.0).item())
 
 
@@ -171,13 +273,25 @@ class SigmaProjector:
             return self.geometry.random_unit(dtype=dtype)
         whitened = self.geometry.whiten_columns(self.basis)
         gram = whitened @ whitened.t()
-        try:
-            eigvals, eigvecs = torch.linalg.eigh(gram)
-        except RuntimeError:
-            gram_cpu = gram.detach().cpu().double()
+        
+        # Check if we should use CPU eigendecomposition
+        force_cpu_eigh = os.environ.get('SIGMA_FORCE_CPU_EIGH', '0') == '1'
+        
+        if force_cpu_eigh and gram.device.type == 'cuda':
+            # Use CPU path directly
+            gram_cpu = gram.detach().cpu()
             eigvals, eigvecs = torch.linalg.eigh(gram_cpu)
             eigvals = eigvals.to(gram.device, dtype=gram.dtype)
             eigvecs = eigvecs.to(gram.device, dtype=gram.dtype)
+        else:
+            try:
+                eigvals, eigvecs = torch.linalg.eigh(gram)
+            except RuntimeError:
+                # GPU failed, fallback to CPU
+                gram_cpu = gram.detach().cpu().double()
+                eigvals, eigvecs = torch.linalg.eigh(gram_cpu)
+                eigvals = eigvals.to(gram.device, dtype=gram.dtype)
+                eigvecs = eigvecs.to(gram.device, dtype=gram.dtype)
         idx = torch.argmin(eigvals)
         eigvec = eigvecs[:, idx]
         candidate = self.geometry.unwhiten_vector(eigvec)

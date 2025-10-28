@@ -63,6 +63,7 @@ class NetConfig:
 class BaseLearnerConfig:
     type: str 
     device: str = 'cuda'
+    enable_cuda1_workarounds: bool = False  # Enable CPU eigendecomposition workarounds for cuda:1
     # Structural category of network; inferred if None.
     network_class: Optional[str] = None
     opt: str = 'adam' #or 'sgd'
