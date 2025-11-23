@@ -4,17 +4,17 @@ run_id: 0
 seed: None
 # debug:
 debug_mode: False  # Disable debug mode for performance
-device: 'cuda:0'  # Options: 'cuda:0', 'cuda:1', 'cpu'. Set via command line: device=cuda:1
+device: 'cuda:1'  # Options: 'cuda:0', 'cuda:1', 'cpu'. Set via command line: device=cuda:1
 
 # GPU workarounds for cuda:1 cuSOLVER issues
 # Enable this when using cuda:1 to work around eigendecomposition failures
 # This forces CPU eigendecomposition for matrix operations in rank-restoring
-enable_cuda1_workarounds: True  # Set to False when using cuda:0 or other GPUs
+enable_cuda1_workarounds: False  # Set to False when using cuda:0 or other GPUs
 
 epochs: 50 #epoch per task switch
 batch_size: 8192
 num_tasks: 500 # number of tasks to train on. Each task will be trained on num_classes_per_task
-num_workers: 2  # Reduced from 12 to match old script performance
+num_workers: 8  # Reduced from 12 to match old script performance
 
 
 # for logging and tracking the experiments
@@ -57,19 +57,19 @@ task_shift_param:
 
     sinusoidal:
       amplitude: 0.5 # default 0.5 The magnitude of the sine wave oscillation.
-      frequency: 0.1 # default 0.1 The frequency of the sine wave (lower is slower).
+      frequency: 0.05 # default 0.1 The frequency of the sine wave (lower is slower).
 
 
 #track rank drop:
 track_rank_drop: True  # Enable tracking of rank drop metrics
 from_theoretical_max_first_feature_rank: True # If True, will use the theoretical max rank of the first feature map as the reference for rank drop
-rank_drop_mode: "difference" # "ratio" or "difference"
+rank_drop_mode: "ratio" # options: "ratio" or "difference"
 
 #rank tracking:
 track_rank: True  # Re-enabled with improved error handling
 track_rank_batch: "use_specified" # "last" or "use_specified" or "all"
 specified_batch_size: 1000 # for "specified"
-rank_measure_freq_to_epoch: 1  #should agree with, or a multiple of evaluation.eval_freq_epoch
+rank_measure_freq_to_epoch: 10  #should agree with, or a multiple of evaluation.eval_freq_epoch
 use_pytorch_entropy_for_effective_rank: True # if False, will use numpy for effective rank
 prop_for_approx_or_l1_rank: 0.99 # for approximate rank, or 1 for l1 rank
 numerical_rank_epsilon: 0.01 # for numerical rank, or 0 for l1 rank
@@ -118,7 +118,7 @@ net:
 
 # learning algorithm:
 learner:
-  type: 'basic_continous_backprop' # 'rr_cbp' #options: 'backprop' 'basic_continous_backprop', 'backprop' , 
+  type: 'backprop' # 'backprop' #options: 'backprop' 'basic_continous_backprop', 'backprop' , 
   network_class: ${net.network_class}  # Use the network class from the net configuration
   init: 'kaiming'
   device: ${device}

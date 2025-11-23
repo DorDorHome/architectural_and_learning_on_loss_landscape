@@ -4,7 +4,7 @@ run_id: 0
 seed: null
 
 # Device and basic training for short fine-tune
-device: 'cuda:0'
+device: 'cuda:1'
 epochs: 2           # Short fine-tune duration (1–3)
 batch_size: 256
 num_workers: 2
