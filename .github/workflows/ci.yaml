@@ -24,7 +24,6 @@ jobs:
           activate-environment: loss_landscape_ci
           python-version: 3.9
           auto-activate-base: false
-          conda-remove-defaults: true
           miniforge-variant: Miniforge3
           miniforge-version: latest
           use-mamba: true
