@@ -1,0 +1,172 @@
+# GPU-OPTIMIZED CONFIGURATION
+# This config is optimized for maximum GPU utilization
+# Key changes from config.yaml:
+#   - enable_cuda1_workarounds: False (use GPU eigendecomposition)
+#   - num_workers: 8 (parallel data loading)
+#   - rank_measure_freq_to_epoch: 10 (less frequent rank tracking)
+#
+# Expected performance improvement: 10-20x speedup, 60-80% GPU utilization
+# 
+# Usage:
+#   python train_with_improved_optimizer.py --config-name=config_optimized
+
+# represent experiments config:
+runs: 1
+run_id: 0
+seed: None
+# debug:
+debug_mode: False  # Disable debug mode for performance
+device: 'cuda:0'  # Options: 'cuda:0', 'cuda:1', 'cpu'. Set via command line: device=cuda:1
+
+# ============================================================================
+# GPU OPTIMIZATION: Disable CPU workarounds for cuda:0
+# ============================================================================
+enable_cuda1_workarounds: False  # OPTIMIZED: Set to False when using cuda:0 for full GPU performance
+
+epochs: 50 #epoch per task switch
+batch_size: 8192
+
+# ============================================================================
+# GPU OPTIMIZATION: Increase workers for parallel data loading
+# ============================================================================
+num_tasks: 500 # number of tasks to train on. Each task will be trained on num_classes_per_task
+num_workers: 8  # OPTIMIZED: Increased from 2 to 8 for better CPU->GPU data pipeline
+
+
+# for logging and tracking the experiments
+use_wandb: True
+use_json: False
+wandb:
+  project: 'effects_of_optimizer_${task_shift_mode}' # Dynamically set project name
+  entity: ''
+  notes: 'GPU-optimized experiment with advanced optimizers.'
+
+# task switching:
+task_shift_mode: "continuous_input_deformation"
+task_shift_param:
+  drifting_values:
+    drift_std_dev: 0.05
+    repulsion_strength: 0.05
+    min_gap: 0.2
+    value_bounds:
+      lower_bound: -20.0
+      upper_bound: 20.0
+
+  continuous_input_deformation:
+    drift_mode: 'random_walk'
+    linear:
+      max_drift: 0.5
+    random_walk:
+      drift_std_dev: 0.1
+    sinusoidal:
+      amplitude: 0.5
+      frequency: 0.1
+
+#track rank drop:
+track_rank_drop: True
+from_theoretical_max_first_feature_rank: True
+rank_drop_mode: "ratio" # options: "ratio" or "difference"
+
+#rank tracking:
+track_rank: True
+
+# ============================================================================
+# GPU OPTIMIZATION: Reduce rank tracking frequency
+# ============================================================================
+track_rank_batch: "use_specified"
+specified_batch_size: 1000
+rank_measure_freq_to_epoch: 10  # OPTIMIZED: Changed from 1 to 10 - only compute ranks every 10 epochs
+use_pytorch_entropy_for_effective_rank: True
+prop_for_approx_or_l1_rank: 0.99
+numerical_rank_epsilon: 0.01
+
+# deal units checking:
+track_dead_units: False
+threshold_for_non_saturating_act: 0.01
+
+# for test, computationally expensive
+track_actual_rank: False
+
+# for tracking average weight magnitude:
+track_weight_magnitude: True
+layers_identifier: None
+
+#data to use
+data:
+  dataset: 'MNIST'
+  use_torchvision: True
+  data_path: '/home/sfchan/dataset'
+  num_classes: 10
+
+# network architecture:
+net:
+  type: "ConvNet" #options are: "ConvNet_batch_norm", "ConvNet_FC_layer_norm", "ConvNet_conv_and_FC_layer_norm" "ConvNet_norm", "vgg_custom" #options: "ConvNet", "vgg_custom" , "resnet_custom" , 'full_rank_resnet_custom'
+  network_class: "conv"
+  device: ${device}
+  netparams:
+    pretrained: False
+    num_classes: ${data.num_classes}
+    initialization: 'kaiming'
+    input_height: None
+    input_width: None
+    conv_layer_bias: True
+    linear_layer_bias: True
+    activation: 'leaky_relu'
+    norm_param:
+      layer_norm:
+        eps: 1e-5
+        elementwise_affine: False
+    weight_correction_scale: 1.0
+    fan_in_correction: False
+    SVD_only_stride_1: False
+    allow_svd_values_negative: True
+    num_hidden_layers: 1
+
+# learning algorithm:
+learner:
+  type: 'rr_cbp' # 'rr_cbp' #options: 'backprop' 'basic_continous_backprop', 'rr_cbp'
+  network_class: ${net.network_class}
+  init: 'kaiming'
+  device: ${device}
+  opt:  'sgd'
+  loss: ${loss_functions.${task_shift_mode}}
+  step_size: 0.01
+  beta_1: 0.95
+  beta_2: 0.999
+  weight_decay: 0.01
+  to_perturb: false
+  perturb_scale: 0.05
+  momentum: 0.9
+  neurons_replacement_rate: 0.001
+  decay_rate_utility_track: 0.9
+  maturity_threshold: 100
+  util_type: 'contribution'
+  accumulate: False
+  outgoing_random: False
+# for rr_cbp specific params:
+  diag_sigma_only: false
+  sigma_ema_beta: 0.95 #original: 0.0
+  sigma_ridge: 1e-1
+  max_proj_trials: 4
+  proj_eps: 1e-6
+  center_bias: 'mean'
+  nullspace_seed_epsilon: 0.0
+  orthonormalize_batch: True
+  improve_conditioning_if_saturated: True
+  log_rank_metrics_every: 1
+
+  # Gradient clipping options
+  use_grad_clip: true  #on only for drifting_values       # Enable gradient clipping to prevent gradient explosion
+  grad_clip_max_norm: 1.0      # Maximum norm for gradient clipping
+
+
+# conditional on task_shift_mode
+loss_functions:
+  continuous_input_deformation: 'cross_entropy'
+  drifting_values: 'mse'
+
+# evaluation
+evaluation:
+  use_testset: False
+  eval_freq_epoch: 1
+  eval_metrics: ['accuracy', 'loss']

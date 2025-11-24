@@ -9,12 +9,12 @@ device: 'cuda:0'  # Options: 'cuda:0', 'cuda:1', 'cpu'. Set via command line: de
 # GPU workarounds for cuda:1 cuSOLVER issues
 # Enable this when using cuda:1 to work around eigendecomposition failures
 # This forces CPU eigendecomposition for matrix operations in rank-restoring
-enable_cuda1_workarounds: True  # Set to False when using cuda:0 or other GPUs
+enable_cuda1_workarounds: False  # Set to False when using cuda:0 or other GPUs
 
 epochs: 50 #epoch per task switch
 batch_size: 8192
 num_tasks: 500 # number of tasks to train on. Each task will be trained on num_classes_per_task
-num_workers: 2  # Reduced from 12 to match old script performance
+num_workers: 8  # Reduced from 12 
 
 
 # for logging and tracking the experiments
@@ -57,13 +57,13 @@ task_shift_param:
 
     sinusoidal:
       amplitude: 0.5 # default 0.5 The magnitude of the sine wave oscillation.
-      frequency: 0.1 # default 0.1 The frequency of the sine wave (lower is slower).
+      frequency: 0.05 # default 0.1 The frequency of the sine wave (lower is slower).
 
 
 #track rank drop:
 track_rank_drop: True  # Enable tracking of rank drop metrics
 from_theoretical_max_first_feature_rank: True # If True, will use the theoretical max rank of the first feature map as the reference for rank drop
-rank_drop_mode: "difference" # "ratio" or "difference"
+rank_drop_mode: "ratio" # "ratio" or "difference"
 
 #rank tracking:
 track_rank: True  # Re-enabled with improved error handling
@@ -89,12 +89,12 @@ layers_identifier: None
 data:
   dataset: 'MNIST'
   use_torchvision: True
-  data_path: '/hdda/datasets' # '/home/sfchan/dataset'  #'/hdda/datasets' 
+  data_path: '/home/sfchan/dataset' # '/home/sfchan/dataset'  #'/hdda/datasets' 
   num_classes: 10
 
 # network architecture:
 net:
-  type: "ConvNet" # "ConvNet_batch_norm", "ConvNet_FC_layer_norm", "ConvNet_conv_and_FC_layer_norm" "ConvNet_norm", "vgg_custom" #options: "ConvNet", "vgg_custom" , "resnet_custom" , 'full_rank_resnet_custom'
+  type: "ConvNet" #options are: "ConvNet_batch_norm", "ConvNet_FC_layer_norm", "ConvNet_conv_and_FC_layer_norm" "ConvNet_norm", "vgg_custom" #options: "ConvNet", "vgg_custom" , "resnet_custom" , 'full_rank_resnet_custom'
   network_class: "conv"
   device: ${device}
   netparams:
@@ -118,7 +118,7 @@ net:
 
 # learning algorithm:
 learner:
-  type: 'basic_continous_backprop' # 'rr_cbp' #options: 'backprop' 'basic_continous_backprop', 'backprop' , 
+  type: 'backprop' # 'rr_cbp' #options: 'backprop' 'basic_continous_backprop', 'rr_cbp'
   network_class: ${net.network_class}  # Use the network class from the net configuration
   init: 'kaiming'
   device: ${device}
@@ -148,7 +148,6 @@ learner:
   orthonormalize_batch: True
   improve_conditioning_if_saturated: True
   log_rank_metrics_every: 1
-
 
   # Gradient clipping options
   use_grad_clip: true  #on only for drifting_values       # Enable gradient clipping to prevent gradient explosion
