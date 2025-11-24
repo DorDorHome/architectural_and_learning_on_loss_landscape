@@ -1,0 +1,22 @@
+{
+    "include": [
+        "src",
+        "experiments",
+        "configs",
+        "tests"
+    ],
+    "exclude": [
+        "**/node_modules",
+        "**/__pycache__",
+        ".git",
+        "wandb"
+    ],
+    "extraPaths": [
+        "."
+    ],
+    "pythonVersion": "3.9",
+    "typeCheckingMode": "basic",
+    "useLibraryCodeForTypes": true,
+    "reportMissingImports": "warning",
+    "reportMissingTypeStubs": false
+}
