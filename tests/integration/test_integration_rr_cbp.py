@@ -2,8 +2,12 @@
 
 import sys
 import pathlib
+import os
+from pathlib import Path
+
+# Add project root to sys.path
 PROJECT_ROOT = pathlib.Path(__file__).resolve().parent.parent.parent
-sys.path.append(str(PROJECT_ROOT))
+sys.path.insert(0, str(PROJECT_ROOT))
 
 import torch
 import torch.nn.functional as F
@@ -18,14 +22,6 @@ from src.algos.supervised.supervised_factory import create_learner
 
 def test_rr_cbp_integration():
     """Test RR-CBP integration with the training pipeline."""
-import sys
-from pathlib import Path
-import os
-
-# Add project root to sys.path
-project_root = Path(__file__).resolve().parent.parent.parent
-sys.path.insert(0, str(project_root))
-
     
     # Create minimal config for testing
     cfg_dict = {
@@ -168,4 +164,6 @@ sys.path.insert(0, str(project_root))
 if __name__ == "__main__":
     success = test_rr_cbp_integration()
     if success:
-        print("🎉 RR-CBP integration test completed successfully!")
+        sys.exit(0)
+    else:
+        sys.exit(1)
