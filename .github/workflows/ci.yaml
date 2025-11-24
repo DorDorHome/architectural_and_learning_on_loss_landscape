@@ -36,3 +36,5 @@ jobs:
       - name: Run Tests
         run: |
           pytest tests/
+
+# Trigger CI run
