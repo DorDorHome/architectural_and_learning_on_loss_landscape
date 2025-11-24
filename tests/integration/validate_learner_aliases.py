@@ -1,3 +1,11 @@
+import sys
+from pathlib import Path
+import os
+
+# Add project root to sys.path
+project_root = Path(__file__).resolve().parent.parent.parent
+sys.path.insert(0, str(project_root))
+
 from configs.configurations import ExperimentConfig, NetParams, ContinuousBackpropConfig
 from src.models.model_factory import model_factory
 from src.algos.supervised.supervised_factory import create_learner

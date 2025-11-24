@@ -1,0 +1,39 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -l {0}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Conda Environment
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          environment-file: environment_ci.yml
+          activate-environment: loss_landscape_ci
+          python-version: 3.9
+          auto-activate-base: false
+          miniforge-variant: Miniforge3
+          miniforge-version: latest
+          use-mamba: true
+
+      - name: Verify Environment
+        run: |
+          conda info
+          conda list
+          python --version
+
+      - name: Run Tests
+        run: |
+          pytest tests/

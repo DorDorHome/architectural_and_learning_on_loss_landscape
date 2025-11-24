@@ -4,11 +4,11 @@ run_id: 0
 seed: None
 # debug:
 debug_mode: False  # Disable debug mode for performance
-device: 'cuda:0'
+device: 'cuda:1'
 epochs: 50 #epoch per task switch
 batch_size: 8192
 num_tasks: 500 # number of tasks to train on. Each task will be trained on num_classes_per_task
-num_workers: 2  # Reduced from 12 to match old script performance
+num_workers: 8  # Reduced from 12 to match old script performance
 
 
 # for logging and tracking the experiments
@@ -57,7 +57,7 @@ task_shift_param:
 #track rank drop:
 track_rank_drop: True  # Enable tracking of rank drop metrics
 from_theoretical_max_first_feature_rank: True # If True, will use the theoretical max rank of the first feature map as the reference for rank drop
-rank_drop_mode: "difference" # "ratio" or "difference"
+rank_drop_mode: "ratio" # "ratio" or "difference"
 enable_rank_dynamics: True  # New flag controlling computation/logging of rank dynamics (default on)
 
 #rank tracking:
@@ -90,7 +90,7 @@ data:
 
 # network architecture:
 net:
-  type: "ConvNet_batch_norm" # "resnet_custom" # "ConvNet_batch_norm", "ConvNet_FC_layer_norm", "ConvNet_conv_and_FC_layer_norm" "ConvNet_norm", "vgg_custom" #options: "ConvNet", "vgg_custom" , "resnet_custom" , 'full_rank_resnet_custom'
+  type: "ConvNet" # "resnet_custom" # "ConvNet_batch_norm", "ConvNet_FC_layer_norm", "ConvNet_conv_and_FC_layer_norm" "ConvNet_norm", "vgg_custom" #options: "ConvNet", "vgg_custom" , "resnet_custom" , 'full_rank_resnet_custom'
   network_class: "conv"
   device: ${device}
   netparams:
@@ -114,7 +114,7 @@ net:
 
 # learning algorithm:
 learner:
-  type: 'backprop' #options: 'basic_continous_backprop', 'backprop' , 
+  type: 'rr_cbp' #options: 'basic_continous_backprop', 'backprop' , 
   network_class: ${net.network_class}  # Use the network class from the net configuration
   init: 'kaiming'
   device: ${device}

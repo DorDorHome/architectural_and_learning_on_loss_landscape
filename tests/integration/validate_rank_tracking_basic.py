@@ -1,6 +1,14 @@
 """Quick validation for Step 8 rank tracking integration.
 Runs a 1-epoch tiny training loop with track_rank=True on a small subset of CIFAR10.
 """
+import sys
+from pathlib import Path
+import os
+
+# Add project root to sys.path
+project_root = Path(__file__).resolve().parent.parent.parent
+sys.path.insert(0, str(project_root))
+
 import torch
 from omegaconf import OmegaConf
 from copy import deepcopy

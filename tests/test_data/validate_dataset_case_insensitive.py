@@ -7,6 +7,14 @@ This script should run fast: it only instantiates the datasets (will download if
 not present). If download is heavy, user may interrupt after confirming the
 normalization warning appears.
 """
+import sys
+from pathlib import Path
+import os
+
+# Add project root to sys.path
+project_root = Path(__file__).resolve().parent.parent.parent
+sys.path.insert(0, str(project_root))
+
 from configs.configurations import DataConfig
 from src.data_loading.transform_factory import transform_factory
 from src.data_loading.dataset_factory import dataset_factory

@@ -4,11 +4,12 @@ run_id: 0
 seed: None
 # debug:
 debug_mode: False  # Disable debug mode for performance
-device: 'cuda:0'  # Options: 'cuda:0', 'cuda:1', 'cpu'. Set via command line: device=cuda:1
+device: 'cuda:1'  # Options: 'cuda:0', 'cuda:1', 'cpu'. Set via command line: device=cuda:1
 
 # GPU workarounds for cuda:1 cuSOLVER issues
 # Enable this when using cuda:1 to work around eigendecomposition failures
 # This forces CPU eigendecomposition for matrix operations in rank-restoring
+enable_cuda1_workarounds: False  # Set to False when using cuda:0 or other GPUs
 enable_cuda1_workarounds: False  # Set to False when using cuda:0 or other GPUs
 
 epochs: 50 #epoch per task switch
@@ -58,6 +59,7 @@ task_shift_param:
     sinusoidal:
       amplitude: 0.5 # default 0.5 The magnitude of the sine wave oscillation.
       frequency: 0.05 # default 0.1 The frequency of the sine wave (lower is slower).
+      frequency: 0.05 # default 0.1 The frequency of the sine wave (lower is slower).
 
 
 #track rank drop:
@@ -69,7 +71,7 @@ rank_drop_mode: "ratio" # "ratio" or "difference"
 track_rank: True  # Re-enabled with improved error handling
 track_rank_batch: "use_specified" # "last" or "use_specified" or "all"
 specified_batch_size: 1000 # for "specified"
-rank_measure_freq_to_epoch: 1  #should agree with, or a multiple of evaluation.eval_freq_epoch
+rank_measure_freq_to_epoch: 10  #should agree with, or a multiple of evaluation.eval_freq_epoch
 use_pytorch_entropy_for_effective_rank: True # if False, will use numpy for effective rank
 prop_for_approx_or_l1_rank: 0.99 # for approximate rank, or 1 for l1 rank
 numerical_rank_epsilon: 0.01 # for numerical rank, or 0 for l1 rank

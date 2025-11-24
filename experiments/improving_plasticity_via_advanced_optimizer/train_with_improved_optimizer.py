@@ -22,6 +22,12 @@ sys.path.append(str(PROJECT_ROOT))
 from configs.configurations import ExperimentConfig
 import json
 import os
+
+# Force CPU eigendecomposition to avoid CUDA errors on cuda:1
+os.environ['SIGMA_FORCE_CPU_EIGH'] = '1'
+os.environ['LLA_PREFER_GPU_EIGH'] = '0'
+print("⚠️  Forcing CPU eigendecomposition workarounds for cuda:1 stability")
+
 import random
 # import pickle
 # import argparse
