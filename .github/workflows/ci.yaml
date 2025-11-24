@@ -22,10 +22,8 @@ jobs:
         with:
           environment-file: environment_ci.yml
           activate-environment: loss_landscape_ci
-          python-version: 3.9
-          auto-activate-base: false
-          miniconda-version: "latest"
-          conda-remove-defaults: true
+          miniforge-variant: Miniforge3
+          miniforge-version: latest
           use-mamba: true
 
       - name: Verify Environment
