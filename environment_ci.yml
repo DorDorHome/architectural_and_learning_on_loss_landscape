@@ -1,0 +1,36 @@
+name: loss_landscape_ci
+channels:
+  - conda-forge
+dependencies:
+  - python=3.9
+  - numpy
+  - scipy
+  - pandas
+  - matplotlib
+  - pillow
+  - tqdm
+  - psutil
+  
+  # RL & Physics
+  - swig
+  - box2d-py
+  - gymnasium
+  - stable-baselines3
+  - shimmy
+  - pygame
+  
+  # ML Framework
+  - pytorch
+  - torchvision
+  
+  # Config & Logging
+  - hydra-core
+  - omegaconf
+  - pyyaml
+  - wandb
+  - tensorboard
+  - opencv
+  - rich
+  
+  # Testing
+  - pytest

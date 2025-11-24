@@ -20,8 +20,8 @@ jobs:
       - name: Set up Conda Environment
         uses: conda-incubator/setup-miniconda@v3
         with:
-          environment-file: requirement_basic.yml
-          activate-environment: loss_landscape_basic
+          environment-file: environment_ci.yml
+          activate-environment: loss_landscape_ci
           python-version: 3.9
           auto-activate-base: false
           miniforge-variant: Mambaforge
