@@ -3,6 +3,14 @@
 Creates several ConvNet variants with missing dimensions and ensures
 that a forward pass works. Prints inferred dimensions.
 """
+import sys
+from pathlib import Path
+import os
+
+# Add project root to sys.path
+project_root = Path(__file__).resolve().parent.parent.parent
+sys.path.insert(0, str(project_root))
+
 from configs.configurations import NetConfig, NetParams
 from src.models.model_factory import model_factory
 import torch

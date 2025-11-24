@@ -18,6 +18,14 @@ from src.algos.supervised.supervised_factory import create_learner
 
 def test_rr_cbp_integration():
     """Test RR-CBP integration with the training pipeline."""
+import sys
+from pathlib import Path
+import os
+
+# Add project root to sys.path
+project_root = Path(__file__).resolve().parent.parent.parent
+sys.path.insert(0, str(project_root))
+
     
     # Create minimal config for testing
     cfg_dict = {
