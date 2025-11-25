@@ -20,8 +20,19 @@ from src.data_loading.transform_factory import transform_factory
 from src.algos.supervised.supervised_factory import create_learner
 
 
+def get_data_path():
+    """Resolve the data path, preferring local existing directories."""
+    potential_paths = ['/home/sfchan/dataset', '/hdda/datasets']
+    for path in potential_paths:
+        if os.path.exists(path):
+            return path
+    return './data'
+
+
 def test_rr_cbp_integration():
     """Test RR-CBP integration with the training pipeline."""
+    
+    data_path = get_data_path()
     
     # Create minimal config for testing
     cfg_dict = {
@@ -38,7 +49,7 @@ def test_rr_cbp_integration():
         'data': {
             'dataset': 'MNIST',
             'use_torchvision': True,
-            'data_path': './data',
+            'data_path': data_path,
             'num_classes': 10
         },
         'net': {

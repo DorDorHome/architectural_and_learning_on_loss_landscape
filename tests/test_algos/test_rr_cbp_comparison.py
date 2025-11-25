@@ -26,6 +26,16 @@ from configs.configurations import RRContinuousBackpropConfig, LinearNetParams, 
 from src.models.deep_ffnn import DeepFFNN
 from src.algos.supervised.rr_cbp_fc import RankRestoringCBP_for_FC
 
+
+def get_data_path():
+    """Resolve the data path, preferring local existing directories."""
+    potential_paths = ['/home/sfchan/dataset', '/hdda/datasets']
+    for path in potential_paths:
+        if os.path.exists(path):
+            return path
+    return './data'
+
+
 def test_comparison():
     """Compare RR-CBP with bias transfer vs baseline SGD training."""
     
@@ -39,7 +49,9 @@ def test_comparison():
     ])
     
     # Small subset for quick test
-    dataset = datasets.MNIST('./data', train=True, download=False, transform=transform)
+    data_path = get_data_path()
+    # download=True ensures it downloads if missing (CI), but skips if present (local)
+    dataset = datasets.MNIST(data_path, train=True, download=True, transform=transform)
     subset_indices = torch.randperm(len(dataset))[:500]  # Just 500 samples
     subset = torch.utils.data.Subset(dataset, subset_indices)
     dataloader = DataLoader(subset, batch_size=32, shuffle=True)
