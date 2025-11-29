@@ -41,7 +41,7 @@ Rank-Restoring Continual Backpropagation (RR-CBP) keeps the Continual Backprop (
 5. **Metrics logging.** Every `log_rank_metrics_every` replacement cycles, record diagnostics such as sigma-aware rank, minimum eigenvalues, activation fraction, energy ratios, and success statistics.
 
 ## Bias and Activation Statistics
-- `chi0_for_activation` supplies a default `chi0` constant based on the activation family (ReLU → 0.5, LeakyReLU accounts for negative slope, sigmoid/tanh → 1.0, etc.).
+- `chi0_for_activation` supplies a default `chi0` constant based on the activation family (ReLU -> 0.5, LeakyReLU accounts for negative slope, sigmoid/tanh -> 1.0, etc.).
 - `estimate_chi0_from_batch=True` replaces the constant with the clamped mean squared activation for the current batch.
 - `chi0_override` forces a manual value for experimentation.
 

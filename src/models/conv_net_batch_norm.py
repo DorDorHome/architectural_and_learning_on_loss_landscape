@@ -57,6 +57,9 @@ class ConvNetWithBatchNorm(nn.Module):
             'fc1_output(with bn)',
             'fc2_output(with bn)'
         ]
+        
+        
+        
 
     def predict(self, x: torch.Tensor, return_feature_container=False):
         """
