@@ -128,6 +128,63 @@ class RRContinuousBackpropConfig(ContinuousBackpropConfig):
     class Config:
         version_base = "1.1"
 
+
+@dataclass
+class RRCBP2Config(ContinuousBackpropConfig):
+    """Configuration for RR-CBP2 and RR-CBP-E2 algorithms (version 2 implementation)."""
+    type: str = 'rr_cbp2'
+    
+    # Core RR-CBP2 settings
+    rrcbp_enabled: bool = True
+    
+    # Covariance EMA settings
+    sigma_ema_beta: float = 0.99
+    sigma_ridge: float = 1e-4
+    
+    # Projection settings
+    max_proj_trials: int = 4
+    proj_eps: float = 1e-8
+    projector_reg_epsilon: float = 1e-6
+    
+    # Bias centering: 'mean' or 'median'
+    center_bias: str = 'mean'
+    
+    # Σ-geometry settings
+    diag_sigma_only: bool = False
+    sigma_eig_floor: float = 1e-6
+    covariance_dtype: Optional[str] = None
+    
+    # Orthonormalization within replacement batch
+    orthonormalize_batch: bool = True
+    
+    # Logging
+    log_rank_metrics_every: int = 0
+    
+    # ===== RR-CBP-E2 (Energy-Aware) Settings =====
+    # Set use_energy_budget=True to enable energy-aware mode (rr_cbp_e_2)
+    use_energy_budget: bool = False
+    
+    # Energy budget parameters (Section 6 of algorithm guide)
+    tau: float = 1e-2
+    use_lambda_star: bool = False
+    lambda_star: Optional[float] = None
+    
+    # Chi-squared constant estimation
+    chi0_override: Optional[float] = None
+    estimate_chi0_from_batch: bool = False
+    
+    # Micro-seeding outgoing weights
+    use_micro_seed: bool = False
+    epsilon_micro_seed: float = 1e-4
+    
+    # Saturated regime handling
+    improve_conditioning_if_saturated: bool = True
+    nullspace_seed_epsilon: float = 0.0
+    
+    class Config:
+        version_base = "1.1"
+
+
 @dataclass
 class BackpropConfig(BaseLearnerConfig):
     type: str = 'backprop'

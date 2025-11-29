@@ -118,7 +118,7 @@ net:
 
 # learning algorithm:
 learner:
-  type: 'rr_cbp' # 'rr_cbp' #options: 'backprop' 'basic_continous_backprop', 'rr_cbp'
+  type: 'rr_cbp_e_2' # 'rr_cbp_e_2'  ' rr_cbp2' 'rr_cbp' #options: 'backprop' 'basic_continous_backprop', 'rr_cbp'
   network_class: ${net.network_class}  # Use the network class from the net configuration
   init: 'kaiming'
   device: ${device}
