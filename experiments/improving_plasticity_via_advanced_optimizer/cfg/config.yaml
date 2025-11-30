@@ -4,7 +4,7 @@ run_id: 0
 seed: None
 # debug:
 debug_mode: False  # Disable debug mode for performance
-device: 'cuda:0'  # Options: 'cuda:0', 'cuda:1', 'cpu'. Set via command line: device=cuda:1
+device: 'cuda:1'  # Options: 'cuda:0', 'cuda:1', 'cpu'. Set via command line: device=cuda:1
 
 # GPU workarounds for cuda:1 cuSOLVER issues
 # Enable this when using cuda:1 to work around eigendecomposition failures
@@ -53,7 +53,7 @@ task_shift_param:
       max_drift: 0.5
 
     random_walk:
-      drift_std_dev: 0.05 # Standard deviation of the noise added at each step.
+      drift_std_dev: 0.1 # Standard deviation of the noise added at each step.
 
     sinusoidal:
       amplitude: 0.5 # default 0.5 The magnitude of the sine wave oscillation.
