@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import logging
 import math
+import os
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple
 
@@ -620,10 +621,31 @@ class RR_GnT2_for_ConvNet(ConvGnT_for_ConvNet):
             rank_val = float(torch.linalg.matrix_rank(gram.cpu().double(), tol=self.config.proj_eps).item())
 
         lambda_min = float("nan")
+        
+        # Check if we should use CPU eigendecomposition
+        force_cpu_eigh = os.environ.get('SIGMA_FORCE_CPU_EIGH', '0') == '1'
+        
         try:
-            eigvals = torch.linalg.eigvalsh(gram)
+            if force_cpu_eigh and gram.device.type == 'cuda':
+                # Use CPU path directly
+                gram_cpu = gram.detach().cpu()
+                eigvals = torch.linalg.eigvalsh(gram_cpu)
+                eigvals = eigvals.to(gram.device, dtype=gram.dtype)
+            else:
+                eigvals = torch.linalg.eigvalsh(gram)
         except RuntimeError:
-            eigvals = torch.linalg.eigvalsh(gram.cpu().double()).to(gram.dtype)
+            # Fallback: try CPU with double precision and stronger regularization
+            try:
+                gram_cpu = gram.detach().cpu().double()
+                # Add regularization to improve conditioning
+                reg = 1e-6 * torch.trace(gram_cpu) / max(gram_cpu.size(0), 1)
+                gram_reg = gram_cpu + reg * torch.eye(gram_cpu.size(0), dtype=torch.float64)
+                eigvals = torch.linalg.eigvalsh(gram_reg)
+                eigvals = eigvals.to(gram.device, dtype=gram.dtype)
+            except RuntimeError:
+                # Last resort: return NaN
+                eigvals = torch.tensor([], device=gram.device, dtype=gram.dtype)
+        
         if eigvals.numel() > 0:
             lambda_min = float(torch.clamp_min(eigvals.min(), 0.0).item())
 
