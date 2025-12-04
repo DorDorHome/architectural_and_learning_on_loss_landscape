@@ -240,8 +240,35 @@ class SigmaProjector:
         reg = self.reg_epsilon * trace / max(dim, 1)
         if reg <= 0:
             reg = self.reg_epsilon
-        gram = gram + reg * torch.eye(dim, device=gram.device, dtype=gram.dtype)
-        self._G_inv = torch.linalg.solve(gram, torch.eye(dim, device=gram.device, dtype=gram.dtype))
+        
+        # Check for CPU workaround
+        force_cpu = os.environ.get('SIGMA_FORCE_CPU_EIGH', '0') == '1'
+        
+        if force_cpu and gram.device.type == 'cuda':
+            # Perform inversion on CPU with double precision
+            gram_cpu = gram.detach().cpu().double()
+            reg_val = reg.item() if isinstance(reg, Tensor) else reg
+            gram_reg = gram_cpu + reg_val * torch.eye(dim, dtype=torch.float64)
+            try:
+                inv = torch.linalg.solve(gram_reg, torch.eye(dim, dtype=torch.float64))
+                self._G_inv = inv.to(gram.device, dtype=gram.dtype)
+                return
+            except RuntimeError:
+                # If CPU double precision fails, try increasing regularization
+                reg_val *= 10
+                gram_reg = gram_cpu + reg_val * torch.eye(dim, dtype=torch.float64)
+                inv = torch.linalg.solve(gram_reg, torch.eye(dim, dtype=torch.float64))
+                self._G_inv = inv.to(gram.device, dtype=gram.dtype)
+                return
+
+        gram_reg = gram + reg * torch.eye(dim, device=gram.device, dtype=gram.dtype)
+        try:
+            self._G_inv = torch.linalg.solve(gram_reg, torch.eye(dim, device=gram.device, dtype=gram.dtype))
+        except RuntimeError:
+            # Fallback: increase regularization
+            reg = reg * 10
+            gram_reg = gram + reg * torch.eye(dim, device=gram.device, dtype=gram.dtype)
+            self._G_inv = torch.linalg.solve(gram_reg, torch.eye(dim, device=gram.device, dtype=gram.dtype))
 
     def apply(self, vec: Tensor) -> Tensor:
         if self.basis.numel() == 0:
