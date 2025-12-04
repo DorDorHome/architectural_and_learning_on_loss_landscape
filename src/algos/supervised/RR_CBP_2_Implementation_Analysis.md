@@ -15,7 +15,7 @@ This document provides a comprehensive mapping between the mathematical algorith
    - [3.1 Training Loop and Per-Step Updates](#31-training-loop-and-per-step-updates)
    - [3.2 Utility Computation and Maturity Testing](#32-utility-computation-and-maturity-testing)
    - [3.3 Covariance Tracking](#33-covariance-tracking)
-   - [3.4 $\Sigma$-Geometry Operations](#34-σ-geometry-operations)
+   - [3.4 Σ-Geometry Operations](#34-σ-geometry-operations)
    - [3.5 Direction Sampling (RR-CBP2)](#35-direction-sampling-rr-cbp2)
    - [3.6 Energy Budget Allocation (RR-CBP-E2)](#36-energy-budget-allocation-rr-cbp-e2)
    - [3.7 Bias Transfer and Outgoing Weight Reset](#37-bias-transfer-and-outgoing-weight-reset)
@@ -74,7 +74,7 @@ The incoming weight vector w for a new neuron is chosen to be **orthogonal to al
 **Key Extensions (Section 6):**
 
 1. **Per-unit target variance:**
-   $q_{\text{tar}} = v_{\text{tar}} / \chi_0(\phi) = (\text{tr}(\Sigma) / d) / \chi_0(\phi)$
+   $q_{\text{tar}} = v_{\text{tar}} / \chi_0(\phi)$ = $(\text{tr}(\Sigma) / d) / \chi_0(\phi)$
 
 2. **Layer energy budget:**
    $Q_{\text{tar}} = N \cdot q_{\text{tar}}$
@@ -177,7 +177,7 @@ def learn(self, x: torch.Tensor, target: torch.Tensor):
     loss.backward()
     self.opt.step()
     
-    # Generate-and-test with Σ-orthogonal replacement
+    # Generate-and-test with $\Sigma$-orthogonal replacement
     if self.rr_gnt.config.rrcbp_enabled:
         self.opt.zero_grad()
         self.rr_gnt.gen_and_test(features=self.previous_features, batch_input=x)
@@ -189,14 +189,14 @@ def learn(self, x: torch.Tensor, target: torch.Tensor):
 
 **Algorithm (Section 4.1-4.2):**
 ```pseudo
-for i = 1 to $N_\ell$ do
-  $a_{ℓ,i} \leftarrow a_{ℓ,i} + 1$  # Increment age
-  $f_{ℓ,i} \leftarrow \eta f_{ℓ,i} + (1-\eta) h_{ℓ,i,t}$  # Update activation EMA
-  $u_{ℓ,i} \leftarrow \eta u_{ℓ,i} + (1-\eta) y_{ℓ,i}$  # Update utility EMA
+for i = 1 to N_ℓ do
+  a_{ℓ,i} ← a_{ℓ,i} + 1                    # Increment age
+  f_{ℓ,i} ← η f_{ℓ,i} + (1-η) h_{ℓ,i,t}   # Update activation EMA
+  u_{ℓ,i} ← η u_{ℓ,i} + (1-η) y_{ℓ,i}     # Update utility EMA
 end for
 
-$\mathcal{E}_\ell \leftarrow { i | a_{ℓ,i} \geq M }$  # Mature set
-$S_\ell \leftarrow \text{indices of} r_\ell \text{smallest} u_hat_{ℓ,i}$  # Replacement set
+E_ℓ ← { i | a_{ℓ,i} ≥ M }                  # Mature set
+S_ℓ ← indices of r_ℓ smallest u_hat_{ℓ,i}  # Replacement set
 ```
 
 **Implementation:**
@@ -209,7 +209,7 @@ These steps are inherited from the base classes `GnT_for_FC` and `ConvGnT_for_Co
 | Activation EMA | `GnT_for_FC` | `update_utility()` → `self.mean_feature_act[layer_idx] += (1-η) * features.mean(dim=0)` |
 | Utility EMA | `GnT_for_FC` | `update_utility()` → `self.util[layer_idx] += (1-η) * new_util` |
 | Maturity check | `GnT_for_FC` | `test_features()` → `self.ages[i] >= self.maturity_threshold` |
-| Select lowest utility | `GnT_for_FC` | `test_features()` → `topk(\text{smallest}=True)` on bias-corrected utility |
+| Select lowest utility | `GnT_for_FC` | `test_features()` → `topk(smallest=True)` on bias-corrected utility |
 
 **Key code from `gnt.py` (base class):**
 ```python
@@ -234,7 +234,7 @@ def update_utility(self, layer_idx=0, features=None):
 
 **Algorithm (Section 2.1):**
 
-    $$\Sigma := \frac{1}{m} H H^T$$
+    $\Sigma := (1/m) H H^T$
 
 with EMA update.
 
@@ -263,7 +263,7 @@ def update(self, h: Tensor, dtype: Optional[str] = None) -> Tensor:
         return ema + self.ridge * eye
 ```
 
-**Code from `rr_gnt2_fc.py` showing where $H_{\text{prev}}$ is computed:**
+**Code from `rr_gnt2_fc.py` showing where H_prev is computed:**
 ```python
 def _compute_layer_inputs(self, layer_idx, features, batch_input, layer):
     """Compute H_prev (d × m matrix) for the layer."""
@@ -282,8 +282,8 @@ def _compute_layer_inputs(self, layer_idx, features, batch_input, layer):
 
 **Algorithm (Section 2.2):**
 
-    $\langle u, v \rangle_\Sigma$ = $u^T \Sigma v$
-    $|u|_\Sigma$ = $\sqrt{$u^T \Sigma u$}$
+    $\langle u, v \rangle_\Sigma = u^T \Sigma v$
+    $|u|_\Sigma = \sqrt{u^T \Sigma u}$
 
 **Algorithm (Section 2.4 - $\Sigma$-orthogonal projector):**
 
@@ -294,13 +294,13 @@ def _compute_layer_inputs(self, layer_idx, features, batch_input, layer):
 | Operation | Class | Method | Algorithm Equation |
 |-----------|-------|--------|-------------------|
 | $\Sigma$-inner product | `SigmaGeometry` | `inner(u, v)` | Eq. (2.2) |
-| $\Sigma$-norm | `SigmaGeometry` | `norm(vec)` | \$|u\|_\Sigma$ |
-| Vector energy | `SigmaGeometry` | `vector_energy(vec)` | \$|u\|^2_\Sigma$ |
+| $\Sigma$-norm | `SigmaGeometry` | `norm(vec)` | $\lvert u \rvert_\Sigma$ |
+| Vector energy | `SigmaGeometry` | `vector_energy(vec)` | $\lvert u \rvert^2_\Sigma$ |
 | Matrix energy | `SigmaGeometry` | `matrix_energy(W)` | $Q(W;\Sigma) = \text{tr}(W \Sigma W^T)$ |
 | Whitening | `SigmaGeometry` | `whiten_columns(V)` | $\tilde{V} = \Sigma^{1/2} V$ |
 | Unwhitening | `SigmaGeometry` | `unwhiten_vector(v)` | $\Sigma^{-1/2} v$ |
 | Build projector | `SigmaProjector` | `__init__()` | Eq. (2.1) |
-| Project to complement | `SigmaProjector` | `project_complement(u)` | (I - P_$\Sigma$) u |
+| Project to complement | `SigmaProjector` | `project_complement(u)` | $(I - P_\Sigma) u$ |
 | Least-covered direction | `SigmaProjector` | `least_covered_direction()` | Section 5.2 |
 
 **Code from `sigma_geometry.py`:**
@@ -338,7 +338,7 @@ class SigmaProjector:
 ```pseudo
 # (2) Draw direction and project into $\Sigma$-orthogonal complement
 $u      \leftarrow GaussianSample(d_\ell)$
-$\hat{w}  \leftarrow (I - P_\Sigma) u$
+w_hat  ← $(I - P_\Sigma) u$
 
 if ||$\hat{w}$||_$\Sigma$ > 0 then
   $w_{\text{dir}} \leftarrow \hat{w} / ||\hat{w}||_\Sigma$
@@ -369,12 +369,12 @@ def _sample_sigma_direction(self, projector, geometry, dtype):
         # Draw u ~ N(0, I)
         u = torch.randn(geometry.dim, device=geometry.sigma.device, dtype=dtype)
         
-        # Project into Σ-orthogonal complement: (I - P_Σ) u
+        # Project into Σ-orthogonal complement: $(I - P_\Sigma) u$
         residual = projector.project_complement(u)
         norm = geometry.norm(residual)
         
         if norm > self.config.proj_eps:
-            # Normalize to unit Σ-norm
+            # Normalize to unit $\Sigma$-norm
             return residual / norm, False
     
     # Fallback: least-covered direction (Section 5.2)
@@ -424,12 +424,12 @@ $Q_{\text{tar}} \leftarrow N_\ell * q_{\text{tar}}$
 $Q_{\text{res}} \leftarrow \max(Q_{\text{tar}} - Q_{\text{used}}, 0)$
 
 if $Q_{\text{res}}$ > 0 then
-  $q_{\text{alloc}} \leftarrow \min(q_{\text{tar}}, Q_{\text{res}} / r_\ell)$  # Underbudget
+  $q_{\text{alloc}} \leftarrow \min(q_{\text{tar}}, Q_{\text{res}} / r_\ell)$           # Underbudget
 else
   $\lambda_min_\Sigma \leftarrow \text{smallest}_eigenvalue(\Sigma_\ell)$
-  $q_{\min} \leftarrow \tau * \lambda_min_\Sigma$  # Rank-restoring floor
-  $\lambda_* \leftarrow conditioning target (optional)$
-  $q_{\text{alloc}} \leftarrow \min(q_{\text{tar}}, \max(q_{\min}, \lambda_*))$  # Overbudget
+  $q_{\min} \leftarrow \tau * \lambda_min_\Sigma$                          # Rank-restoring floor
+  $\lambda_* \leftarrow conditioning target (optional)
+  $q_{\text{alloc}} \leftarrow \min(q_{\text{tar}}, \max(q_{\min}, \lambda_*))$     # Overbudget
 end if
 
 # (3) Scale direction
@@ -440,7 +440,7 @@ $w_{\text{dir}} \leftarrow w_{\text{dir}} * sqrt(q_{\text{alloc}}) / ||w_{\text{
 
 | Step | Class | Method | Algorithm Reference |
 |------|-------|--------|---------------------|
-| Compute $\chi_0$($\phi$) | `chi0_for_activation()` | function | Section 6.1 |
+| Compute $\chi_0(\phi)$ | `chi0_for_activation()` | function | Section 6.1 |
 | Compute $q_{\text{tar}}$ | `RR_GnT2_for_FC._replace_units()` | inline | Eq. in Section 6.1 |
 | Compute $Q_{\text{used}}$ | `SigmaGeometry` | `vector_energy()` | Section 6.2 |
 | Allocate q | `EnergyAllocator` | `allocate()` | Section 6.2-6.3 |
@@ -455,10 +455,10 @@ if config.use_energy_budget:
     # v_tar = (1/d) tr(Σ)
     v_target = geometry.trace / \max(geometry.dim, 1)
     
-    # q_tar = v_tar / χ₀(φ)
+    # $q_{\text{tar}} = v_{\text{tar}} / \chi_0(\phi)$
     q_target = v_target / \max(chi0, config.proj_eps)
     
-    # Q_used = Σ_{i ∈ K} ||w_i||²_Σ
+    # Q_used = $\Sigma_{i \in K}$ ||w_i||²_Σ
     used_energy = 0.0
     for col in range(kept_vectors.size(1)):
         used_energy += geometry.vector_energy(kept_vectors[:, col])
@@ -581,7 +581,7 @@ The implementation follows a clean separation:
    - *Philosophy:* The GnT class encapsulates all $\Sigma$-geometry logic, separate from training.
 
 3. **Helper Layer** (`sigma_geometry.py`, `rr_covariance.py`):
-   - Provides mathematical primitives ($\Sigma$-inner product, projection, etc.)
+   - Provides mathematical primitives (Σ-inner product, projection, etc.)
    - Stateless except for EMA tracking
    - *Philosophy:* Mathematical operations should be reusable and testable in isolation.
 
@@ -607,7 +607,7 @@ if config.use_energy_budget and allocator is not None:
     q_alloc, saturated = allocator.allocate()
     w_scaled = self._scale_to_energy(direction, geometry, q_alloc)
 else:
-    w_scaled = direction  # Already unit Σ-norm
+    w_scaled = direction  # Already unit $\Sigma$-norm
 ```
 
 ### 4.4 Incremental Projector Updates
@@ -642,7 +642,7 @@ The `RRCBP2Config` class contains all hyperparameters. Key ones grouped by purpo
 | `sigma_ridge` | 0.0001 | Ridge regularization for $\Sigma$ |
 | `diag_sigma_only` | False | Use diagonal approximation |
 
-### $\Sigma$-Geometry
+### Σ-Geometry
 | Parameter | Default | Purpose |
 |-----------|---------|---------|
 | `max_proj_trials` | 4 | Attempts before fallback to least-covered |
@@ -672,7 +672,7 @@ The `RRCBP2Config` class contains all hyperparameters. Key ones grouped by purpo
 
 The RR-CBP2 implementation cleanly separates:
 1. **What to replace** (CBP utility logic in base classes)
-2. **How to replace** ($\Sigma$-orthogonal initialization in RR_GnT2_*)
+2. **How to replace** (Σ-orthogonal initialization in RR_GnT2_*)
 3. **How much energy** (EnergyAllocator for RR-CBP-E2)
 
 The algorithm guide's pseudocode maps directly to methods:
