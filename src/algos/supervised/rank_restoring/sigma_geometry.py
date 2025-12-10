@@ -196,9 +196,9 @@ class SigmaGeometry:
         force_cpu_eigh = os.environ.get('SIGMA_FORCE_CPU_EIGH', '0') == '1'
         
         if force_cpu_eigh and gram.device.type == 'cuda':
-            # Use CPU path directly
+            # Use CPU path with double precision for numerical stability
             gram_cpu = gram.detach().cpu()
-            eigvals = torch.linalg.eigvalsh(gram_cpu)
+            eigvals = torch.linalg.eigvalsh(gram_cpu.double()).to(gram_cpu.dtype)
             eigvals = eigvals.to(gram.device, dtype=gram.dtype)
         else:
             try:
