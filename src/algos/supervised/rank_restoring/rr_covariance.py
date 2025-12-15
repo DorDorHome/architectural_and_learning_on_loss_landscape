@@ -34,11 +34,13 @@ class CovarianceState:
             else:
                 cov = h @ h.t() / float(batch)
             ema.mul_(self.beta).add_(cov, alpha=1 - self.beta)
+            self.ema.copy_(ema)
             if self.diag_only:
-                return ema + self.ridge
+                result = ema + self.ridge
             else:
                 eye = torch.eye(ema.size(0), device=device, dtype=ema.dtype)
-                return ema + self.ridge * eye
+                result = ema + self.ridge * eye
+            return result.detach().clone()
 
 
 def initialize_covariance(d_dim: int, device: torch.device, beta: float, ridge: float, diag_only: bool,

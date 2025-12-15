@@ -191,15 +191,27 @@ class SigmaGeometry:
         else:
             whitened = weight @ self._sqrt.t()
         gram = whitened @ whitened.t()
-        
-        # Check if we should use CPU eigendecomposition
+        gram = 0.5 * (gram + gram.t())
+        n = gram.size(0)
+        device = gram.device
+        dtype = gram.dtype
+        with torch.no_grad():
+            trace = torch.trace(gram)
+            base_reg = max(self.eps * 100.0, trace / n * 1e-6)
+            gram = gram + base_reg * torch.eye(n, device=device, dtype=dtype)
         force_cpu_eigh = os.environ.get('SIGMA_FORCE_CPU_EIGH', '0') == '1'
         
         if force_cpu_eigh and gram.device.type == 'cuda':
-            # Use CPU path with double precision for numerical stability
-            gram_cpu = gram.detach().cpu()
-            eigvals = torch.linalg.eigvalsh(gram_cpu.double()).to(gram_cpu.dtype)
-            eigvals = eigvals.to(gram.device, dtype=gram.dtype)
+            gram_cpu = gram.detach().cpu().double()
+            try:
+                eigvals = torch.linalg.eigvalsh(gram_cpu)
+                eigvals = eigvals.to(device=gram.device, dtype=gram.dtype)
+            except RuntimeError:
+                import warnings
+                warnings.warn("Eigendecomposition failed, adding stronger regularization")
+                gram_cpu = gram_cpu + (base_reg * 100.0) * torch.eye(n, dtype=torch.float64)
+                eigvals = torch.linalg.eigvalsh(gram_cpu)
+                eigvals = eigvals.to(device=gram.device, dtype=gram.dtype)
         else:
             try:
                 eigvals = torch.linalg.eigvalsh(gram)

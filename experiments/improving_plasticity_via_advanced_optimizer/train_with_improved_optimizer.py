@@ -240,6 +240,15 @@ def main(cfg: ExperimentConfig) -> Any:
             print(f"\n{'='*50}")
             print(f"Starting task {task_idx+1}/{cfg.num_tasks}")
             print(f"{'='*50}")
+            
+            if task_idx > 0 and task_idx % 10 == 0:
+                print(f"[Memory cleanup] Task {task_idx}: Forcing covariance state detachment...")
+                if hasattr(learner, 'covariance_states'):
+                    for cov_state in learner.covariance_states.values():
+                        if hasattr(cov_state, 'ema'):
+                            cov_state.ema = cov_state.ema.detach().clone()
+                torch.cuda.empty_cache()
+                print(f"[Memory cleanup] Completed")
 
             # --- Dataset Handling for each task ---
             if is_stateful:
