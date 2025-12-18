@@ -4,7 +4,7 @@ run_id: 0
 seed: None
 # debug:
 debug_mode: False  # Disable debug mode for performance
-device: 'cuda:1'
+device: 'cuda:0'
 epochs: 50 #epoch per task switch
 batch_size: 8192
 num_tasks: 500 # number of tasks to train on. Each task will be trained on num_classes_per_task

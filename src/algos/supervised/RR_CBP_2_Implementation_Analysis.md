@@ -57,7 +57,7 @@ for each step:
 **Key Difference from CBP:**
 The incoming weight vector w for a new neuron is chosen to be **orthogonal to all kept neurons in the $\Sigma$-geometry**:
 
-    $\langle w, v_j \rangle_\Sigma = w^T \Sigma v_j = 0$   for all j $\in$ K (kept set)
+$\langle w, v_j \rangle_\Sigma = w^T \Sigma v_j = 0$   for all j $\in$ K (kept set)
 
 **Direction Sampling (Section 5.1):**
 1. Draw $u \sim \mathcal{N}(0, I_d)$
@@ -74,11 +74,11 @@ The incoming weight vector w for a new neuron is chosen to be **orthogonal to al
 **Key Extensions (Section 6):**
 
 1. **Per-unit target variance:**
-   $q_{\text{tar}} = v_{\text{tar}} / \chi_0(\phi)$ = $(\text{tr}(\Sigma) / d) / \chi_0(\phi)$
+$q_{\text{tar}} = v_{\text{tar}} / \chi_0(\phi)$ = $(\text{tr}(\Sigma) / d) / \chi_0(\phi)$
 
 2. **Layer energy budget:**
-   $Q_{\text{tar}} = N \cdot q_{\text{tar}}$
-   $Q_{\text{res}} = \max(Q_{\text{tar}} - Q_{\text{used}}, 0)$
+$Q_{\text{tar}} = N \cdot q_{\text{tar}}$
+$Q_{\text{res}} = \max(Q_{\text{tar}} - Q_{\text{used}}, 0)$
 
 3. **Allocation per new unit:**
    - **Underbudget:** $q_{\text{alloc}} = \min(q_{\text{tar}}, Q_{\text{res}} / r)$
@@ -86,7 +86,7 @@ The incoming weight vector w for a new neuron is chosen to be **orthogonal to al
      - where $q_{\min} = \tau \cdot \lambda_{\min}(\Sigma)$ is the rank-restoring floor
 
 4. **Scaling step:**
-   $w \leftarrow w \cdot \sqrt{q_{\text{alloc}}} / |w|_\Sigma$
+$w \leftarrow w \cdot \sqrt{q_{\text{alloc}}} / |w|_\Sigma$
 
 ---
 
@@ -234,7 +234,7 @@ def update_utility(self, layer_idx=0, features=None):
 
 **Algorithm (Section 2.1):**
 
-    $\Sigma := (1/m) H H^T$
+$\Sigma := (1/m) H H^T$
 
 with EMA update.
 
@@ -282,12 +282,12 @@ def _compute_layer_inputs(self, layer_idx, features, batch_input, layer):
 
 **Algorithm (Section 2.2):**
 
-    $\langle u, v \rangle_\Sigma = u^T \Sigma v$
-    $|u|_\Sigma = \sqrt{u^T \Sigma u}$
+$\langle u, v \rangle_\Sigma = u^T \Sigma v$
+$|u|_\Sigma = \sqrt{u^T \Sigma u}$
 
 **Algorithm (Section 2.4 - $\Sigma$-orthogonal projector):**
 
-    $P_\Sigma = V (V^T \Sigma V)^{-1} V^T \Sigma$
+$P_\Sigma = V (V^T \Sigma V)^{-1} V^T \Sigma$
 
 **Implementation:**
 

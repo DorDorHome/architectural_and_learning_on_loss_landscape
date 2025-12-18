@@ -9,6 +9,7 @@ device: 'cuda:0'  # Options: 'cuda:0', 'cuda:1', 'cpu'. Set via command line: de
 # GPU workarounds for cuda:1 cuSOLVER issues
 # Enable this when using cuda:1 to work around eigendecomposition failures
 # This forces CPU eigendecomposition for matrix operations in rank-restoring
+enable_cuda1_workarounds: true  # Set to False when using cuda:0 or other GPUs
 enable_cuda1_workarounds: False  # Set to False when using cuda:0 or other GPUs
 
 epochs: 50 #epoch per task switch
@@ -89,7 +90,7 @@ layers_identifier: None
 data:
   dataset: 'MNIST'
   use_torchvision: True
-  data_path: '/home/sfchan/dataset' # '/home/sfchan/dataset'  #'/hdda/datasets' 
+  data_path: '/hdda/datasets' # '/home/sfchan/dataset'  #'/hdda/datasets' 
   num_classes: 10
 
 # network architecture:
@@ -118,6 +119,7 @@ net:
 
 # learning algorithm:
 learner:
+  type: 'rr_cbp2'   # 'rr_cbp_e_2'  'rr_cbp2' 'rr_cbp' #options: 'backprop' 'basic_continous_backprop', 'rr_cbp'
   type: 'rr_cbp2'  # 'rr_cbp_e_2'  'rr_cbp2' 'rr_cbp' #options: 'backprop' 'basic_continous_backprop', 'rr_cbp'
   network_class: ${net.network_class}  # Use the network class from the net configuration
   init: 'kaiming'
@@ -140,6 +142,7 @@ learner:
 # for rr_cbp specific params:
   diag_sigma_only: false
   sigma_ema_beta: 0.95 #original: 0.0
+  sigma_ridge: 5e-2
   sigma_ridge: 5e-2
   max_proj_trials: 4
   proj_eps: 1e-6
