@@ -6,7 +6,7 @@ The project uses factories and Hydra configs to keep experiments small and reusa
 
 - Configs (`configs/configurations.py`): dataclasses for `ExperimentConfig`, `DataConfig`, `NetConfig`, `BackpropConfig`, etc.
 - Models (`src/models/` + `model_factory.py`): implemented PyTorch modules selected by `cfg.net.type`
-- Learners (`src/algos/supervised/` + `supervised_factory.py`): optimization/training strategies with a simple `learn()` contract
+- Learners (`src/algos/supervised/` + `supervised_factory.py`): optimization/training strategies with a simple `learn()` contract. Note: Some older experiment scripts may bypass the central `supervised_factory` and use local logic to instantiate learners.
 - Data (`src/data_loading/`): dataset creation and transform selection; wrappers for dataset shifts
 - Utils (`src/utils/`): rank and diagnostics utilities invoked by experiments
 

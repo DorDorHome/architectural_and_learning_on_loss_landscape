@@ -1,6 +1,11 @@
 # Experiments: structure and templates
 
-Each experiment is a self-contained folder under `experiments/<experiment_name>/` with:
+This document describes the standard structure for typical supervised learning experiments.
+Each experiment is a self-contained folder under `experiments/<experiment_name>/`.
+
+Specialized experiments (e.g., for Hessian analysis or Reinforcement Learning) may have a different structure and entry points. For those, please refer to the `README.md` file inside the specific experiment's folder.
+
+A standard experiment contains:
 - `train.py` (or similar entrypoint) annotated with `@hydra.main(config_path="cfg", config_name="config")`
 - `cfg/config.yaml` providing an `ExperimentConfig`-shaped config (with nested `data`, `net`, `learner`, `evaluation`, etc.)
 
@@ -11,7 +16,7 @@ Minimal contract:
 - Build dataset(s): `train_set, test_set = dataset_factory(cfg.data, transform, with_testset=cfg.evaluation.use_testset)`
 - Optionally wrap: `create_stateful_dataset_wrapper`/`create_stateless_dataset_wrapper`
 - Build model: `net = model_factory(cfg.net)` and move to `cfg.net.device`
-- Build learner: `learner = create_learner(cfg.learner, net, cfg.net)`
+- Build learner: `learner = create_learner(cfg.learner, net, cfg.net)` (Note: some older scripts like `basic_training/single_run.py` may use local logic instead of the factory).
 - Dataloaders should use `cfg.batch_size` and `cfg.num_workers` (support "auto")
 - Respect `cfg.runs` and `cfg.run_id` or document single-run behavior
 
