@@ -67,6 +67,11 @@ class Learner(ABC):
                                    lr=step_size,
                                    betas=(beta_1, beta_2),
                                    weight_decay=weight_decay)
+        elif opt == 'adamw':
+            optimizer = optim.AdamW(self.net.parameters(),
+                                   lr=step_size,
+                                   betas=(beta_1, beta_2),
+                                   weight_decay=weight_decay)
         
         else:
             raise ValueError(f'Optimizer {opt} not implemented')
