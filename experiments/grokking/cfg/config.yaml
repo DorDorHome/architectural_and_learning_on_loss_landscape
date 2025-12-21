@@ -14,7 +14,7 @@ num_workers: 2
 data:
   dataset: "modular_arithmetic"
   use_torchvision: false
-  data_path: "data/" # This will be created
+  data_path: '/hdda/datasets' # '/home/sfchan/dataset'  #'/hdda/datasets' 
   num_classes: 113
 
 net:
