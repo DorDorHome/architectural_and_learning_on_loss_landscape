@@ -13,6 +13,7 @@ num_workers: 2
 
 data:
   dataset: "modular_arithmetic"
+  use_torchvision: false
   data_path: "data/" # This will be created
   num_classes: 113
 
