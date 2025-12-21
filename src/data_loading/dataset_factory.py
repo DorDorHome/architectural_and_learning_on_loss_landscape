@@ -174,6 +174,12 @@ def dataset_factory(config: DataConfig, transform, with_testset= False) -> Any:
         #     trainset = torchvision.datasets.ImageNet(root=dataset_path, train=True, download=True, transform=transform)
             
 
+    elif dataset_name_for_logic == 'modular_arithmetic':
+        from src.data_loading.grokking_datasets import ModularArithmeticDataset
+        trainset = ModularArithmeticDataset(train=True, seed=config.seed if hasattr(config, 'seed') else 42)
+        if with_testset:
+            testset = ModularArithmeticDataset(train=False, seed=config.seed if hasattr(config, 'seed') else 42)
+
     # custom data formats can be used:
     elif not config.use_torchvision:
         if dataset_name_for_logic == 'imagenet_for_plasticity':

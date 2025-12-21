@@ -12,7 +12,8 @@ sys.path.append(str(PROJECT_ROOT))
 from src.models.conv_net import ConvNet
 import warnings
 
-from configs.configurations import NetConfig, NetParams  # Assuming NetParams is defined here
+from configs.configurations import NetConfig, NetParams, GrokkingTransformerConfig
+from typing import Any, Union
 
 import hydra 
 from omegaconf import DictConfig, OmegaConf
@@ -66,7 +67,7 @@ def _infer_conv_input_dims(params: NetParams):
         )
 
 
-def model_factory(config: NetConfig) -> Any:
+def model_factory(config: Union[NetConfig, GrokkingTransformerConfig]) -> Any:
     """
     Factory function to create model instances based on the configuration.
 
@@ -177,6 +178,13 @@ def model_factory(config: NetConfig) -> Any:
     elif model_type == 'rl_mlp_backbone':
         from src.models.rl_backbones import SimpleMLP
         return SimpleMLP
+
+    elif model_type == 'GrokkingTransformer_pytorch_manual_implementation':
+        from src.models.grokking_transformer import GrokkingTransformerManual
+        return GrokkingTransformerManual(**config.netparams)
+    elif model_type == 'GrokkingTransformer_pytorch_implementation':
+        from src.models.grokking_transformer import GrokkingTransformerStandard
+        return GrokkingTransformerStandard(**config.netparams)
 
     else:
         # If the model type is not supported, raise a ValueError

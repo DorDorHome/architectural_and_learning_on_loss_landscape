@@ -1,0 +1,47 @@
+defaults:
+  - _self_
+
+use_wandb: True
+wandb:
+  project: "grokking"
+
+seed: 42
+device: "cuda"
+epochs: 10000
+batch_size: 512 # p*p / 25, roughly
+num_workers: 2
+
+data:
+  dataset: "modular_arithmetic"
+  data_path: "data/" # This will be created
+  num_classes: 113
+
+net:
+  _target_: "configs.configurations.GrokkingTransformerConfig"
+  type: "GrokkingTransformer_pytorch_manual_implementation"
+  d_model: 128
+  n_layers: 1 # As per the paper
+  n_heads: 4
+  vocab_size: 115 # p + 2
+  max_seq_len: 4 # [x, +, y, =]
+
+learner:
+  type: "backprop"
+  opt: "adamw"
+  step_size: 1e-3
+  weight_decay: 1.0
+  beta_1: 0.9
+  beta_2: 0.98
+  loss: "cross_entropy"
+
+evaluation:
+  use_testset: True
+  eval_freq_epoch: 10
+
+track_rank: True
+layers_identifier:
+  - "attn.W_q"
+  - "attn.W_k"
+  - "attn.W_v"
+  - "mlp.0"
+  - "mlp.2"

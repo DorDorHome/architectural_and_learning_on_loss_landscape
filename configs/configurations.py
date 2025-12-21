@@ -60,6 +60,29 @@ class NetConfig:
         version_base = "1.1"
 
 @dataclass
+class GrokkingTransformerConfig:
+    _target_: str = "configs.configurations.GrokkingTransformerConfig"
+    type: str = "GrokkingTransformer_pytorch_manual_implementation"
+    vocab_size: int = 115
+    max_seq_len: int = 10
+    n_layers: int = 2
+    n_heads: int = 4
+    d_model: int = 128
+    dropout: float = 0.0
+    
+    # We need a `netparams` field to be compatible with the model factory
+    @property
+    def netparams(self):
+        return {
+            "vocab_size": self.vocab_size,
+            "max_seq_len": self.max_seq_len,
+            "n_layers": self.n_layers,
+            "n_heads": self.n_heads,
+            "d_model": self.d_model,
+            "dropout": self.dropout,
+        }
+
+@dataclass
 class BaseLearnerConfig:
     type: str 
     device: str = 'cuda'
@@ -237,7 +260,7 @@ class ExperimentConfig:
     epochs: int = 10
     batch_size: int = 128
     data: DataConfig = field(default_factory=DataConfig)
-    net: NetConfig = field(default_factory=lambda: NetConfig(type='ConvNet'))
+    net: Union[NetConfig, GrokkingTransformerConfig] = field(default_factory=lambda: NetConfig(type='ConvNet'))
     learner: Union[BackpropConfig, ContinuousBackpropConfig, RRContinuousBackpropConfig] = field(default_factory=BackpropConfig)
     evaluation: Union[EvaluationConfig, None] = field(default_factory=EvaluationConfig)
     track_rank: bool = False

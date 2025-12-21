@@ -31,17 +31,28 @@ class Backprop(Learner):
         self.grad_clip_max_norm = getattr(config, 'grad_clip_max_norm', 1.0)
         
         
-    def learn(self, x: torch.Tensor, target: torch.Tensor):
+    def learn(self, x: torch.Tensor, target: torch.Tensor) -> Tuple[float, torch.Tensor]:
         """implement the basic backpropagation algorithm"""
         # move data to device:
         x, target = x.to(self.device), target.to(self.device)
         self.opt.zero_grad()
+        
         output, features = self.net.predict(x)
-        loss = self.loss_func(output, target)
         self.previous_features = features
+
+        # For grokking, loss is on the last token
+        if output.dim() == 3 and output.size(1) > 1:
+            loss = self.loss_func(output[:, -1, :], target)
+        else:
+            loss = self.loss_func(output, target)
         
         # backpropagate
         loss.backward()
+        
+        # Gradient clipping to prevent gradient explosion (if enabled)
+        if self.use_grad_clip:
+            torch.nn.utils.clip_grad_norm_(self.net.parameters(), max_norm=self.grad_clip_max_norm)
+        
         self.opt.step()
         
         if self.to_perturb:
