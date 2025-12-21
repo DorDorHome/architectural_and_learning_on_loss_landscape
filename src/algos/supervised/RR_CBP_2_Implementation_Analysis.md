@@ -621,6 +621,52 @@ for unit_idx in replace_idx:
 
 This ensures each new neuron is orthogonal to all previously added neurons in the same batch.
 
+### 4.5 Numerical Stability for Eigendecomposition
+
+The implementation includes multiple layers of safeguards for eigendecomposition in ill-conditioned cases:
+
+**Problem:** When energy budget is exhausted and λ_min(Σ) → 0, weights receive near-zero Σ-energy, creating degenerate gram matrices that fail standard eigendecomposition.
+
+**Solutions implemented in `lambda_min_whitened()` (sigma_geometry.py:186-223):**
+
+1. **Symmetrization:** Force gram matrix symmetry to avoid numerical artifacts
+   ```python
+   gram = 0.5 * (gram + gram.t())
+   ```
+
+2. **Adaptive Regularization:** Add small regularization proportional to matrix trace
+   ```python
+   base_reg = max(eps * 100.0, trace / n * 1e-6)
+   gram = gram + base_reg * eye
+   ```
+
+3. **Double Precision with Fallback:** Use float64 for eigendecomposition with stronger regularization on failure
+   ```python
+   try:
+       gram_cpu = gram.detach().cpu().double()
+       eigvals = torch.linalg.eigvalsh(gram_cpu)
+   except RuntimeError:
+       # Add 100x stronger regularization and retry
+       gram_cpu = gram_cpu + (base_reg * 100.0) * eye
+       eigvals = torch.linalg.eigvalsh(gram_cpu)
+   ```
+
+4. **CPU Path Workaround:** Force CPU eigendecomposition when `enable_cuda1_workarounds=True`
+   ```python
+   force_cpu_eigh = os.environ.get('SIGMA_FORCE_CPU_EIGH', '0') == '1'
+   if force_cpu_eigh and gram.device.type == 'cuda':
+       gram_cpu = gram.detach().cpu().double()
+   ```
+
+**Why This Matters:**
+- Saturated regime (Q_res ≤ 0) is **algorithmically valid** per Section 6.3
+- New units receive q_alloc = τ · λ_min(Σ)
+- When λ_min(Σ) ≈ 0, weights have tiny Σ-energy
+- Gram matrix W Σ W^T ≈ 0 → requires high precision + regularization
+- These safeguards allow monitoring even in extreme saturation
+
+**Note:** The `lambda_min_whitened()` computation is **diagnostic only** - not required by core RR-CBP-E2 algorithm. It monitors weight conditioning after replacement.
+
 ---
 
 ## 5. Configuration Parameters
@@ -683,3 +729,4 @@ The algorithm guide's pseudocode maps directly to methods:
 - `RR_EnergyAwareReinitUnit()` → `_replace_units()` with `EnergyAllocator`
 
 This design allows easy extension (e.g., new utility types, new energy allocation schemes) while maintaining fidelity to the mathematical formulation.
+
