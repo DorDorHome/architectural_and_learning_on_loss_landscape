@@ -53,11 +53,13 @@ class LinearNetParams:
 @dataclass
 class NetConfig:
     type: str
-    netparams: Optional[Union[None, NetParams,LinearNetParams ]] = None
+    netparams: Optional[Union[None, NetParams, LinearNetParams]] = None
     # High-level structural category to help learner selection ('conv' | 'fc' | 'other').
     network_class: Optional[str] = None
     class Config:
         version_base = "1.1"
+
+
 
 @dataclass
 class GrokkingTransformerConfig:
@@ -69,18 +71,8 @@ class GrokkingTransformerConfig:
     n_heads: int = 4
     d_model: int = 128
     dropout: float = 0.0
-    
-    # We need a `netparams` field to be compatible with the model factory
-    @property
-    def netparams(self):
-        return {
-            "vocab_size": self.vocab_size,
-            "max_seq_len": self.max_seq_len,
-            "n_layers": self.n_layers,
-            "n_heads": self.n_heads,
-            "d_model": self.d_model,
-            "dropout": self.dropout,
-        }
+
+
 
 @dataclass
 class BaseLearnerConfig:

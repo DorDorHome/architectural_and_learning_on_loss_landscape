@@ -5,6 +5,7 @@
 /outputs/
 /outputs/*
 /configs/__pycache__/
+/data/
 
 experiments/Hessian_and_landscape_plot_with_plasticity_loss/outputs/*
 experiments/Hessian_and_landscape_plot_with_plasticity_loss/outputs
@@ -44,6 +45,10 @@ experiments/output_vs_input_plasticity/wandb/*
 experiments/output_vs_input_plasticity/wandb
 experiments/output_vs_input_plasticity/outputs
 experiments/output_vs_input_plasticity/outputs/*
+
+
+experiments/grokking/outputs/*
+experiments/grokking/outputs
 
 FEATURE_CONTAINER_EXPLANATION.py
 FEATURE_ENHANCEMENT_PLAN.md

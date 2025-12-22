@@ -6,7 +6,7 @@ wandb:
   project: "grokking"
 
 seed: 42
-device: "cuda"
+device: "cpu"
 epochs: 10000
 batch_size: 512 # p*p / 25, roughly
 num_workers: 2
@@ -28,6 +28,14 @@ net:
 
 learner:
   type: "backprop"
+  device: ${device}
+  to_perturb: false
+  perturb_scale: 0.0
+  enable_cuda1_workarounds: false
+  network_class: null
+  momentum: 0.0
+  additional_regularization: null
+  lambda_orth: null
   opt: "adamw"
   step_size: 1e-3
   weight_decay: 1.0

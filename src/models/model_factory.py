@@ -15,6 +15,7 @@ import warnings
 from configs.configurations import NetConfig, NetParams, GrokkingTransformerConfig
 from typing import Any, Union
 
+
 import hydra 
 from omegaconf import DictConfig, OmegaConf
 
@@ -82,6 +83,24 @@ def model_factory(config: Union[NetConfig, GrokkingTransformerConfig]) -> Any:
     """
     # Get the model type from the configuration. expect a string
     model_type = config.type
+
+    if hasattr(config, 'vocab_size'):
+        # Convert OmegaConf object to a standard dictionary for safe access
+        conf_dict = OmegaConf.to_container(config, resolve=True)
+        params = {
+            "vocab_size": conf_dict.get('vocab_size', 115),
+            "max_seq_len": conf_dict.get('max_seq_len', 10),
+            "n_layers": conf_dict.get('n_layers', 2),
+            "n_heads": conf_dict.get('n_heads', 4),
+            "d_model": conf_dict.get('d_model', 128),
+            "dropout": conf_dict.get('dropout', 0.0),
+        }
+        if model_type == 'GrokkingTransformer_pytorch_manual_implementation':
+            from src.models.grokking_transformer import GrokkingTransformerManual
+            return GrokkingTransformerManual(**params)
+        elif model_type == 'GrokkingTransformer_pytorch_implementation':
+            from src.models.grokking_transformer import GrokkingTransformerStandard
+            return GrokkingTransformerStandard(**params)
     
     # if model_type = 'convnet', return an instance of ConvNet:
     if model_type == 'ConvNet':

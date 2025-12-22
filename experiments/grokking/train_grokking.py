@@ -59,7 +59,7 @@ def main(cfg: DictConfig) -> None:
             input_batch, target_batch = input_batch.to(device), target_batch.to(device)
             
             loss, output = learner.learn(input_batch, target_batch)
-            train_loss += loss.item()
+            train_loss += loss
             train_acc += nll_accuracy(output[:, -1, :], target_batch)
 
         train_loss /= len(train_loader)
