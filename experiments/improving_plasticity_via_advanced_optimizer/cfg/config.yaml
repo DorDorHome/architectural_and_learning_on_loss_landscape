@@ -9,8 +9,8 @@ device: 'cuda:0'  # Options: 'cuda:0', 'cuda:1', 'cpu'. Set via command line: de
 # GPU workarounds for cuda:1 cuSOLVER issues
 # Enable this when using cuda:1 to work around eigendecomposition failures
 # This forces CPU eigendecomposition for matrix operations in rank-restoring
-enable_cuda1_workarounds: False # Set to False when using cuda:0 or other GPUs
-
+enable_cuda1_workarounds: true  # Set to False when using cuda:0 or other GPUs
+enable_cuda1_workarounds: False  # Set to False when using cuda:0 or other GPUs
 
 epochs: 50 #epoch per task switch
 batch_size: 8192
@@ -128,7 +128,7 @@ learner:
   step_size: 0.01 # 0.01 for SGD, 0.001 for Adam
   beta_1: 0.95
   beta_2: 0.999
-  weight_decay: 0.05 # L2 regularization strength , use 0.001 for labelled regression tasks
+  weight_decay: 0.01 # L2 regularization strength , use 0.001 for labelled regression tasks
   to_perturb: false
   perturb_scale: 0.05
   momentum: 0.9
@@ -141,6 +141,7 @@ learner:
 # for rr_cbp specific params:
   diag_sigma_only: false
   sigma_ema_beta: 0.95 #original: 0.0
+  sigma_ridge: 5e-2
   sigma_ridge: 5e-2
   max_proj_trials: 4
   proj_eps: 1e-6
