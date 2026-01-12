@@ -3,7 +3,7 @@ from torch.utils.data import Dataset
 import numpy as np
 
 class ModularArithmeticDataset(Dataset):
-    def __init__(self, train: bool, p: int = 113, seed: int = 42):
+    def __init__(self, train: bool, p: int = 113, seed: int = 42, train_split_ratio: float = 0.5):
         self.train = train
         self.p = p
         
@@ -17,7 +17,7 @@ class ModularArithmeticDataset(Dataset):
         pairs = pairs[shuffled_indices]
         
         # Split
-        split_idx = len(pairs) // 2
+        split_idx = int(len(pairs) * train_split_ratio)
         if self.train:
             self.pairs = pairs[:split_idx]
         else:

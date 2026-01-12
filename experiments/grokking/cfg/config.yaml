@@ -16,6 +16,7 @@ data:
   use_torchvision: false
   data_path: '/hdda/datasets' # '/home/sfchan/dataset'  #'/hdda/datasets' 
   num_classes: 113
+  train_split_ratio: 0.3
 
 net:
   _target_: "configs.configurations.GrokkingTransformerConfig"
@@ -54,3 +55,4 @@ layers_identifier:
   - "attn.W_v"
   - "mlp.0"
   - "mlp.2"
+

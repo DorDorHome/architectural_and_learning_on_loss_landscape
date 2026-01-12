@@ -1,0 +1,17 @@
+# experiments/grokking/cfg/sweep_config.yaml
+# This file defines the Hydra sweeper configuration for parameter sweeps.
+
+hydra:
+  sweeper:
+    # Use the basic sweeper provided by Hydra.
+    # This sweeper handles comma-separated lists for parameter values.
+    _target_: hydra.plugins.sweeper.basic_sweeper.BasicSweeper
+    params:
+      # Define the parameters you want to sweep here.
+      # Each key corresponds to a parameter path in your main config (e.g., config.yaml).
+      # The value is a comma-separated list of values to sweep over.
+      learner.optimizer.lr: 0.001,0.01
+      learner.optimizer.weight_decay: 1e-4,1e-5
+      # Example: If you wanted to sweep batch_size and a network hidden dimension:
+      # data.batch_size: 32,64
+      # net.netparams.hidden_dim: 128,256

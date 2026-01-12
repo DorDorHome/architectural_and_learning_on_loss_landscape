@@ -35,7 +35,7 @@ def load_imagenet_by_classes(path_to_classes_folder_of_Imagnet:str  , train_imag
     """
     if test:
         # pick one class, and load the data for that class
-        data_file = os.path.join( path_to_classes_folder_of_Imagnet, str(0) +'.npy')
+        data_file = os.path.join( path_to_classes_folder_of_Imagnet, str(0) +".npy")
         new_x = np.load(data_file)
         # verify that the number of images is 700 and that it is the same as 
         # the sum of train_images_per_class and test_images_per_class
@@ -45,7 +45,7 @@ def load_imagenet_by_classes(path_to_classes_folder_of_Imagnet:str  , train_imag
         
     x_train, y_train, x_test, y_test = [], [], [], []
     for idx, _class in enumerate(classes):
-        data_file = os.path.join( path_to_classes_folder_of_Imagnet, str(_class) +'.npy')
+        data_file = os.path.join( path_to_classes_folder_of_Imagnet, str(_class) +".npy")
         new_x = np.load(data_file)
         x_train.append(new_x[:train_images_per_class])
         x_test.append(new_x[train_images_per_class:])
@@ -124,10 +124,10 @@ def dataset_factory(config: DataConfig, transform, with_testset= False) -> Any:
     # -------------------------------------------------------------
     raw_dataset_name = config.dataset
     canonical_map = {
-        'cifar10': 'CIFAR10',
-        'mnist': 'MNIST',
-        'imagenet': 'ImageNet',
-        'imagenet_for_plasticity': 'imagenet_for_plasticity',  # custom dataset kept lowercase
+        "'cifar10': 'CIFAR10',
+        "'mnist': 'MNIST',
+        "'imagenet': 'ImageNet',
+        "'imagenet_for_plasticity': 'imagenet_for_plasticity',  # custom dataset kept lowercase
     }
     normalized_dataset_name = canonical_map.get(raw_dataset_name.lower(), raw_dataset_name)
     if normalized_dataset_name != raw_dataset_name:
@@ -176,9 +176,10 @@ def dataset_factory(config: DataConfig, transform, with_testset= False) -> Any:
 
     elif dataset_name_for_logic == 'modular_arithmetic':
         from src.data_loading.grokking_datasets import ModularArithmeticDataset
-        trainset = ModularArithmeticDataset(train=True, seed=config.seed if hasattr(config, 'seed') else 42)
+        train_split_ratio = config.train_split_ratio if hasattr(config, 'train_split_ratio') else 0.5
+        trainset = ModularArithmeticDataset(train=True, seed=config.seed if hasattr(config, 'seed') else 42, train_split_ratio=train_split_ratio)
         if with_testset:
-            testset = ModularArithmeticDataset(train=False, seed=config.seed if hasattr(config, 'seed') else 42)
+            testset = ModularArithmeticDataset(train=False, seed=config.seed if hasattr(config, 'seed') else 42, train_split_ratio=train_split_ratio)
 
     # custom data formats can be used:
     elif not config.use_torchvision:
@@ -217,3 +218,4 @@ if __name__=="__main__":
     # 3. the number of classes is 10
     
     
+
