@@ -27,6 +27,7 @@ experiments/improving_plasticity_via_advanced_optimizer/wandb/
 experiments/hyperparameters_sweep/wandb/
 experiments/hyperparameters_sweep/outputs/
 
+experiments/grokking/multirun/
 src/utils/testing_plots
 src/utils/testing_plots/*
 experiments/basic_training/outputs

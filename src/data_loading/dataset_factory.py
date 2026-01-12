@@ -124,10 +124,10 @@ def dataset_factory(config: DataConfig, transform, with_testset= False) -> Any:
     # -------------------------------------------------------------
     raw_dataset_name = config.dataset
     canonical_map = {
-        "'cifar10': 'CIFAR10',
-        "'mnist': 'MNIST',
-        "'imagenet': 'ImageNet',
-        "'imagenet_for_plasticity': 'imagenet_for_plasticity',  # custom dataset kept lowercase
+        'cifar10': 'CIFAR10',
+        'mnist': 'MNIST',
+        'imagenet': 'ImageNet',
+        'imagenet_for_plasticity': 'imagenet_for_plasticity',  # custom dataset kept lowercase
     }
     normalized_dataset_name = canonical_map.get(raw_dataset_name.lower(), raw_dataset_name)
     if normalized_dataset_name != raw_dataset_name:

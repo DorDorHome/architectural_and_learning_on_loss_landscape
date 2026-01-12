@@ -6,9 +6,9 @@ wandb:
   project: "grokking"
 
 seed: 42
-device: "cpu"
+device: "cuda:0"
 epochs: 10000
-batch_size: 512 # p*p / 25, roughly
+batch_size: 1024 # p*p / 25, roughly
 num_workers: 2
 
 data:
