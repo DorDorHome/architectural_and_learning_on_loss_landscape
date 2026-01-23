@@ -41,8 +41,29 @@ class GnT_for_FC(object):
     ):
         super(GnT_for_FC, self).__init__()
         self.device = device
-        self.net = net
-        self.num_hidden_layers = int(len(self.net)/2)
+        
+        
+        # self.net = net
+        # self.num_hidden_layers = int(len(self.net)/2)
+        
+        # --- REFACTORED INIT LOGIC ---
+        self.plasticity_map = None
+        self.use_map = False
+
+        if hasattr(net, 'get_plasticity_map'):
+            self.plasticity_map = net.get_plasticity_map()
+            self.use_map = True
+            self.net = net
+            self.num_hidden_layers = len(self.plasticity_map)
+        elif hasattr(net, 'layers'):
+            self.net = net.layers
+            self.num_hidden_layers = int(len(self.net)/2)
+        else:
+            self.net = net
+            self.num_hidden_layers = int(len(self.net)/2)
+        # -----------------------------
+        
+        
         self.loss_func = loss_func
         self.accumulate = accumulate
 
@@ -62,12 +83,34 @@ class GnT_for_FC(object):
         """
         Utility of all features/neurons
         """
-        self.util = [torch.zeros(self.net[i * 2].out_features).to(self.device) for i in range(self.num_hidden_layers)]
-        self.bias_corrected_util = \
-            [torch.zeros(self.net[i * 2].out_features).to(self.device) for i in range(self.num_hidden_layers)]
-        self.ages = [torch.zeros(self.net[i * 2].out_features).to(self.device) for i in range(self.num_hidden_layers)]
+        
+        self.util = []
+        self.bias_corrected_util = []
+        self.ages = []
+        self.mean_feature_act = []
+        
+        for i in range(self.num_hidden_layers):
+            if self.use_map:
+                layer = self.plasticity_map[i]['weight_module']
+            else:
+                layer = self.net[i * 2]
+                
+            out_feats = layer.out_features
+            self.util.append(torch.zeros(out_feats).to(self.device))
+            self.bias_corrected_util.append(torch.zeros(out_feats).to(self.device))
+            self.ages.append(torch.zeros(out_feats).to(self.device))
+            self.mean_feature_act.append(torch.zeros(out_feats).to(self.device))
+
+        
+        # self.util = [torch.zeros(self.net[i * 2].out_features).to(self.device) for i in range(self.num_hidden_layers)]
+        # self.bias_corrected_util = \
+        #     [torch.zeros(self.net[i * 2].out_features).to(self.device) for i in range(self.num_hidden_layers)]
+        # self.ages = [torch.zeros(self.net[i * 2].out_features).to(self.device) for i in range(self.num_hidden_layers)]
+        
+        # self.mean_feature_act = [torch.zeros(self.net[i * 2].out_features).to(self.device) for i in range(self.num_hidden_layers)]
+
+
         self.m = torch.nn.Softmax(dim=1)
-        self.mean_feature_act = [torch.zeros(self.net[i * 2].out_features).to(self.device) for i in range(self.num_hidden_layers)]
         self.accumulated_num_features_to_replace = [0 for i in range(self.num_hidden_layers)]
 
         """
@@ -78,6 +121,35 @@ class GnT_for_FC(object):
 
     def compute_bounds(self, hidden_activation, init='kaiming'):
         if hidden_activation in ['swish', 'elu']: hidden_activation = 'relu'
+        
+        # --- Use Map or Legacy ---
+        if self.use_map:
+            bounds = []
+            for i in range(self.num_hidden_layers):
+                # Map doesn't strictly store indices, but we strictly need the current layer's in_features
+                # and hidden_activation logic.
+                layer = self.plasticity_map[i]['weight_module']
+                if init == 'default':
+                    b = sqrt(1 / layer.in_features)
+                elif init == 'xavier':
+                    b = torch.nn.init.calculate_gain(nonlinearity=hidden_activation) * \
+                        sqrt(6 / (layer.in_features + layer.out_features))
+                elif init == 'lecun':
+                    b = sqrt(3 / layer.in_features)
+                else:
+                    b = torch.nn.init.calculate_gain(nonlinearity=hidden_activation) * \
+                        sqrt(3 / layer.in_features)
+                bounds.append(b)
+            # Last layer bound (heuristic from original code) usually looks at the "next" layer of the last block
+            # For now, we append a dummy bound or replicate the last one to be safe, 
+            # as gen_new_features loop index goes up to num_hidden_layers
+            # The original code did: bounds.append(1 * sqrt(3 / net[last*2].in_features))
+            # We will approximate this using the last layer in map
+            last_layer = self.plasticity_map[-1]['weight_module']
+            bounds.append(1 * sqrt(3 / last_layer.in_features))
+            return bounds
+        # -----------------------------------
+        # legacy logic starts here
         if init == 'default':
             bounds = [sqrt(1 / self.net[i * 2].in_features) for i in range(self.num_hidden_layers)]
         elif init == 'xavier':
@@ -104,8 +176,16 @@ class GnT_for_FC(object):
             self.mean_feature_act[layer_idx] -= - (1 - self.decay_rate) * features.mean(dim=0)
             bias_corrected_act = self.mean_feature_act[layer_idx] / bias_correction
 
-            current_layer = self.net[layer_idx * 2]
-            next_layer = self.net[layer_idx * 2 + 2]
+            # --- Use Map or Legacy ---
+            if self.use_map:
+                map_item = self.plasticity_map[layer_idx]
+                current_layer = map_item['weight_module']
+                next_layer = map_item['outgoing_module']
+            else:
+                current_layer = self.net[layer_idx * 2]
+                next_layer = self.net[layer_idx * 2 + 2]
+            # -----------------------------------
+            
             output_wight_mag = next_layer.weight.data.abs().mean(dim=0)
             input_wight_mag = current_layer.weight.data.abs().mean(dim=1)
 
@@ -210,8 +290,24 @@ class GnT_for_FC(object):
             for i in range(self.num_hidden_layers):
                 if num_features_to_replace[i] == 0:
                     continue
-                current_layer = self.net[i * 2]
-                next_layer = self.net[i * 2 + 2]
+                
+                
+                # --- REFACTOR: Map or Legacy ---
+                if self.use_map:
+                    map_item = self.plasticity_map[i]
+                    current_layer = map_item['weight_module']
+                    next_layer = map_item['outgoing_module']
+                    
+                    # CRITICAL FIX: We check if the OUTGOING module feeds into a norm.
+                    # If the next layer is normalized, bias compensation is useless/harmful.
+                    should_compensate = not map_item.get('outgoing_feeds_into_norm', False)
+                else:
+                    current_layer = self.net[i * 2]
+                    next_layer = self.net[i * 2 + 2]
+                    # Legacy fallback: We assume standard FC/Conv blocks DO tolerate compensation
+                    should_compensate = True
+                # -------------------------------
+                
                 current_layer.weight.data[features_to_replace[i], :] *= 0.0
                 # noinspection PyArgumentList
                 current_layer.weight.data[features_to_replace[i], :] += \
@@ -221,9 +317,11 @@ class GnT_for_FC(object):
                 """
                 # Update bias to correct for the removed features and set the outgoing weights and ages to zero
                 """
-                next_layer.bias.data += (next_layer.weight.data[:, features_to_replace[i]] * \
-                                                self.mean_feature_act[i][features_to_replace[i]] / \
-                                                (1 - self.decay_rate ** self.ages[i][features_to_replace[i]])).sum(dim=1)
+                if should_compensate:
+                    next_layer.bias.data += (next_layer.weight.data[:, features_to_replace[i]] * \
+                                                    self.mean_feature_act[i][features_to_replace[i]] / \
+                                                    (1 - self.decay_rate ** self.ages[i][features_to_replace[i]])).sum(dim=1)
+                
                 next_layer.weight.data[:, features_to_replace[i]] = 0
                 self.ages[i][features_to_replace[i]] = 0
 
@@ -237,16 +335,29 @@ class GnT_for_FC(object):
                 # input weights
                 if num_features_to_replace[i] == 0:
                     continue
-                self.opt.state[self.net[i * 2].weight]['exp_avg'][features_to_replace[i], :] = 0.0
-                self.opt.state[self.net[i * 2].bias]['exp_avg'][features_to_replace[i]] = 0.0
-                self.opt.state[self.net[i * 2].weight]['exp_avg_sq'][features_to_replace[i], :] = 0.0
-                self.opt.state[self.net[i * 2].bias]['exp_avg_sq'][features_to_replace[i]] = 0.0
-                self.opt.state[self.net[i * 2].weight]['step'][features_to_replace[i], :] = 0
-                self.opt.state[self.net[i * 2].bias]['step'][features_to_replace[i]] = 0
+                
+                # --- REFACTOR: Map or Legacy ---
+                if self.use_map:
+                    map_item = self.plasticity_map[i]
+                    curr_weight = map_item['weight_module'].weight
+                    curr_bias = map_item['weight_module'].bias
+                    next_weight = map_item['outgoing_module'].weight
+                else:
+                    curr_weight = self.net[i * 2].weight
+                    curr_bias = self.net[i * 2].bias
+                    next_weight = self.net[i * 2 + 2].weight
+                # -------------------------------
+
+                self.opt.state[curr_weight]['exp_avg'][features_to_replace[i], :] = 0.0
+                self.opt.state[curr_bias]['exp_avg'][features_to_replace[i]] = 0.0
+                self.opt.state[curr_weight]['exp_avg_sq'][features_to_replace[i], :] = 0.0
+                self.opt.state[curr_bias]['exp_avg_sq'][features_to_replace[i]] = 0.0
+                self.opt.state[curr_weight]['step'][features_to_replace[i], :] = 0
+                self.opt.state[curr_bias]['step'][features_to_replace[i]] = 0
                 # output weights
-                self.opt.state[self.net[i * 2 + 2].weight]['exp_avg'][:, features_to_replace[i]] = 0.0
-                self.opt.state[self.net[i * 2 + 2].weight]['exp_avg_sq'][:, features_to_replace[i]] = 0.0
-                self.opt.state[self.net[i * 2 + 2].weight]['step'][:, features_to_replace[i]] = 0
+                self.opt.state[next_weight]['exp_avg'][:, features_to_replace[i]] = 0.0
+                self.opt.state[next_weight]['exp_avg_sq'][:, features_to_replace[i]] = 0.0
+                self.opt.state[next_weight]['step'][:, features_to_replace[i]] = 0
 
     def gen_and_test(self, features):
         """

@@ -134,7 +134,7 @@ learner:
   neurons_replacement_rate: 0.001
   decay_rate_utility_track: 0.9
   maturity_threshold: 100
-  util_type: 'contribution'
+  util_type: 'adaptable_contribution' #options: 'weight', 'coontribution', 'zero_contribution', 'adaptation', 'adaptable_contribution', 'feature_by_input' 
   accumulate: False
   outgoing_random: False
 # for rr_cbp specific params:
