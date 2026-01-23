@@ -273,9 +273,29 @@ class ConvGnT_for_ConvNet(object):
                  num_last_filter_outputs=4, util_type='contribution',
                  maturity_threshold=100, device='cpu'):
         super(ConvGnT_for_ConvNet, self).__init__()
+        self.plasticity_map = None
+        self.use_map = False
 
-        self.net = net
-        self.num_hidden_layers = int(len(self.net)/2)
+        if hasattr(net, 'get_plasticity_map'):
+            # Case 1: Advanced Model with Explicit Map
+            self.plasticity_map = net.get_plasticity_map()
+            self.use_map = True
+            self.net = net
+            self.num_hidden_layers = len(self.plasticity_map)
+        elif hasattr(net, 'layers'):
+            # Case 2: Standard Model passed as Object (Robustness/Transition)
+            # Unwrap the layers so legacy logic works
+            self.net = net.layers
+            self.num_hidden_layers = int(len(self.net)/2)
+        else:
+            # Case 3: Legacy Usage (Passing list/Sequential directly)
+            self.net = net
+            self.num_hidden_layers = int(len(self.net)/2)
+        
+        
+
+        # self.net = net
+        # self.num_hidden_layers = int(len(self.net)/2)
         self.util_type = util_type
         self.device = device
 
