@@ -1,6 +1,6 @@
 # experiments/grokking/cfg/sweep_config.yaml
 # This file defines the Hydra sweeper configuration for parameter sweeps.
-# to run, python experiments/grokking/train_grokking.py --multirun --config-name=sweep_config
+# to run, python train_grokking.py --multirun --config-name=sweep_config
 
 defaults:
   - config  

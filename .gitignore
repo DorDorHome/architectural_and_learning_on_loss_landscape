@@ -7,10 +7,12 @@
 /configs/__pycache__/
 /data/
 
-experiments/Hessian_and_landscape_plot_with_plasticity_loss/outputs/*
-experiments/Hessian_and_landscape_plot_with_plasticity_loss/outputs
+/experiments/Hessian_and_landscape_plot_with_plasticity_loss/outputs/*
+/experiments/Hessian_and_landscape_plot_with_plasticity_loss/outputs
 /experiments/comparison_of_different_measures_of_rank/results_plots
 /experiments/comparison_of_different_measures_of_rank/results_raw
+
+experiments/improving_plasticity_via_advanced_optimizer/cfg/config.yaml
 
 __pycache__/
 *.pyc
