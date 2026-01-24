@@ -96,3 +96,47 @@ class ConvNet(nn.Module):
                 'conv3_flattened',
                 'fc1_output',
                 'fc2_output']
+
+
+    def get_plasticity_map(self):
+        """
+        Defines the connectivity and plasticity flow for GnT.
+        Topology: Conv1 -> Conv2 -> Conv3 -> FC1 -> FC2 -> FC3(Output)
+        """
+        return [
+            {
+                # Layer 0
+                'name': 'conv1',
+                'weight_module': self.conv1,
+                'outgoing_module': self.conv2,
+                'outgoing_feeds_into_norm': False
+            },
+            {
+                # Layer 1
+                'name': 'conv2',
+                'weight_module': self.conv2,
+                'outgoing_module': self.conv3,
+                'outgoing_feeds_into_norm': False
+            },
+            {
+                # Layer 2 (Transition from Conv to Linear happens here regarding output weights)
+                'name': 'conv3',
+                'weight_module': self.conv3,
+                'outgoing_module': self.fc1,
+                'outgoing_feeds_into_norm': False
+            },
+            {
+                # Layer 3
+                'name': 'fc1',
+                'weight_module': self.fc1,
+                'outgoing_module': self.fc2,
+                'outgoing_feeds_into_norm': False
+            },
+            {
+                # Layer 4
+                'name': 'fc2',
+                'weight_module': self.fc2,
+                'outgoing_module': self.fc3,
+                'outgoing_feeds_into_norm': False
+            }
+        ]

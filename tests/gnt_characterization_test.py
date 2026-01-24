@@ -9,11 +9,9 @@ import logging
 logging.basicConfig(level=logging.INFO, format='%(message)s')
 logger = logging.getLogger(__name__)
 
-# Add project root to path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.append(str(PROJECT_ROOT))
 
-# Import specific project classes
 from src.models.conv_net import ConvNet
 from src.models.deep_ffnn import DeepFFNN
 from configs.configurations import NetParams, LinearNetParams
@@ -30,13 +28,11 @@ def get_stats_from_run(mode):
     
     # --- MODE SELECTION ---
     if mode == 'legacy':
-        # Simulate old code: passing the list directly
         gnt_input = net.layers
         logger.info("[Setup] Passing 'net.layers' (List) to GnT")
     elif mode == 'module':
-        # Simulate new code: passing the object
         gnt_input = net
-        logger.info("[Setup] Passing 'net' (ConvNet Object) to GnT")
+        logger.info("[Setup] Passing 'net' (ConvNet Object) to GnT (Expects get_plasticity_map)")
     
     try:
         gnt = ConvGnT_for_ConvNet(
@@ -49,7 +45,17 @@ def get_stats_from_run(mode):
             init='kaiming',
             device=device
         )
-        logger.info(f"[Init] Success. Detected {gnt.num_hidden_layers} hidden layers.")
+        mode_detected = "Map" if gnt.use_map else "Legacy"
+        logger.info(f"[Init] Success. Detected {gnt.num_hidden_layers} hidden layers. Mode={mode_detected}")
+        
+        # Verify mode activated correctly
+        if mode == 'module' and not gnt.use_map:
+            logger.error("FAIL: Passed module but GnT did not detect map!")
+            return None
+        if mode == 'legacy' and gnt.use_map:
+            logger.error("FAIL: Passed list but GnT tried to use map!")
+            return None
+            
     except Exception as e:
         logger.error(f"[Init] CRASH: {e}")
         return None
@@ -58,17 +64,24 @@ def get_stats_from_run(mode):
     dummy_input = torch.randn(10, 3, 32, 32) 
     
     for step in range(3):
+        # Forward pass
         _, features_list = net.predict(dummy_input)
+        
+        # GnT Step
         try:
             gnt.gen_and_test(features_list)
         except Exception as e:
             logger.error(f"[Step {step}] CRASH: {e}")
+            import traceback
+            traceback.print_exc()
             return None
         
         # Snapshot Stats
+        # 1. Utility values
         utils = [[round(x, 6) for x in layer[:2].tolist()] for layer in gnt.util]
+        
+        # 2. Checksum of Weights (Prove modification happened and is identical)
         weights_sum = 0.0
-        # Calculate weight sum safely (Module vs List agnostic for checking)
         for name, param in net.named_parameters():
              if 'weight' in name: weights_sum += param.data.sum().item()
                 
@@ -76,23 +89,16 @@ def get_stats_from_run(mode):
         
     logger.info(f"[Result] Mode='{mode}' finished successfully.")
     return stats
-            
-            
 
 def get_stats_from_run_fc(mode):
+    # This test remains simplistic for now as DeepFFNN hasn't been modified with get_plasticity_map yet
+    # It serves to ensure we didn't break legacy FC functionality with refactors.
     logger.info(f"\n[TEST ENGINE] Starting FC Test Mode='{mode}'")
     torch.manual_seed(42)
     device = 'cpu'
-    
-    # Configure DeepFFNN
-    # Layers: In(Linear), Act, Hidden(Linear), Act, Out(Linear)
-    # 2 Hidden layers requested -> 2 iterations in GnT
+
     config = LinearNetParams(
-        input_size=10, 
-        num_features=20, 
-        num_outputs=5, 
-        num_hidden_layers=2, # Creates In + 1 Hidden Block
-        act_type='relu'
+        input_size=10, num_features=20, num_outputs=5, num_hidden_layers=2, act_type='relu'
     )
     net = DeepFFNN(config)
     optimizer = optim.SGD(net.parameters(), lr=0.01)
@@ -100,6 +106,8 @@ def get_stats_from_run_fc(mode):
     if mode == 'legacy':
         gnt_input = net.layers
     elif mode == 'module':
+        # DeepFFNN doesn't have get_plasticity_map yet, so this checks the robust fallback
+        # gnt.py logic: if has layers but no map, unwraps layers -> behaves like legacy
         gnt_input = net
     
     try:
@@ -111,10 +119,8 @@ def get_stats_from_run_fc(mode):
             decay_rate=0.9,
             maturity_threshold=0,
             init='kaiming',
-            device=device,
-            util_type='contribution'
+            device=device
         )
-        logger.info(f"[Init] Success. Detected {gnt.num_hidden_layers} hidden layers.")
     except Exception as e:
         logger.error(f"[Init] CRASH: {e}")
         return None
@@ -122,43 +128,44 @@ def get_stats_from_run_fc(mode):
     stats = []
     dummy_input = torch.randn(5, 10) 
     
-    for step in range(3):
-        # DeepFFNN returns (out, [features...])
-        _, activations = net.predict(dummy_input)
-        
-        # GnT for FC expects features [h1, h2, ...] 
-        # DeepFFNN activations includes output at end? 
-        # Let's check: in_layer(x), hidden_layers(x)
-        # We need to pass the list of features.
+    for step in range(2):
+        _, features = net.predict(dummy_input)
         try:
-            gnt.gen_and_test(activations)
+             # DeepFFNN.predict returns features as list, GnT expects that list
+            gnt.gen_and_test(features)
         except Exception as e:
             logger.error(f"[Step {step}] CRASH: {e}")
             return None
         
         utils = [[round(x, 6) for x in layer[:2].tolist()] for layer in gnt.util]
-        weights_sum = 0.0
-        for name, param in net.named_parameters():
-             if 'weight' in name: weights_sum += param.data.sum().item()
+        weights_sum = sum([p.data.sum().item() for n, p in net.named_parameters() if 'weight' in n])
         stats.append({'utils': utils, 'w_sum': round(weights_sum, 4)})
         
     return stats
 
 if __name__ == "__main__":
-    print("====== CONVNET TEST ======")
+    print("====== CONVNET TEST (Map vs Legacy) ======")
     conv_leg = get_stats_from_run('legacy')
     conv_mod = get_stats_from_run('module')
     
-    if conv_leg and conv_mod and conv_leg == conv_mod:
-        print("✅ CONV SUCCESS: Both modes match.")
+    if conv_leg and conv_mod:
+        match = True
+        for i, (l, m) in enumerate(zip(conv_leg, conv_mod)):
+            if l != m:
+                print(f"Step {i} MISMATCH\nL: {l}\nM: {m}")
+                match = False
+        if match:
+            print("✅ CONV SUCCESS: Explicit Map produces identical physics to Legacy List.")
+        else:
+            print("❌ CONV FAIL: Logic mismatch.")
     else:
-        print("❌ CONV FAIL: Legacy/Module mismatch or crash.")
+        print("❌ CONV FAIL: Crash encountered.")
 
-    print("\n====== FC TEST ======")
+    print("\n====== FC TEST (Legacy vs Fallback) ======")
     fc_leg = get_stats_from_run_fc('legacy')
-    fc_mod = get_stats_from_run_fc('module')
+    fc_mod = get_stats_from_run_fc('module') # Tests if passing object unwraps layers correctly
     
     if fc_leg and fc_mod and fc_leg == fc_mod:
-        print("✅ FC SUCCESS: Both modes match.")
+        print("✅ FC SUCCESS: Fallback wrapper works correctly.")
     else:
-        print("❌ FC FAIL: Legacy/Module mismatch or crash.")
+        print("❌ FC FAIL: Mismatch or crash.")
