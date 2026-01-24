@@ -73,7 +73,7 @@ class ContinualBackprop_for_FC(Learner):
             raise TypeError(f"ContinualBackprop_for_FC requires net.type == 'FC', got {getattr(self.net,'type',None)}")
 
         self.gnt: Optional[GnT_for_FC] = GnT_for_FC(
-            net=self.net.layers,
+            net=self.net,
             hidden_activation=hidden_activation,
             opt=self.opt,
             replacement_rate=self.neurons_replacement_rate,
@@ -152,7 +152,7 @@ class ContinuousBackprop_for_ConvNet(Learner):
 
         # define the generate-and-test object for the given network
         self.gnt = ConvGnT_for_ConvNet(
-            net=self.net.layers,
+            net=self.net,
             hidden_activation=hidden_activation,
             opt=self.opt,
             replacement_rate=self.neurons_replacement_rate,

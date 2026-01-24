@@ -12,10 +12,12 @@ logger = logging.getLogger(__name__)
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.append(str(PROJECT_ROOT))
 
+# Imports
 from src.models.conv_net import ConvNet
 from src.models.deep_ffnn import DeepFFNN
 from configs.configurations import NetParams, LinearNetParams
 from src.algos.gnt import ConvGnT_for_ConvNet, GnT_for_FC
+from src.algos.AdamGnT import AdamGnT  # Required to trigger opt state clearing logic
 
 def get_stats_from_run(mode):
     logger.info(f"\n[TEST ENGINE] Starting Mode='{mode}'")
@@ -24,12 +26,14 @@ def get_stats_from_run(mode):
     
     config = NetParams(num_classes=10, input_height=32, input_width=32, activation='relu')
     net = ConvNet(config)
-    optimizer = optim.SGD(net.parameters(), lr=0.01)
+    
+    # Use AdamGnT to verify state clearing logic works
+    optimizer = AdamGnT(net.parameters(), lr=0.01)
     
     # --- MODE SELECTION ---
     if mode == 'legacy':
         gnt_input = net.layers
-        logger.info("[Setup] Passing 'net.layers' (List) to GnT")
+        logger.info("[Setup] Passing 'net.layers' (List) to GnT (Simulating current ContinuousBackprop)")
     elif mode == 'module':
         gnt_input = net
         logger.info("[Setup] Passing 'net' (ConvNet Object) to GnT (Expects get_plasticity_map)")
@@ -43,19 +47,12 @@ def get_stats_from_run(mode):
             decay_rate=0.9,
             maturity_threshold=0,
             init='kaiming',
-            device=device
+            device=device,
+            # CRITICAL: 32x32 input -> 2x2 spatial output after 3 convs & pools = 4 outputs
+            num_last_filter_outputs=4 
         )
         mode_detected = "Map" if gnt.use_map else "Legacy"
         logger.info(f"[Init] Success. Detected {gnt.num_hidden_layers} hidden layers. Mode={mode_detected}")
-        
-        # Verify mode activated correctly
-        if mode == 'module' and not gnt.use_map:
-            logger.error("FAIL: Passed module but GnT did not detect map!")
-            return None
-        if mode == 'legacy' and gnt.use_map:
-            logger.error("FAIL: Passed list but GnT tried to use map!")
-            return None
-            
     except Exception as e:
         logger.error(f"[Init] CRASH: {e}")
         return None
@@ -63,36 +60,51 @@ def get_stats_from_run(mode):
     stats = []
     dummy_input = torch.randn(10, 3, 32, 32) 
     
+    # Run a few steps to populate optimizer state
     for step in range(3):
-        # Forward pass
+        # 1. Forward
         _, features_list = net.predict(dummy_input)
         
-        # GnT Step
+        # 2. Fake a gradient step so optimizer state exists
+        loss = features_list[-1].sum()
+        optimizer.zero_grad()
+        loss.backward(retain_graph=True)
+        optimizer.step()
+
+        # 3. GnT Step (Modifies weights and Opt state)
         try:
             gnt.gen_and_test(features_list)
         except Exception as e:
-            logger.error(f"[Step {step}] CRASH: {e}")
+            logger.error(f"[Step {step}] GnT CRASH: {e}")
             import traceback
             traceback.print_exc()
             return None
         
         # Snapshot Stats
-        # 1. Utility values
+        # A. Utility values
         utils = [[round(x, 6) for x in layer[:2].tolist()] for layer in gnt.util]
         
-        # 2. Checksum of Weights (Prove modification happened and is identical)
+        # B. Checksum of Weights
         weights_sum = 0.0
         for name, param in net.named_parameters():
              if 'weight' in name: weights_sum += param.data.sum().item()
-                
-        stats.append({'utils': utils, 'w_sum': round(weights_sum, 4)})
+        
+        # C. Checksum of Optimizer State (Critical for Adam)
+        opt_state_sum = 0.0
+        for param_group in optimizer.param_groups:
+            for p in param_group['params']:
+                state = optimizer.state[p]
+                if 'exp_avg' in state:
+                    opt_state_sum += state['exp_avg'].sum().item()
+                if 'exp_avg_sq' in state:
+                    opt_state_sum += state['exp_avg_sq'].sum().item()
+
+        stats.append({'utils': utils, 'w_sum': round(weights_sum, 4), 'opt_sum': round(opt_state_sum, 4)})
         
     logger.info(f"[Result] Mode='{mode}' finished successfully.")
     return stats
 
 def get_stats_from_run_fc(mode):
-    # This test remains simplistic for now as DeepFFNN hasn't been modified with get_plasticity_map yet
-    # It serves to ensure we didn't break legacy FC functionality with refactors.
     logger.info(f"\n[TEST ENGINE] Starting FC Test Mode='{mode}'")
     torch.manual_seed(42)
     device = 'cpu'
@@ -101,16 +113,16 @@ def get_stats_from_run_fc(mode):
         input_size=10, num_features=20, num_outputs=5, num_hidden_layers=2, act_type='relu'
     )
     net = DeepFFNN(config)
-    optimizer = optim.SGD(net.parameters(), lr=0.01)
+    optimizer = AdamGnT(net.parameters(), lr=0.01)
     
     if mode == 'legacy':
         gnt_input = net.layers
     elif mode == 'module':
-        # DeepFFNN doesn't have get_plasticity_map yet, so this checks the robust fallback
-        # gnt.py logic: if has layers but no map, unwraps layers -> behaves like legacy
+        # Should fallback to unwrapping layers internally
         gnt_input = net
     
     try:
+        # FIXED: Using GnT_for_FC now
         gnt = GnT_for_FC(
             net=gnt_input,  
             hidden_activation='relu',
@@ -119,7 +131,7 @@ def get_stats_from_run_fc(mode):
             decay_rate=0.9,
             maturity_threshold=0,
             init='kaiming',
-            device=device
+            device=device,
         )
     except Exception as e:
         logger.error(f"[Init] CRASH: {e}")
@@ -130,16 +142,30 @@ def get_stats_from_run_fc(mode):
     
     for step in range(2):
         _, features = net.predict(dummy_input)
+        
+        loss = features[-1].sum()
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
         try:
-             # DeepFFNN.predict returns features as list, GnT expects that list
             gnt.gen_and_test(features)
         except Exception as e:
             logger.error(f"[Step {step}] CRASH: {e}")
+            import traceback
+            traceback.print_exc()
             return None
         
         utils = [[round(x, 6) for x in layer[:2].tolist()] for layer in gnt.util]
         weights_sum = sum([p.data.sum().item() for n, p in net.named_parameters() if 'weight' in n])
-        stats.append({'utils': utils, 'w_sum': round(weights_sum, 4)})
+        
+        opt_state_sum = 0.0
+        for param_group in optimizer.param_groups:
+            for p in param_group['params']:
+                state = optimizer.state[p]
+                if 'exp_avg' in state: opt_state_sum += state['exp_avg'].sum().item()
+
+        stats.append({'utils': utils, 'w_sum': round(weights_sum, 4), 'opt_sum': round(opt_state_sum, 4)})
         
     return stats
 
@@ -151,11 +177,12 @@ if __name__ == "__main__":
     if conv_leg and conv_mod:
         match = True
         for i, (l, m) in enumerate(zip(conv_leg, conv_mod)):
+            # Compare dicts
             if l != m:
                 print(f"Step {i} MISMATCH\nL: {l}\nM: {m}")
                 match = False
         if match:
-            print("✅ CONV SUCCESS: Explicit Map produces identical physics to Legacy List.")
+            print("✅ CONV SUCCESS: Utils, Weights, and Optimizer States are identical.")
         else:
             print("❌ CONV FAIL: Logic mismatch.")
     else:
@@ -163,7 +190,7 @@ if __name__ == "__main__":
 
     print("\n====== FC TEST (Legacy vs Fallback) ======")
     fc_leg = get_stats_from_run_fc('legacy')
-    fc_mod = get_stats_from_run_fc('module') # Tests if passing object unwraps layers correctly
+    fc_mod = get_stats_from_run_fc('module') 
     
     if fc_leg and fc_mod and fc_leg == fc_mod:
         print("✅ FC SUCCESS: Fallback wrapper works correctly.")

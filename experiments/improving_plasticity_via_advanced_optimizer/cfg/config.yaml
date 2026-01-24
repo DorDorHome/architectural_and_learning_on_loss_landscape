@@ -118,7 +118,7 @@ net:
 
 # learning algorithm:
 learner:
-  type: 'rr_cbp_e_2' # 'rr_cbp_e_2'  'rr_cbp2' 'rr_cbp' #options: 'backprop' 'basic_continous_backprop', 'rr_cbp'
+  type: 'basic_continous_backprop' # 'rr_cbp_e_2'  'rr_cbp2' 'rr_cbp' #options: 'backprop' 'basic_continous_backprop', 'rr_cbp'
   network_class: ${net.network_class}  # Use the network class from the net configuration
   init: 'kaiming'
   device: ${device}
@@ -134,7 +134,7 @@ learner:
   neurons_replacement_rate: 0.001
   decay_rate_utility_track: 0.9
   maturity_threshold: 100
-  util_type: 'adaptable_contribution'
+  util_type: 'adaptable_contribution' #options: 'weight', 'coontribution', 'zero_contribution', 'adaptation', 'adaptable_contribution', 'feature_by_input' 
   accumulate: False
   outgoing_random: False
 # for rr_cbp specific params:

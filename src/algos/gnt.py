@@ -95,15 +95,12 @@ class GnT_for_FC(object):
             else:
                 layer = self.net[i * 2]
                 
-           # --- ROBUST DIMENSION LOOKUP ---
-            # Handle both Linear (out_features) and Conv2d (out_channels)
+            # Handle both Linear (out_features) only.
             if hasattr(layer, 'out_features'):
                 out_feats = layer.out_features
-            elif hasattr(layer, 'out_channels'):
-                out_feats = layer.out_channels
             else:
                 # Fallback or error if using an unsupported layer type provided by map
-                raise AttributeError(f"Layer {layer} in plasticity map has neither .out_features nor .out_channels")
+                raise AttributeError(f"Layer {layer} in plasticity map doesn't have .out_features")
             # --------
             self.util.append(torch.zeros(out_feats).to(self.device))
             self.bias_corrected_util.append(torch.zeros(out_feats).to(self.device))
@@ -357,16 +354,37 @@ class GnT_for_FC(object):
                     next_weight = self.net[i * 2 + 2].weight
                 # -------------------------------
 
-                self.opt.state[curr_weight]['exp_avg'][features_to_replace[i], :] = 0.0
-                self.opt.state[curr_bias]['exp_avg'][features_to_replace[i]] = 0.0
-                self.opt.state[curr_weight]['exp_avg_sq'][features_to_replace[i], :] = 0.0
-                self.opt.state[curr_bias]['exp_avg_sq'][features_to_replace[i]] = 0.0
-                self.opt.state[curr_weight]['step'][features_to_replace[i], :] = 0
-                self.opt.state[curr_bias]['step'][features_to_replace[i]] = 0
-                # output weights
-                self.opt.state[next_weight]['exp_avg'][:, features_to_replace[i]] = 0.0
-                self.opt.state[next_weight]['exp_avg_sq'][:, features_to_replace[i]] = 0.0
-                self.opt.state[next_weight]['step'][:, features_to_replace[i]] = 0
+
+                # Check if state exists before clearing (prevent crash on frozen/grad-less layers)
+                
+                # Current Weights
+                if curr_weight in self.opt.state and 'exp_avg' in self.opt.state[curr_weight]:
+                    self.opt.state[curr_weight]['exp_avg'][features_to_replace[i], :] = 0.0
+                    self.opt.state[curr_weight]['exp_avg_sq'][features_to_replace[i], :] = 0.0
+                    self.opt.state[curr_weight]['step'][features_to_replace[i], :] = 0
+                
+                # Current Bias
+                if curr_bias in self.opt.state and 'exp_avg' in self.opt.state[curr_bias]:
+                    self.opt.state[curr_bias]['exp_avg'][features_to_replace[i]] = 0.0
+                    self.opt.state[curr_bias]['exp_avg_sq'][features_to_replace[i]] = 0.0
+                    self.opt.state[curr_bias]['step'][features_to_replace[i]] = 0
+                
+                # Next Weights (Outgoing)
+                if next_weight in self.opt.state and 'exp_avg' in self.opt.state[next_weight]:
+                     self.opt.state[next_weight]['exp_avg'][:, features_to_replace[i]] = 0.0
+                     self.opt.state[next_weight]['exp_avg_sq'][:, features_to_replace[i]] = 0.0
+                     self.opt.state[next_weight]['step'][:, features_to_replace[i]] = 0
+
+                # self.opt.state[curr_weight]['exp_avg'][features_to_replace[i], :] = 0.0
+                # self.opt.state[curr_bias]['exp_avg'][features_to_replace[i]] = 0.0
+                # self.opt.state[curr_weight]['exp_avg_sq'][features_to_replace[i], :] = 0.0
+                # self.opt.state[curr_bias]['exp_avg_sq'][features_to_replace[i]] = 0.0
+                # self.opt.state[curr_weight]['step'][features_to_replace[i], :] = 0
+                # self.opt.state[curr_bias]['step'][features_to_replace[i]] = 0
+                # # output weights
+                # self.opt.state[next_weight]['exp_avg'][:, features_to_replace[i]] = 0.0
+                # self.opt.state[next_weight]['exp_avg_sq'][:, features_to_replace[i]] = 0.0
+                # self.opt.state[next_weight]['step'][:, features_to_replace[i]] = 0
 
     def gen_and_test(self, features):
         """
@@ -649,7 +667,7 @@ class ConvGnT_for_ConvNet(object):
             else:
                 current_layer = self.net[i * 2]
                 next_layer = self.net[i * 2 + 2]
-            # --
+            # -------
             
             # if isinstance(self.net[i * 2], Conv2d) and isinstance(self.net[i * 2 + 2], Linear):
             if isinstance(current_layer, Conv2d) and isinstance(next_layer, Linear):
@@ -679,18 +697,27 @@ class ConvGnT_for_ConvNet(object):
                     curr_weight = self.net[i * 2].weight
                     next_weight = self.net[i * 2 + 2].weight
                 # -----------------------------------
-                # input weights
-                self.opt.state[curr_bias]['exp_avg'][features_to_replace_input_indices[i]] = 0.0
-                self.opt.state[curr_weight]['exp_avg_sq'][features_to_replace_input_indices[i], :] = 0.0
-                self.opt.state[curr_bias]['exp_avg_sq'][features_to_replace_input_indices[i]] = 0.0
-                self.opt.state[curr_weight]['step'][features_to_replace_input_indices[i], :] = 0
-                self.opt.state[curr_bias]['step'][features_to_replace_input_indices[i]] = 0
-                # output weights
-                self.opt.state[next_weight]['exp_avg'][:, features_to_replace_output_indices[i]] = 0.0
-                self.opt.state[next_weight]['exp_avg_sq'][:, features_to_replace_output_indices[i]] = 0.0
-                self.opt.state[next_weight]['step'][:, features_to_replace_output_indices[i]] = 0
+                # Input Weights
+                if curr_bias in self.opt.state and 'exp_avg' in self.opt.state[curr_bias]:
+                    self.opt.state[curr_bias]['exp_avg'][features_to_replace_input_indices[i]] = 0.0
+                    self.opt.state[curr_bias]['exp_avg_sq'][features_to_replace_input_indices[i]] = 0.0
+                    self.opt.state[curr_bias]['step'][features_to_replace_input_indices[i]] = 0
+                    
+                if curr_weight in self.opt.state and 'exp_avg' in self.opt.state[curr_weight]:
+                    self.opt.state[curr_weight]['exp_avg_sq'][features_to_replace_input_indices[i], :] = 0.0
+                    self.opt.state[curr_weight]['step'][features_to_replace_input_indices[i], :] = 0
+                    # Note: Original code missed clearing 'exp_avg' for curr_weight in ConvGnT, adding it here for consistency if needed, 
+                    # but following your previous snippet exactly for safety:
+                    # Your previous snippet didn't have exp_avg for curr_weight here, likely unintentional or specific to Sparse updates?
+                    # Assuming standard Adam:
+                    if 'exp_avg' in self.opt.state[curr_weight]:
+                         self.opt.state[curr_weight]['exp_avg'][features_to_replace_input_indices[i], :] = 0.0
 
-                
+                # Output Weights
+                if next_weight in self.opt.state and 'exp_avg' in self.opt.state[next_weight]:
+                    self.opt.state[next_weight]['exp_avg'][:, features_to_replace_output_indices[i]] = 0.0
+                    self.opt.state[next_weight]['exp_avg_sq'][:, features_to_replace_output_indices[i]] = 0.0
+                    self.opt.state[next_weight]['step'][:, features_to_replace_output_indices[i]] = 0
                 
                 # input weights
                 # self.opt.state[self.net[i * 2].bias]['exp_avg'][features_to_replace_input_indices[i]] = 0.0
@@ -723,6 +750,7 @@ class ConvGnT_for_ConvNet(object):
                     should_compensate = True
                 # -------------------------------
 
+                # Reset INPUT weights
                 if isinstance(current_layer, Linear):
                     current_layer.weight.data[features_to_replace_input_indices[i], :] *= 0.0
                     current_layer.weight.data[features_to_replace_input_indices[i], :] -= - \
@@ -739,10 +767,46 @@ class ConvGnT_for_ConvNet(object):
                 # Update bias to correct for the removed features
                 """
                 if should_compensate:
-                    next_layer.bias.data += (next_layer.weight.data[:, features_to_replace_output_indices[i]] * \
-                                                    self.mean_feature_act[i][features_to_replace_input_indices[i]] / \
-                                                    (1 - self.decay_rate ** self.ages[i][features_to_replace_input_indices[i]])).sum(dim=1)
-                  
+                    # Calculate scalar correction factor: (1 / (1 - decay^age)) * Mean_Act
+                    correction_scalar = self.mean_feature_act[i][features_to_replace_input_indices[i]] / \
+                                        (1 - self.decay_rate ** self.ages[i][features_to_replace_input_indices[i]])
+
+                    if isinstance(next_layer, Conv2d):
+                        # --- Case A: Conv -> Conv ---
+                        # Weight shape: (Out, In, K, K)
+                        # We must sum over (input_channels, K, K) to get a 1D vector for bias
+                        
+                        # Reshape scalar to (1, N_replaced, 1, 1) to broadcast over filters
+                        c_term = correction_scalar.view(1, -1, 1, 1)
+                        
+                        # Slice weights: (Out, N_replaced, K, K)
+                        w_slice = next_layer.weight.data[:, features_to_replace_output_indices[i]]
+                        
+                        # Multiply and Sum over (dim 1, 2, 3) -> result shape (Out)
+                        bias_update = (w_slice * c_term).sum(dim=(1, 2, 3))
+                        next_layer.bias.data += bias_update
+
+                    elif isinstance(next_layer, Linear):
+                        # --- Case B: Conv -> Linear (Flattened) or Linear -> Linear ---
+                        
+                        if isinstance(current_layer, Conv2d):
+                            # Special handling: correction_scalar has size (N_filters).
+                            # Linears input is (N_filters * H * W).
+                            # We must repeat the scalar to match the expanded indices.
+                            expansion_factor = self.num_last_filter_outputs # e.g. 64 (8*8)
+                            c_term = correction_scalar.repeat_interleave(expansion_factor)
+                        else:
+                            # Standard Linear->Linear
+                            c_term = correction_scalar
+
+                        # Weight shape: (Out, In_Features)
+                        # Slice: (Out, N_replaced_expanded)
+                        w_slice = next_layer.weight.data[:, features_to_replace_output_indices[i]]
+                        
+                        # Multiply and Sum over dim 1 -> result shape (Out)
+                        bias_update = (w_slice * c_term).sum(dim=1)
+                        next_layer.bias.data += bias_update # Add to existing bias
+
                 
                 """
                 # Set the outgoing weights and ages to zero
