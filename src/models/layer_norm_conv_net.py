@@ -126,6 +126,49 @@ class ConvNetWithFCLayerNorm(nn.Module):
             # Backward compatibility: return raw list
             return output, feature_tensors
 
+    def get_plasticity_map(self):
+        """
+        Returns a list of dictionaries describing the topology for plasticity algorithms.
+        """
+        return [
+            {
+                'name': 'conv1',
+                'weight_module': self.conv1,
+                'outgoing_module': self.conv1,
+                'outgoing_feeds_into_norm': False
+            },
+            {
+                'name': 'conv2',
+                'weight_module': self.conv2,
+                'outgoing_module': self.conv2,
+                'outgoing_feeds_into_norm': False
+            },
+            {
+                'name': 'conv3',
+                'weight_module': self.conv3,
+                'outgoing_module': self.conv3,
+                'outgoing_feeds_into_norm': False
+            },
+            {
+                'name': 'fc1',
+                'weight_module': self.fc1,
+                'outgoing_module': self.fc1,
+                'outgoing_feeds_into_norm': True  # Feeds into self.ln1
+            },
+            {
+                'name': 'fc2',
+                'weight_module': self.fc2,
+                'outgoing_module': self.fc2,
+                'outgoing_feeds_into_norm': True  # Feeds into self.ln2
+            },
+            {
+                'name': 'fc3',
+                'weight_module': self.fc3,
+                'outgoing_module': self.fc3,
+                'outgoing_feeds_into_norm': False
+            }
+        ]
+
     def get_layer_names(self):
         """Return the semantic names of feature layers."""
         return self.feature_names.copy()
@@ -259,6 +302,49 @@ class ConvNet_conv_and_FC_LayerNorm(nn.Module):
         else:
             # Backward compatibility: return raw list
             return output, feature_tensors
+
+    def get_plasticity_map(self):
+        """
+        Returns a list of dictionaries describing the topology for plasticity algorithms.
+        """
+        return [
+            {
+                'name': 'conv1',
+                'weight_module': self.conv1,
+                'outgoing_module': self.conv1,
+                'outgoing_feeds_into_norm': True  # Feeds into self.ln_conv1
+            },
+            {
+                'name': 'conv2',
+                'weight_module': self.conv2,
+                'outgoing_module': self.conv2,
+                'outgoing_feeds_into_norm': True  # Feeds into self.ln_conv2
+            },
+            {
+                'name': 'conv3',
+                'weight_module': self.conv3,
+                'outgoing_module': self.conv3,
+                'outgoing_feeds_into_norm': True  # Feeds into self.ln_conv3
+            },
+            {
+                'name': 'fc1',
+                'weight_module': self.fc1,
+                'outgoing_module': self.fc1,
+                'outgoing_feeds_into_norm': True  # Feeds into self.ln_fc1
+            },
+            {
+                'name': 'fc2',
+                'weight_module': self.fc2,
+                'outgoing_module': self.fc2,
+                'outgoing_feeds_into_norm': True  # Feeds into self.ln_fc2
+            },
+            {
+                'name': 'fc3',
+                'weight_module': self.fc3,
+                'outgoing_module': self.fc3,
+                'outgoing_feeds_into_norm': False
+            }
+        ]
 
     def get_layer_names(self):
         """Return the semantic names of feature layers."""

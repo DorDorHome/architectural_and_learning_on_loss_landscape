@@ -51,7 +51,7 @@ class RR_GnT2_for_ConvNet(ConvGnT_for_ConvNet):
 
     def __init__(
         self,
-        net: List[Module],
+        net: Union[List[Module], nn.Module], 
         hidden_activation: str,
         opt: AdamGnT,
         config: RRCBP2Config,
@@ -87,18 +87,31 @@ class RR_GnT2_for_ConvNet(ConvGnT_for_ConvNet):
         
         # Track conv output multipliers for handling Conv2d -> Linear transitions
         self._conv_output_multipliers: List[int] = []
+        
+        
         for layer_idx in range(self.num_hidden_layers):
-            current_layer = self.net[layer_idx * 2]
-            next_layer = self.net[layer_idx * 2 + 2]
+            
+            #Use Map or Legacy Logic
+            if self.use_map:
+                map_item = self.plasticity_map[layer_idx]
+                current_layer = map_item['weight_module']
+                next_layer = map_item['outgoing_module']
+            else:
+                current_layer = self.net[layer_idx * 2]
+                next_layer = self.net[layer_idx * 2 + 2]
+
             if isinstance(current_layer, Conv2d) and isinstance(next_layer, Linear):
                 self._conv_output_multipliers.append(num_last_filter_outputs)
             else:
                 self._conv_output_multipliers.append(1)
-        
+       
         # Activation function for chi0 computation
         self.hidden_activation = hidden_activation or "linear"
         self._leaky_slope = 0.01
-        for module in net:
+        # FIX: Handle both List and Module types for iteration
+        iterable_net = net if isinstance(net, list) else net.modules()
+        
+        for module in iterable_net:
             if isinstance(module, nn.LeakyReLU):
                 self._leaky_slope = float(module.negative_slope)
                 break
@@ -136,7 +149,13 @@ class RR_GnT2_for_ConvNet(ConvGnT_for_ConvNet):
                 if count == 0:
                     continue
 
-                current_layer = self.net[layer_idx * 2]
+                # REFACTOR: Map or Legacy
+                if self.use_map:
+                    map_item = self.plasticity_map[layer_idx]
+                    current_layer = map_item['weight_module']
+                else:
+                    current_layer = self.net[layer_idx * 2]
+                
                 
                 # Ensure covariance state is initialized
                 self._ensure_covariance(layer_idx, current_layer)
@@ -222,7 +241,12 @@ class RR_GnT2_for_ConvNet(ConvGnT_for_ConvNet):
         Returns:
             H_prev: Tensor of shape (d, m) where d is input dimension
         """
-        current_layer = self.net[layer_idx * 2]
+        # REFACTOR: Map or Legacy
+        if self.use_map:
+            current_layer = self.plasticity_map[layer_idx]['weight_module']
+        else:
+            current_layer = self.net[layer_idx * 2]
+        
         
         if isinstance(current_layer, Conv2d):
             # Get layer input
@@ -253,7 +277,13 @@ class RR_GnT2_for_ConvNet(ConvGnT_for_ConvNet):
 
     def _kept_indices(self, layer_idx: int, replace_idx: Tensor) -> Tensor:
         """Get indices of units that are kept (not replaced)."""
-        layer = self.net[layer_idx * 2]
+        
+        # REFACTOR: Map or Legacy
+        if self.use_map:
+            layer = self.plasticity_map[layer_idx]['weight_module']
+        else:
+            layer = self.net[layer_idx * 2]
+
         if isinstance(layer, Conv2d):
             total = layer.out_channels
         elif isinstance(layer, Linear):
@@ -287,8 +317,17 @@ class RR_GnT2_for_ConvNet(ConvGnT_for_ConvNet):
         """
         Core replacement logic following the algorithm guide.
         """
-        layer = self.net[layer_idx * 2]
-        next_layer = self.net[layer_idx * 2 + 2]
+        # REFACTOR: Map or Legacy
+        should_compensate = True
+        if self.use_map:
+            map_item = self.plasticity_map[layer_idx]
+            layer = map_item['weight_module']
+            next_layer = map_item['outgoing_module']
+            should_compensate = not map_item.get('outgoing_feeds_into_norm', False)
+        else:
+            layer = self.net[layer_idx * 2]
+            next_layer = self.net[layer_idx * 2 + 2]
+        
         config = self.config
 
         # Get flattened weight matrix
@@ -359,7 +398,9 @@ class RR_GnT2_for_ConvNet(ConvGnT_for_ConvNet):
 
         for idx_pos, unit_idx in enumerate(replace_input_idx.tolist()):
             # (1) Bias transfer
-            if self.ages[layer_idx][unit_idx] > 0:
+            # LOGIC FIX: Check if we should compensate for bias shift 
+            # (i.e. don't if next layer goes to BatchNorm)
+            if should_compensate and self.ages[layer_idx][unit_idx] > 0:
                 bias_corrected_act = self.mean_feature_act[layer_idx][unit_idx] / (
                     1 - self.decay_rate ** self.ages[layer_idx][unit_idx]
                 )
@@ -548,7 +589,11 @@ class RR_GnT2_for_ConvNet(ConvGnT_for_ConvNet):
         epsilon = self.config.epsilon_micro_seed
         use_seed = self.config.use_micro_seed and epsilon > 0.0
         
-        current_layer = self.net[layer_idx * 2]
+        # Map or Legacy for current_layer resolution
+        if self.use_map:
+            current_layer = self.plasticity_map[layer_idx]['weight_module']
+        else:
+            current_layer = self.net[layer_idx * 2]
         
         if isinstance(current_layer, Conv2d) and isinstance(next_layer, Linear):
             # Conv -> Linear transition
@@ -607,7 +652,12 @@ class RR_GnT2_for_ConvNet(ConvGnT_for_ConvNet):
         stats: LayerReplacementStats2,
     ) -> Dict[str, float]:
         """Compute rank metrics for logging."""
-        layer = self.net[layer_idx * 2]
+        # Map or Legacy
+        if self.use_map:
+            layer = self.plasticity_map[layer_idx]['weight_module']
+        else:
+            layer = self.net[layer_idx * 2]
+        
         weight = self._flatten_weight(layer)
         
         if self.config.diag_sigma_only:
@@ -711,41 +761,56 @@ class RR_GnT2_for_ConvNet(ConvGnT_for_ConvNet):
         if replace_input_idx.numel() == 0:
             return
 
-        layer = self.net[layer_idx * 2]
-        next_layer = self.net[layer_idx * 2 + 2]
+        # Map or Legacy
+        if self.use_map:
+            map_item = self.plasticity_map[layer_idx]
+            layer = map_item['weight_module']
+            next_layer = map_item['outgoing_module']
+        else:
+            layer = self.net[layer_idx * 2]
+            next_layer = self.net[layer_idx * 2 + 2]
 
         if isinstance(self.opt, AdamGnT):
             # Reset for current layer
-            if isinstance(layer, Conv2d):
-                self.opt.state[layer.weight]["exp_avg"][replace_input_idx, :, :, :] = 0.0
-                self.opt.state[layer.weight]["exp_avg_sq"][replace_input_idx, :, :, :] = 0.0
-                self.opt.state[layer.weight]["step"][replace_input_idx, :, :, :] = 0
-            elif isinstance(layer, Linear):
-                self.opt.state[layer.weight]["exp_avg"][replace_input_idx, :] = 0.0
-                self.opt.state[layer.weight]["exp_avg_sq"][replace_input_idx, :] = 0.0
-                self.opt.state[layer.weight]["step"][replace_input_idx, :] = 0
+            # LOGIC FIX: Check if state exists using dict .get() or `in` check 
+            # to be robust against frozen layers or missing Grads
             
-            self.opt.state[layer.bias]["exp_avg"][replace_input_idx] = 0.0
-            self.opt.state[layer.bias]["exp_avg_sq"][replace_input_idx] = 0.0
-            self.opt.state[layer.bias]["step"][replace_input_idx] = 0
+            
+            # --- Current Weights ---
+            if layer.weight in self.opt.state and 'exp_avg' in self.opt.state[layer.weight]:            
+                # Reset for current layer
+                if isinstance(layer, Conv2d):
+                    self.opt.state[layer.weight]["exp_avg"][replace_input_idx, :, :, :] = 0.0
+                    self.opt.state[layer.weight]["exp_avg_sq"][replace_input_idx, :, :, :] = 0.0
+                    self.opt.state[layer.weight]["step"][replace_input_idx, :, :, :] = 0
+                elif isinstance(layer, Linear):
+                    self.opt.state[layer.weight]["exp_avg"][replace_input_idx, :] = 0.0
+                    self.opt.state[layer.weight]["exp_avg_sq"][replace_input_idx, :] = 0.0
+                    self.opt.state[layer.weight]["step"][replace_input_idx, :] = 0
+            # --- Current Bias ---
+            if layer.bias in self.opt.state and 'exp_avg' in self.opt.state[layer.bias]:               
+                self.opt.state[layer.bias]["exp_avg"][replace_input_idx] = 0.0
+                self.opt.state[layer.bias]["exp_avg_sq"][replace_input_idx] = 0.0
+                self.opt.state[layer.bias]["step"][replace_input_idx] = 0
 
             # Reset for next layer outgoing weights
-            if isinstance(layer, Conv2d) and isinstance(next_layer, Linear):
-                multiplier = self._conv_output_multipliers[layer_idx]
-                for idx in replace_input_idx.tolist():
-                    start = idx * multiplier
-                    end = start + multiplier
-                    self.opt.state[next_layer.weight]["exp_avg"][:, start:end] = 0.0
-                    self.opt.state[next_layer.weight]["exp_avg_sq"][:, start:end] = 0.0
-                    self.opt.state[next_layer.weight]["step"][:, start:end] = 0
-            elif isinstance(next_layer, Conv2d):
-                self.opt.state[next_layer.weight]["exp_avg"][:, replace_input_idx, :, :] = 0.0
-                self.opt.state[next_layer.weight]["exp_avg_sq"][:, replace_input_idx, :, :] = 0.0
-                self.opt.state[next_layer.weight]["step"][:, replace_input_idx, :, :] = 0
-            elif isinstance(next_layer, Linear):
-                self.opt.state[next_layer.weight]["exp_avg"][:, replace_input_idx] = 0.0
-                self.opt.state[next_layer.weight]["exp_avg_sq"][:, replace_input_idx] = 0.0
-                self.opt.state[next_layer.weight]["step"][:, replace_input_idx] = 0
+            if next_layer.weight in self.opt.state and 'exp_avg' in self.opt.state[next_layer.weight]:
+                if isinstance(layer, Conv2d) and isinstance(next_layer, Linear):
+                    multiplier = self._conv_output_multipliers[layer_idx]
+                    for idx in replace_input_idx.tolist():
+                        start = idx * multiplier
+                        end = start + multiplier
+                        self.opt.state[next_layer.weight]["exp_avg"][:, start:end] = 0.0
+                        self.opt.state[next_layer.weight]["exp_avg_sq"][:, start:end] = 0.0
+                        self.opt.state[next_layer.weight]["step"][:, start:end] = 0
+                elif isinstance(next_layer, Conv2d):
+                    self.opt.state[next_layer.weight]["exp_avg"][:, replace_input_idx, :, :] = 0.0
+                    self.opt.state[next_layer.weight]["exp_avg_sq"][:, replace_input_idx, :, :] = 0.0
+                    self.opt.state[next_layer.weight]["step"][:, replace_input_idx, :, :] = 0
+                elif isinstance(next_layer, Linear):
+                    self.opt.state[next_layer.weight]["exp_avg"][:, replace_input_idx] = 0.0
+                    self.opt.state[next_layer.weight]["exp_avg_sq"][:, replace_input_idx] = 0.0
+                    self.opt.state[next_layer.weight]["step"][:, replace_input_idx] = 0
 
         self.accumulated_num_features_to_replace[layer_idx] = 0.0
 
