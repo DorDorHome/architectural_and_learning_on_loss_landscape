@@ -94,7 +94,7 @@ data:
 
 # network architecture:
 net:
-  type: "ConvNet_FC_layer_norm" #options are: "ConvNet_batch_norm", "ConvNet_FC_layer_norm", "ConvNet_conv_and_FC_layer_norm" "ConvNet_norm", "vgg_custom" #options: "ConvNet", "vgg_custom" , "resnet_custom" , 'full_rank_resnet_custom'
+  type: "ConvNet_batch_norm" #options are: "ConvNet_batch_norm", "ConvNet_FC_layer_norm", "ConvNet_conv_and_FC_layer_norm" "ConvNet_norm", "vgg_custom" #options: "ConvNet", "vgg_custom" , "resnet_custom" , 'full_rank_resnet_custom'
   network_class: "conv"
   device: ${device}
   netparams:
@@ -118,7 +118,7 @@ net:
 
 # learning algorithm:
 learner:
-  type: 'rr_cbp_e_2'    # 'rr_cbp_e_2'  'rr_cbp2' 'rr_cbp' #options: 'backprop' 'basic_continous_backprop', 'rr_cbp'
+  type: 'rr_cbp2'   # 'rr_cbp_e_2'  'rr_cbp2' 'rr_cbp' #options: 'backprop' 'basic_continous_backprop', 'rr_cbp'
   network_class: ${net.network_class}  # Use the network class from the net configuration
   init: 'kaiming'
   device: ${device}

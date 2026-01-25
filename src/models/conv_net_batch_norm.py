@@ -57,9 +57,7 @@ class ConvNetWithBatchNorm(nn.Module):
             'fc1_output(with bn)',
             'fc2_output(with bn)'
         ]
-        
-        
-        
+
 
     def predict(self, x: torch.Tensor, return_feature_container=False):
         """
@@ -93,6 +91,45 @@ class ConvNetWithBatchNorm(nn.Module):
         """
         output, _ = self.predict(x)
         return output
+    
+
+    def get_plasticity_map(self):
+        """
+        Returns a list of dictionaries describing the topology for plasticity algorithms.
+        """
+        return [
+            {
+                'name': 'conv1',
+                'weight_module': self.conv1,
+                'outgoing_module': self.conv2,
+                'outgoing_feeds_into_norm': True  # conv2 is followed by bn_conv2
+            },
+            {
+                'name': 'conv2',
+                'weight_module': self.conv2,
+                'outgoing_module': self.conv3,
+                'outgoing_feeds_into_norm': True  # conv3 is followed by bn_conv3
+            },
+            {
+                'name': 'conv3',
+                'weight_module': self.conv3,
+                'outgoing_module': self.fc1,
+                'outgoing_feeds_into_norm': True  # fc1 is followed by bn_fc1
+            },
+            {
+                'name': 'fc1',
+                'weight_module': self.fc1,
+                'outgoing_module': self.fc2,
+                'outgoing_feeds_into_norm': True  # fc2 is followed by bn_fc2
+            },
+            {
+                'name': 'fc2',
+                'weight_module': self.fc2,
+                'outgoing_module': self.fc3,
+                'outgoing_feeds_into_norm': False # fc3 is NOT followed by BN
+            }
+        ]
+
 
     def get_layer_names(self):
         return self.feature_names.copy()

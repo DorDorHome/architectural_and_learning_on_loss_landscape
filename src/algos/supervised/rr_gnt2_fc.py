@@ -100,7 +100,10 @@ class RR_GnT2_for_FC(GnT_for_FC):
         # Activation function for chi0 computation
         self.hidden_activation = hidden_activation or "linear"
         self._leaky_slope = 0.01
-        for module in net:
+        
+        # Safer iteration for LeakyReLU parameter detection (handles List or Module)
+        iterable_net = net if isinstance(net, list) else net.modules()
+        for module in iterable_net:
             if isinstance(module, nn.LeakyReLU):
                 self._leaky_slope = float(module.negative_slope)
                 break
@@ -136,8 +139,13 @@ class RR_GnT2_for_FC(GnT_for_FC):
                 if count == 0:
                     continue
 
-                layer = self.net[layer_idx * 2]
-                next_layer = self.net[layer_idx * 2 + 2]
+                # Map or Legacy
+                if self.use_map:
+                    map_item = self.plasticity_map[layer_idx]
+                    layer = map_item['weight_module']
+                    # next_layer will be resolved in _replace_units
+                else:
+                    layer = self.net[layer_idx * 2]
                 
                 # Ensure covariance state is initialized
                 self._ensure_covariance(layer_idx, layer)
@@ -224,7 +232,12 @@ class RR_GnT2_for_FC(GnT_for_FC):
 
     def _kept_indices(self, layer_idx: int, replace_idx: Tensor) -> Tensor:
         """Get indices of units that are kept (not replaced)."""
-        layer = self.net[layer_idx * 2]
+        # FIX: Use Map Logic or Legacy
+        if self.use_map:
+            layer = self.plasticity_map[layer_idx]['weight_module']
+        else:
+            layer = self.net[layer_idx * 2]
+
         if not isinstance(layer, Linear):
             raise TypeError("Unsupported layer type for keep index computation")
         total = layer.out_features
@@ -247,8 +260,20 @@ class RR_GnT2_for_FC(GnT_for_FC):
         Section 5: RR-CBP (Σ-orthogonal, unit Σ-norm)
         Section 6: RR-CBP-E (Σ-orthogonal with energy budget)
         """
-        layer = self.net[layer_idx * 2]
-        next_layer = self.net[layer_idx * 2 + 2]
+        
+        # [FIX] Logic for bias compensation
+        should_compensate = True
+        # Use Map Logic or Legacy
+        if self.use_map:
+            map_item = self.plasticity_map[layer_idx]
+            layer = map_item['weight_module']
+            next_layer = map_item['outgoing_module']
+            should_compensate = not map_item.get('outgoing_feeds_into_norm', False)
+        else:
+            layer = self.net[layer_idx * 2]
+            next_layer = self.net[layer_idx * 2 + 2]
+            should_compensate = True
+
         config = self.config
         
         weight_matrix = layer.weight.data
@@ -317,7 +342,7 @@ class RR_GnT2_for_FC(GnT_for_FC):
 
         for unit_idx in replace_idx.tolist():
             # (1) Bias transfer from old unit to next layer
-            if self.ages[layer_idx][unit_idx] > 0:
+            if should_compensate and self.ages[layer_idx][unit_idx] > 0:
                 bias_corrected_act = self.mean_feature_act[layer_idx][unit_idx] / (
                     1 - self.decay_rate ** self.ages[layer_idx][unit_idx]
                 )
@@ -524,7 +549,13 @@ class RR_GnT2_for_FC(GnT_for_FC):
         stats: LayerReplacementStats2,
     ) -> Dict[str, float]:
         """Compute rank and conditioning metrics for logging."""
-        layer = self.net[layer_idx * 2]
+        
+        # Map Logic or Legacy
+        if self.use_map:
+            layer = self.plasticity_map[layer_idx]['weight_module']
+        else:
+            layer = self.net[layer_idx * 2]
+            
         weight = layer.weight.data
         
         # Compute preactivation Gram: G_pre = W Σ W^T
@@ -608,22 +639,34 @@ class RR_GnT2_for_FC(GnT_for_FC):
         if replace_idx.numel() == 0:
             return
 
-        layer = self.net[layer_idx * 2]
-        next_layer = self.net[layer_idx * 2 + 2]
+        # Use Map Logic or Legacy
+        if self.use_map:
+            map_item = self.plasticity_map[layer_idx]
+            layer = map_item['weight_module']
+            next_layer = map_item['outgoing_module']
+        else:
+            layer = self.net[layer_idx * 2]
+            next_layer = self.net[layer_idx * 2 + 2]
+
 
         if isinstance(self.opt, AdamGnT):
             # Reset optimizer state for incoming weights and bias
-            self.opt.state[layer.weight]["exp_avg"][replace_idx, :] = 0.0
-            self.opt.state[layer.weight]["exp_avg_sq"][replace_idx, :] = 0.0
-            self.opt.state[layer.weight]["step"][replace_idx, :] = 0
-            self.opt.state[layer.bias]["exp_avg"][replace_idx] = 0.0
-            self.opt.state[layer.bias]["exp_avg_sq"][replace_idx] = 0.0
-            self.opt.state[layer.bias]["step"][replace_idx] = 0
+            if layer.weight in self.opt.state and 'exp_avg' in self.opt.state[layer.weight]:
+                self.opt.state[layer.weight]["exp_avg"][replace_idx, :] = 0.0
+                self.opt.state[layer.weight]["exp_avg_sq"][replace_idx, :] = 0.0
+                self.opt.state[layer.weight]["step"][replace_idx, :] = 0
+                
+            # --- Current Bias ---
+            if layer.bias in self.opt.state and 'exp_avg' in self.opt.state[layer.bias]:            
+                self.opt.state[layer.bias]["exp_avg"][replace_idx] = 0.0
+                self.opt.state[layer.bias]["exp_avg_sq"][replace_idx] = 0.0
+                self.opt.state[layer.bias]["step"][replace_idx] = 0
 
             # Reset optimizer state for outgoing weights
-            self.opt.state[next_layer.weight]["exp_avg"][:, replace_idx] = 0.0
-            self.opt.state[next_layer.weight]["exp_avg_sq"][:, replace_idx] = 0.0
-            self.opt.state[next_layer.weight]["step"][:, replace_idx] = 0
+            if next_layer.weight in self.opt.state and 'exp_avg' in self.opt.state[next_layer.weight]:
+                self.opt.state[next_layer.weight]["exp_avg"][:, replace_idx] = 0.0
+                self.opt.state[next_layer.weight]["exp_avg_sq"][:, replace_idx] = 0.0
+                self.opt.state[next_layer.weight]["step"][:, replace_idx] = 0
 
         self.accumulated_num_features_to_replace[layer_idx] = 0.0
 

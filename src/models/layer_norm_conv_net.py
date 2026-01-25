@@ -304,41 +304,34 @@ class ConvNet_conv_and_FC_LayerNorm(nn.Module):
             {
                 'name': 'conv1',
                 'weight_module': self.conv1,
-                'outgoing_module': self.conv1,
-                'outgoing_feeds_into_norm': True  # Feeds into self.ln_conv1
+                'outgoing_module': self.conv2,
+                'outgoing_feeds_into_norm': True  # conv2 output IS normalized (ln_conv2)
             },
             {
                 'name': 'conv2',
                 'weight_module': self.conv2,
-                'outgoing_module': self.conv2,
-                'outgoing_feeds_into_norm': True  # Feeds into self.ln_conv2
+                'outgoing_module': self.conv3,
+                'outgoing_feeds_into_norm': True  # conv3 output IS normalized (ln_conv3)
             },
             {
                 'name': 'conv3',
                 'weight_module': self.conv3,
-                'outgoing_module': self.conv3,
-                'outgoing_feeds_into_norm': True  # Feeds into self.ln_conv3
+                'outgoing_module': self.fc1,
+                'outgoing_feeds_into_norm': True  # fc1 output IS normalized (ln_fc1)
             },
             {
                 'name': 'fc1',
                 'weight_module': self.fc1,
-                'outgoing_module': self.fc1,
-                'outgoing_feeds_into_norm': True  # Feeds into self.ln_fc1
+                'outgoing_module': self.fc2,
+                'outgoing_feeds_into_norm': True  # fc2 output IS normalized (ln_fc2)
             },
             {
                 'name': 'fc2',
                 'weight_module': self.fc2,
-                'outgoing_module': self.fc2,
-                'outgoing_feeds_into_norm': True  # Feeds into self.ln_fc2
-            },
-            {
-                'name': 'fc3',
-                'weight_module': self.fc3,
                 'outgoing_module': self.fc3,
-                'outgoing_feeds_into_norm': False
+                'outgoing_feeds_into_norm': False # fc3 is not normalized
             }
         ]
-
     def get_layer_names(self):
         """Return the semantic names of feature layers."""
         return self.feature_names.copy()
