@@ -83,6 +83,29 @@ class RankRestoringCBP2_for_ConvNet(Learner):
         Calculate the spatial dimensions (H x W) of the last convolutional layer
         before it gets flattened into a linear layer.
         """
+        # Support Map-based topology first
+        if hasattr(self.net, "get_plasticity_map"):
+            try:
+                plasticity_map = self.net.get_plasticity_map()
+                for item in plasticity_map:
+                    current_layer = item['weight_module']
+                    outgoing_module = item['outgoing_module']
+                    
+                    # Detect the Conv2d -> Linear transition
+                    if isinstance(current_layer, Conv2d) and isinstance(outgoing_module, Linear):
+                        # Calculate spatial area: In_Features (Linear) / Out_Channels (Conv)
+                        num_last_filter_outputs = outgoing_module.in_features // current_layer.out_channels
+                        return max(1, int(num_last_filter_outputs))
+                
+                # If loop finishes without finding transition, return 1 (default)
+                return 1
+            except Exception:
+                # Fallback to legacy check logic if map parsing fails
+                pass
+        
+        
+        
+        # Legacy Logic: Relies on self.net.layers list and stride-2 assumption
         layers = cast(Sequence[Module], self.net.layers)
         last_conv_idx = -1
         first_linear_idx = -1

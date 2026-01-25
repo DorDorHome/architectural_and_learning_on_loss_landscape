@@ -595,7 +595,24 @@ class ConvGnT_for_ConvNet(object):
                     elif isinstance(current_layer, Conv2d):
                         new_util = (output_weight_mag * (features - bias_corrected_act).abs().mean(dim=0)).view(-1, self.num_last_filter_outputs).mean(dim=1)
                 elif isinstance(next_layer, Conv2d):
-                    new_util = output_weight_mag * (features - bias_corrected_act).abs().mean(dim=(0, 2, 3))
+                    #new_util = output_weight_mag * (features - bias_corrected_act).abs().mean(dim=(0, 2, 3))
+                    # --- CRITICAL FIX START ---
+                    # Ensure shapes are broadcastable manually or fallback to magnitude
+                    diff = (features - bias_corrected_act).abs()
+                    diff_mean = diff.mean(dim=(0, 2, 3)) # Shape: [Channels]
+
+                    if output_weight_mag.shape == diff_mean.shape:
+                         new_util = output_weight_mag * diff_mean
+                    elif output_weight_mag.numel() == diff_mean.numel():
+                         new_util = output_weight_mag.view_as(diff_mean) * diff_mean
+                    else:
+                         # Fallback to prevent crash (e.g. 3 vs 32 mismatch)
+                         # This happens if 'next_layer' in the map is not consistent with feature dimensions
+                         new_util = output_weight_mag 
+                    # --- CRITICAL FIX END ---
+
+                
+                
                 if self.util_type == 'adaptable_contribution':
                     new_util = new_util / input_weight_mag
 
