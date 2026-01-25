@@ -69,7 +69,7 @@ class RankRestoringCBP2_for_ConvNet(Learner):
 
         # Initialize the RR-GnT2 module for generate-and-test
         self.rr_gnt = RR_GnT2_for_ConvNet(
-            net=self.net.layers,
+            net=self.net,
             hidden_activation=hidden_activation,
             opt=self.opt,
             config=config,
