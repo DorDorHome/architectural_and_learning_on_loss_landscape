@@ -20,6 +20,8 @@ class SigmaGeometry:
         if self.diag_only:
             if self.sigma.dim() != 1:
                 raise ValueError("Diagonal sigma expected to be a 1-D tensor")
+            
+            # clamp the sigma to the eps to avoid singular matrices
             self._sigma_clamped = torch.clamp(self.sigma, min=self.eps)
             self._trace = float(self._sigma_clamped.sum().item())
             self._lambda_min = float(self._sigma_clamped.min().item())

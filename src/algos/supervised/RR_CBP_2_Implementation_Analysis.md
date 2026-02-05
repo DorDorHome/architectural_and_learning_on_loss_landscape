@@ -112,7 +112,7 @@ $w \leftarrow w \cdot \sqrt{q_{\text{alloc}}} / |w|_\Sigma$
 │       │ inherits from                  │ inherits from                  │
 │       ▼                                ▼                                │
 │  GnT_for_FC                      ConvGnT_for_ConvNet                    │
-│  (gnt.py)                        (gnt.py)                               │
+│  (src/algos/gnt.py)              (src/algos/gnt.py)                     │
 ├─────────────────────────────────────────────────────────────────────────┤
 │                          HELPER LAYER                                   │
 ├─────────────────────────────────────────────────────────────────────────┤
@@ -129,8 +129,8 @@ $w \leftarrow w \cdot \sqrt{q_{\text{alloc}}} / |w|_\Sigma$
 | `RankRestoringCBP2_for_ConvNet` | `rr_cbp2_conv.py` | Same as above for ConvNets |
 | `RR_GnT2_for_FC` | `rr_gnt2_fc.py` | Core algorithm: $\Sigma$-orthogonal replacement for FC layers |
 | `RR_GnT2_for_ConvNet` | `rr_gnt2_conv.py` | Core algorithm: $\Sigma$-orthogonal replacement for Conv layers |
-| `GnT_for_FC` | `gnt.py` | Base class: age tracking, utility computation, test_features |
-| `ConvGnT_for_ConvNet` | `gnt.py` | Base class for ConvNets |
+| `GnT_for_FC` | `src/algos/gnt.py` | Base class: age tracking, utility computation, test_features |
+| `ConvGnT_for_ConvNet` | `src/algos/gnt.py` | Base class for ConvNets |
 | `CovarianceState` | `rr_covariance.py` | Maintains EMA of feature covariance $\Sigma$ |
 | `SigmaGeometry` | `sigma_geometry.py` | $\Sigma$-inner products, norms, whitening |
 | `SigmaProjector` | `sigma_geometry.py` | $\Sigma$-orthogonal projection onto kept subspace |
@@ -144,14 +144,12 @@ $w \leftarrow w \cdot \sqrt{q_{\text{alloc}}} / |w|_\Sigma$
 ### 3.1 Training Loop and Per-Step Updates
 
 **Algorithm (Section 4.3 CBP pseudocode):**
-```pseudo
-for t = 1 to T do
-  $\hat{y}_t \leftarrow f_\theta(x_t)$
-  $L_t \leftarrow L(\theta; x_t, y_t)$
-  $g_t \leftarrow \nabla_\theta L_t$
-  $\theta \leftarrow OptimizerStep(\theta, g_t; \alpha)$
-  ...
-```
+- **for** $t = 1$ **to** $T$ **do**
+  - $\hat{y}_t \leftarrow f_\theta(x_t)$
+  - $L_t \leftarrow L(\theta; x_t, y_t)$
+  - $g_t \leftarrow \nabla_\theta L_t$
+  - $\theta \leftarrow \mathrm{OptimizerStep}(\theta, g_t; \alpha)$
+  - $\ldots$
 
 **Implementation:**
 
@@ -168,9 +166,10 @@ for t = 1 to T do
 def learn(self, x: torch.Tensor, target: torch.Tensor):
     x, target = x.to(self.device), target.to(self.device)
     
-    # Forward pass
+    # Forward pass to get predictions and hidden features
     output, features = self.net.predict(x)
     loss = self.loss_func(output, target)
+    self.previous_features = features
     
     # Backward pass and optimizer step
     self.opt.zero_grad()
@@ -181,6 +180,13 @@ def learn(self, x: torch.Tensor, target: torch.Tensor):
     if self.rr_gnt.config.rrcbp_enabled:
         self.opt.zero_grad()
         self.rr_gnt.gen_and_test(features=self.previous_features, batch_input=x)
+
+        # Re-run forward pass to get fresh features after network modifications
+        with torch.no_grad():
+            _, fresh_features = self.net.predict(x)
+            self.previous_features = fresh_features
+
+    return loss.detach(), output.detach()
 ```
 
 ---
@@ -188,44 +194,56 @@ def learn(self, x: torch.Tensor, target: torch.Tensor):
 ### 3.2 Utility Computation and Maturity Testing
 
 **Algorithm (Section 4.1-4.2):**
-```pseudo
-for i = 1 to N_ℓ do
-  a_{ℓ,i} ← a_{ℓ,i} + 1                    # Increment age
-  f_{ℓ,i} ← η f_{ℓ,i} + (1-η) h_{ℓ,i,t}   # Update activation EMA
-  u_{ℓ,i} ← η u_{ℓ,i} + (1-η) y_{ℓ,i}     # Update utility EMA
-end for
-
-E_ℓ ← { i | a_{ℓ,i} ≥ M }                  # Mature set
-S_ℓ ← indices of r_ℓ smallest u_hat_{ℓ,i}  # Replacement set
-```
+- **for** $i = 1$ **to** $N_\ell$ **do**
+  - $a_{\ell,i} \leftarrow a_{\ell,i} + 1$  (increment age)
+  - $f_{\ell,i} \leftarrow \eta f_{\ell,i} + (1-\eta)\, h_{\ell,i,t}$  (activation EMA)
+  - $u_{\ell,i} \leftarrow \eta u_{\ell,i} + (1-\eta)\, y_{\ell,i}$  (utility EMA)
+- $E_\ell \leftarrow \{\, i \mid a_{\ell,i} \ge M \,\}$  (mature set)
+- $S_\ell \leftarrow$ indices of $r_\ell$ smallest $\hat{u}_{\ell,i}$  (replacement set)
 
 **Implementation:**
 
-These steps are inherited from the base classes `GnT_for_FC` and `ConvGnT_for_ConvNet` in `gnt.py`. The RR-CBP2 classes reuse this logic completely.
+These steps are inherited from the base classes `GnT_for_FC` and `ConvGnT_for_ConvNet` in `src/algos/gnt.py`. The RR-CBP2 classes reuse this logic completely.
 
 | Step | Class | Method |
 |------|-------|--------|
 | Age increment | `GnT_for_FC` | `test_features()` → `self.ages[i] += 1` |
-| Activation EMA | `GnT_for_FC` | `update_utility()` → `self.mean_feature_act[layer_idx] += (1-η) * features.mean(dim=0)` |
-| Utility EMA | `GnT_for_FC` | `update_utility()` → `self.util[layer_idx] += (1-η) * new_util` |
-| Maturity check | `GnT_for_FC` | `test_features()` → `self.ages[i] >= self.maturity_threshold` |
-| Select lowest utility | `GnT_for_FC` | `test_features()` → `topk(smallest=True)` on bias-corrected utility |
+| Activation EMA (+ bias correction) | `GnT_for_FC` | `update_utility()` → EMA of `features.mean(dim=0)` and `bias_correction = 1 - decay_rate**age` |
+| Utility EMA (+ bias correction) | `GnT_for_FC` | `update_utility()` → EMA of `new_util`, then `bias_corrected_util = util / bias_correction` |
+| Maturity check | `GnT_for_FC` | `test_features()` → `eligible = where(self.ages[i] > self.maturity_threshold)` |
+| Select lowest utility | `GnT_for_FC` | `test_features()` → `topk(-bias_corrected_util[eligible], k)` (equivalently “k smallest”) |
 
-**Key code from `gnt.py` (base class):**
+**Key code from `src/algos/gnt.py` (base class):**
 ```python
-def update_utility(self, layer_idx=0, features=None):
+def update_utility(self, layer_idx=0, features=None, next_features=None):
     with torch.no_grad():
         self.util[layer_idx] *= self.decay_rate
+        # Adam-style bias correction
         bias_correction = 1 - self.decay_rate ** self.ages[layer_idx]
-        
-        # Compute output weight magnitude (how important this neuron is to next layer)
-        output_wight_mag = next_layer.weight.data.abs().mean(dim=0)
-        
-        # Contribution utility: importance × activation magnitude
+
+        # Activation EMA (with bias correction via bias_correction)
+        self.mean_feature_act[layer_idx] *= self.decay_rate
+        self.mean_feature_act[layer_idx] -= - (1 - self.decay_rate) * features.mean(dim=0)
+        bias_corrected_act = self.mean_feature_act[layer_idx] / bias_correction
+
+        # Resolve current/next modules (map-based or legacy)
+        if self.use_map:
+            map_item = self.plasticity_map[layer_idx]
+            current_layer = map_item['weight_module']
+            next_layer = map_item['outgoing_module']
+        else:
+            current_layer = self.net[layer_idx * 2]
+            next_layer = self.net[layer_idx * 2 + 2]
+
+        # Output weight magnitude (importance to next layer)
+        output_weight_mag = next_layer.weight.data.abs().mean(dim=0)
+
         if self.util_type == 'contribution':
-            new_util = output_wight_mag * features.abs().mean(dim=0)
-        
+            new_util = output_weight_mag * features.abs().mean(dim=0)
+        # ... other util_type branches omitted ...
+
         self.util[layer_idx] += (1 - self.decay_rate) * new_util
+        self.bias_corrected_util[layer_idx] = self.util[layer_idx] / bias_correction
 ```
 
 ---
@@ -324,7 +342,12 @@ class SigmaProjector:
     
     def apply(self, vec: Tensor) -> Tensor:
         """Apply projector P_Σ v = V (V^T Σ V)^{-1} V^T Σ v"""
-        sigma_vec = self.geometry.sigma @ vec
+        if self.basis.numel() == 0:
+            return torch.zeros_like(vec)
+        if self.geometry.diag_only:
+            sigma_vec = self.geometry.sigma * vec
+        else:
+            sigma_vec = self.geometry.sigma @ vec
         coeff = self.basis.t() @ sigma_vec       # V^T Σ v
         proj_coeff = self._G_inv @ coeff         # (V^T Σ V)^{-1} V^T Σ v
         return self.basis @ proj_coeff           # V (...)
@@ -335,17 +358,13 @@ class SigmaProjector:
 ### 3.5 Direction Sampling (RR-CBP2)
 
 **Algorithm (Section 5.1 and 5.4 pseudocode):**
-```pseudo
-# (2) Draw direction and project into $\Sigma$-orthogonal complement
-$u      \leftarrow GaussianSample(d_\ell)$
-w_hat  ← $(I - P_\Sigma) u$
-
-if ||$\hat{w}$||_$\Sigma$ > 0 then
-  $w_{\text{dir}} \leftarrow \hat{w} / ||\hat{w}||_\Sigma$
-else
-  $w_{\text{dir}} \leftarrow LeastCoveredDirection(W_{\text{keep}}, \Sigma_\ell)$
-end if
-```
+- **(2) Draw direction and project into $\Sigma$-orthogonal complement**
+  - $u \leftarrow \mathrm{GaussianSample}(d_\ell)$
+  - $\hat{w} \leftarrow (I - P_\Sigma)\, u$
+- **if** $\|\hat{w}\|_\Sigma > 0$ **then**
+  - $w_{\mathrm{dir}} \leftarrow \hat{w} / \|\hat{w}\|_\Sigma$
+- **else**
+  - $w_{\mathrm{dir}} \leftarrow \mathrm{LeastCoveredDirection}(W_{\mathrm{keep}}, \Sigma_\ell)$
 
 **Implementation:**
 
@@ -415,26 +434,20 @@ def least_covered_direction(self, dtype):
 
 **Algorithm (Section 6.1-6.4):**
 
-```pseudo
-# (1) Compute layer targets
-$v_{\text{tar}} \leftarrow (1 / d_\ell) * \text{trace}(\Sigma_\ell)$
-$q_{\text{tar}} \leftarrow v_{\text{tar}} / \chi_0$
-
-$Q_{\text{tar}} \leftarrow N_\ell * q_{\text{tar}}$
-$Q_{\text{res}} \leftarrow \max(Q_{\text{tar}} - Q_{\text{used}}, 0)$
-
-if $Q_{\text{res}}$ > 0 then
-  $q_{\text{alloc}} \leftarrow \min(q_{\text{tar}}, Q_{\text{res}} / r_\ell)$           # Underbudget
-else
-  $\lambda_min_\Sigma \leftarrow \text{smallest}_eigenvalue(\Sigma_\ell)$
-  $q_{\min} \leftarrow \tau * \lambda_min_\Sigma$                          # Rank-restoring floor
-  $\lambda_* \leftarrow conditioning target (optional)
-  $q_{\text{alloc}} \leftarrow \min(q_{\text{tar}}, \max(q_{\min}, \lambda_*))$     # Overbudget
-end if
-
-# (3) Scale direction
-$w_{\text{dir}} \leftarrow w_{\text{dir}} * sqrt(q_{\text{alloc}}) / ||w_{\text{dir}}||_\Sigma$
-```
+- **(1) Compute layer targets**
+  - $v_{\mathrm{tar}} \leftarrow (1 / d_\ell)\, \mathrm{trace}(\Sigma_\ell)$
+  - $q_{\mathrm{tar}} \leftarrow v_{\mathrm{tar}} / \chi_0$
+  - $Q_{\mathrm{tar}} \leftarrow N_\ell\, q_{\mathrm{tar}}$
+  - $Q_{\mathrm{res}} \leftarrow \max(Q_{\mathrm{tar}} - Q_{\mathrm{used}}, 0)$
+- **if** $Q_{\mathrm{res}} > 0$ **then** (underbudget)
+  - $q_{\mathrm{alloc}} \leftarrow \min(q_{\mathrm{tar}}, Q_{\mathrm{res}} / r_\ell)$
+- **else** (overbudget / saturated)
+  - $\lambda_{\min,\Sigma} \leftarrow \mathrm{smallest\_eigenvalue}(\Sigma_\ell)$
+  - $q_{\min} \leftarrow \tau\, \lambda_{\min,\Sigma}$  (rank-restoring floor)
+  - $\lambda_* \leftarrow$ conditioning target (optional)
+  - $q_{\mathrm{alloc}} \leftarrow \min\!\bigl(q_{\mathrm{tar}}, \max(q_{\min}, \lambda_*)\bigr)$
+- **(3) Scale direction**
+  - $w_{\mathrm{dir}} \leftarrow w_{\mathrm{dir}} \cdot \sqrt{q_{\mathrm{alloc}}} \,/\, \|w_{\mathrm{dir}}\|_\Sigma$
 
 **Implementation:**
 
@@ -453,10 +466,10 @@ if config.use_energy_budget:
     chi0 = self._resolve_chi0(activations)
     
     # v_tar = (1/d) tr(Σ)
-    v_target = geometry.trace / \max(geometry.dim, 1)
+    v_target = geometry.trace / max(geometry.dim, 1)
     
     # $q_{\text{tar}} = v_{\text{tar}} / \chi_0(\phi)$
-    q_target = v_target / \max(chi0, config.proj_eps)
+    q_target = v_target / max(chi0, config.proj_eps)
     
     # Q_used = $\Sigma_{i \in K}$ ||w_i||²_Σ
     used_energy = 0.0
@@ -478,28 +491,41 @@ if config.use_energy_budget:
 **Code from `sigma_geometry.py` (`EnergyAllocator`):**
 ```python
 class EnergyAllocator:
-    def __init__(self, q_target, layer_size, used_energy, tau, 
-                 lambda_min_sigma, lambda_star, replacements):
+    def __init__(
+        self,
+        q_target: float,
+        layer_size: int,
+        used_energy: float,
+        tau: float,
+        lambda_min_sigma: float,
+        lambda_star: Optional[float],
+        replacements: int,
+    ) -> None:
         self.q_target = q_target
-        self.total_target = q_target * layer_size           # Q_tar = N * q_tar
-        self.residual = max(0.0, self.total_target - used_energy)  # Q_res
-        self.q_min = tau * lambda_min_sigma                 # Rank-restoring floor
-    
-    def allocate(self):
+        self.layer_size = layer_size
+        self.total_target = q_target * layer_size
+        self.used_energy = used_energy
+        self.remaining = replacements
+        self.lambda_min_sigma = lambda_min_sigma
+        self.lambda_star = lambda_star
+        self.q_min = tau * lambda_min_sigma
+        self.residual = max(0.0, self.total_target - self.used_energy)
+
+    def allocate(self) -> Tuple[float, bool]:
         saturated = self.residual <= 0.0
-        
+        if self.remaining <= 0:
+            q_alloc = max(self.q_min, self.lambda_star or 0.0)
+            return q_alloc, True
         if not saturated:
-            # Underbudget: fair share of remaining budget
             q_alloc = min(self.q_target, self.residual / self.remaining)
-            self.residual -= q_alloc
+            self.residual = max(0.0, self.residual - q_alloc)
         else:
-            # Overbudget: use rank-restoring floor
             floor = self.q_min
             if self.lambda_star is not None:
                 floor = max(floor, self.lambda_star)
             q_alloc = min(self.q_target, floor)
-        
         self.remaining -= 1
+        self.used_energy += q_alloc
         return q_alloc, saturated
 ```
 
@@ -508,6 +534,8 @@ class EnergyAllocator:
 def _scale_to_energy(self, direction, geometry, q_alloc):
     """Scale direction to achieve ||w||²_Σ = q_alloc"""
     norm = geometry.norm(direction)
+    if norm < self.config.proj_eps or q_alloc <= 0:
+        return direction
     scale = math.sqrt(q_alloc) / norm
     return direction * scale
 ```
@@ -517,18 +545,18 @@ def _scale_to_energy(self, direction, geometry, q_alloc):
 ### 3.7 Bias Transfer and Outgoing Weight Reset
 
 **Algorithm (Section 4.2 and 5.3):**
-```pseudo
-# (1) Bias transfer
-TransferBiasFromUnit(ℓ, i, f_hat_{ℓ,i}, outgoing_weights)
+- **(1) Bias transfer**
+  - $\mathrm{TransferBiasFromUnit}(\ell, i, \hat{f}_{\ell,i}, \mathrm{outgoing\_weights})$
+- **(4) Bias centering**
+  - $a \leftarrow w_{\mathrm{dir}}^T H_{\mathrm{prev}}$
+  - $b \leftarrow -\mathrm{mean}(a)$
+  - $\mathrm{SetBias}(\ell, i, b)$
+- **(5) Zero outgoing weights**
+  - $\mathrm{ZeroOutgoingWeights}(\ell, i)$
 
-# (4) Bias centering
-$a \leftarrow w_{\text{dir}}^T H_{\text{prev}}$
-$b \leftarrow -mean(a)$
-SetBias(ℓ, i, b)
-
-# (5) Zero outgoing weights
-ZeroOutgoingWeights(ℓ, i)
-```
+**Implementation note:** In `RR_GnT2_for_FC._replace_units()`, bias transfer is **conditional**:
+- It is skipped when the removed unit has age 0.
+- It is also skipped when the model's plasticity map indicates the outgoing module feeds into a normalization layer (`outgoing_feeds_into_norm=True`), since bias compensation would be canceled/undesirable.
 
 **Implementation:**
 
@@ -540,24 +568,29 @@ ZeroOutgoingWeights(ℓ, i)
 
 **Code from `rr_gnt2_fc.py`:**
 ```python
-def _transfer_bias(self, next_layer, unit_idx, bias_corrected_act):
-    """Transfer bias from removed unit to next layer."""
-    # Contribution to next layer = outgoing_weight * mean_activation
+def _transfer_bias(self, next_layer: Module, unit_idx: int, bias_corrected_act: Tensor) -> None:
+    """Transfer bias from removed unit to next layer (Section 4.2)."""
     contribution = next_layer.weight.data[:, unit_idx] * bias_corrected_act
-    next_layer.bias.data += contribution
+    next_layer.bias.data += contribution.to(device=next_layer.bias.device, dtype=next_layer.bias.dtype)
 
-def _center_bias(self, activations):
-    """Compute bias to center preactivations: b = -mean(a)"""
+def _center_bias(self, activations: Tensor) -> Tensor:
+    """Compute bias to center preactivations (Section 5.3)."""
+    if activations.numel() == 0:
+        return torch.zeros(1, device=activations.device, dtype=activations.dtype).squeeze(0)
     if self.config.center_bias == "median":
         return -torch.median(activations)
     return -activations.mean()
 
-def _zero_and_seed_outgoing(self, next_layer, unit_idx):
-    """Zero outgoing weights (optionally add micro-seed)."""
+def _zero_and_seed_outgoing(self, next_layer: Module, unit_idx: int) -> None:
+    """Zero outgoing weights and optionally micro-seed (Section 5.3)."""
+    epsilon = self.config.epsilon_micro_seed
+    use_seed = self.config.use_micro_seed and epsilon > 0.0
     next_layer.weight.data[:, unit_idx] = 0.0
-    if self.config.use_micro_seed:
+    if use_seed:
         noise = torch.randn_like(next_layer.weight.data[:, unit_idx])
-        next_layer.weight.data[:, unit_idx] = epsilon * (noise / noise.norm())
+        noise = noise - noise.mean()
+        norm = torch.clamp(noise.norm(), min=self.config.proj_eps)
+        next_layer.weight.data[:, unit_idx] = epsilon * (noise / norm)
 ```
 
 ---
@@ -729,4 +762,3 @@ The algorithm guide's pseudocode maps directly to methods:
 - `RR_EnergyAwareReinitUnit()` → `_replace_units()` with `EnergyAllocator`
 
 This design allows easy extension (e.g., new utility types, new energy allocation schemes) while maintaining fidelity to the mathematical formulation.
-
