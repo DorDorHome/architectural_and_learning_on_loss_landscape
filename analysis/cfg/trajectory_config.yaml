@@ -1,0 +1,78 @@
+# ============================================================
+#  Trajectory Comparison Config — Plasticity Experiments
+#
+#  Compares how different learner types maintain loss/accuracy
+#  across task progression (task_idx). Each run: outer loop over
+#  tasks (data shifts), inner loop over epochs. We keep only the
+#  last epoch per task (loss achieved after training that task).
+#
+#  Matches: experiments/improving_plasticity_via_advanced_optimizer/
+# ============================================================
+
+wandb:
+  entity: "alvin-wb"
+  project: "effects_of_optimizer_continuous_input_deformation"
+
+filters:
+  state: ["finished"]
+  tags: []
+  name_regex: null
+  created_after: null
+  created_before: null
+  config_filters: {}
+  summary_filters: {}
+  max_runs: null
+
+variables:
+  config_keys:
+    - "learner.type"
+    - "learner.step_size"
+    - "learner.weight_decay"
+    - "net.type"
+    - "batch_size"
+    - "num_tasks"
+    - "epochs"
+    - "task_shift_mode"
+
+  summary_metrics: []
+
+  history_metrics:
+    - "global_epoch"
+    - "task_idx"
+    - "epoch_loss"
+    - "epoch_accuracy"
+    - "effective_rank_normalized_aurc"
+
+  # One row per task: keep the last epoch of each task (max global_epoch per task_idx)
+  history_sampling:
+    method: "last_per_group"
+    group_by: "task_idx"
+    sort_by: "global_epoch"
+
+  history_post_filters: {}
+  derived_metrics: []
+
+analysis:
+  type: "trajectory_comparison"
+
+  trajectory:
+    x_axis: "task_idx"              # Outer loop: task progression (data shifts)
+    y_variables:
+      - "epoch_loss"                 # Loss after training each task
+      - "epoch_accuracy"             # Accuracy after training each task
+    group_by: "learner__type"        # Compare backprop vs rr_cbp2 vs rr_cbp_e_2 vs ...
+    summary_statistics:
+      - "mean"                       # Mean curve across runs per learner
+      - "std"                        # ± 1 std shaded band
+    comparisons:
+      - "auc"                        # Area under curve (lower loss AUC = better plasticity)
+      - "final_vs_initial"           # Ratio of last vs first value
+      - "max_degradation"            # Worst value relative to best
+
+  output:
+    save_figures: true
+    figure_format: "png"
+    figure_dpi: 150
+    output_dir: "outputs"
+    print_summary: true
+    save_summary_csv: true

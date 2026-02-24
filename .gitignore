@@ -61,7 +61,7 @@ wandb/*
 analysis/results/*
 analysis/wandb
 analysis/wandb/*
-
+analysis/outputs
 
 test_drift_minimal.py
 test_enhanced_features.py
