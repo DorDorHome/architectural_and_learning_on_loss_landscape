@@ -87,3 +87,5 @@ experiments/Hessian_and_landscape_plot_with_plasticity_loss/**/*.pt
 experiments/Hessian_and_landscape_plot_with_plasticity_loss/**/*.png
 
 repopack-output.txt
+
+.venv/
