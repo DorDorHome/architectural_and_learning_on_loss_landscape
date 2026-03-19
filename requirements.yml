@@ -123,7 +123,7 @@ dependencies:
   - pyparsing=3.1.2=pyhd8ed1ab_0
   - pyqt=5.9.2=py39h2531618_6
   - pysocks=1.7.1=pyha2e5f31_6
-  - python=3.9.18=h7a1cb2a_0
+  - python=3.10.14=h7a1cb2a_0
   - python-dateutil=2.9.0=pyhd8ed1ab_0
   - python-lmdb=1.4.1=py39h2926eaa_1
   - python-tzdata=2024.1=pyhd8ed1ab_0
