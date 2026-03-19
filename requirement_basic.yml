@@ -19,7 +19,8 @@ dependencies:
   # PyTorch from Conda (CPU/GPU resolved by Conda)
   - pytorch
   - torchvision
-  
+  - statsmodels
+  - scikit-learn
   # Anything not conveniently available via Conda goes under pip
   - pip:
       - stable-baselines3[extra]

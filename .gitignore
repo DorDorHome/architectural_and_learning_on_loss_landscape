@@ -48,7 +48,10 @@ experiments/output_vs_input_plasticity/wandb/*
 experiments/output_vs_input_plasticity/wandb
 experiments/output_vs_input_plasticity/outputs
 experiments/output_vs_input_plasticity/outputs/*
-
+analysis/output_plots/*
+analysis/output_plots
+analysis/archived_output_plots/*
+**/.DS_Store
 
 experiments/grokking/outputs/*
 experiments/grokking/outputs
@@ -87,3 +90,8 @@ experiments/Hessian_and_landscape_plot_with_plasticity_loss/**/*.pt
 experiments/Hessian_and_landscape_plot_with_plasticity_loss/**/*.png
 
 repopack-output.txt
+analysis/archived_output_plots/no filtering on outliners/.DS_Store
+analysis/archived_output_plots/.DS_Store
+.gitignore
+
+.DS_Store
