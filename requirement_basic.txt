@@ -9,6 +9,7 @@ scipy
 # Data & plotting
 pandas
 matplotlib
+seaborn
 pillow
 tqdm
 

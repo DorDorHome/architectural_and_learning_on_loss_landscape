@@ -10,6 +10,7 @@ dependencies:
   - scipy
   - pandas
   - matplotlib
+  - seaborn
   - pillow
   - tqdm
   - psutil

@@ -10,4 +10,5 @@ scipy
 omegaconf
 pyyaml
 statsmodels
+seaborn
 scikit-learn
