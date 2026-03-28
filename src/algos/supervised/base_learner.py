@@ -12,7 +12,7 @@ from typing import Callable, Optional, Union, Any
 from torch.optim import optimizer
 from omegaconf import DictConfig
 from configs.configurations import *
-from src.loss_for_regularization.regularized_loss_for_svd_conv import RegularizedLoss_SVD_conv
+from src.losses.orthogonality import RegularizedLoss_SVD_conv
 
 class Learner(ABC):
     """
@@ -74,7 +74,7 @@ class Learner(ABC):
                                    weight_decay=weight_decay)
         
         else:
-            raise ValueError(f'Optimizer {opt} not implemented')
+            raise ValueErr∫or(f'Optimizer {opt} not implemented')
         
         return optimizer
     
