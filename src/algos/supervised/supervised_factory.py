@@ -11,7 +11,8 @@ from src.algos.supervised.rr_cbp_conv import RankRestoringCBP_for_ConvNet
 from src.algos.supervised.rr_cbp_fc import RankRestoringCBP_for_FC
 from src.algos.supervised.rr_cbp2_fc import RankRestoringCBP2_for_FC
 from src.algos.supervised.rr_cbp2_conv import RankRestoringCBP2_for_ConvNet
-from configs.configurations import RRContinuousBackpropConfig, RRCBP2Config
+from src.algos.supervised.srr_cbp import SRR_CBP_for_ConvNet, SRR_CBP_for_FC
+from configs.configurations import RRContinuousBackpropConfig, RRCBP2Config, SRRCBPConfig
 from typing import Optional
 import warnings
 
@@ -129,6 +130,25 @@ def create_learner(config: DictConfig, net, netconfig=None):
             return RankRestoringCBP2_for_ConvNet(net, config, netconfig)
         raise ValueError(
             f"Unsupported network_class '{net_cls}' for rank-restoring CBP2 (net.type={getattr(net, 'type', None)})"
+        )
+    elif normalized_type == 'srr_cbp':
+        if not isinstance(config, SRRCBPConfig):
+            if isinstance(config, DictConfig):
+                config = SRRCBPConfig(**OmegaConf.to_container(config, resolve=True))
+            elif isinstance(config, dict):
+                config = SRRCBPConfig(**config)
+            else:
+                raise TypeError("SRR-CBP requires SRRCBPConfig-compatible config")
+            try:
+                config.network_class = net_cls
+            except Exception:
+                pass
+        if net_cls == 'fc':
+            return SRR_CBP_for_FC(net, config, netconfig)
+        if net_cls == 'conv':
+            return SRR_CBP_for_ConvNet(net, config, netconfig)
+        raise ValueError(
+            f"Unsupported network_class '{net_cls}' for SRR-CBP (net.type={getattr(net, 'type', None)})"
         )
     else:
         raise ValueError(f"Unsupported learner type: {learner_type}")

@@ -82,3 +82,76 @@ class RegularizedLoss_SVD_conv(nn.Module):
         # Combine the primary loss with the orthogonality loss
         total_loss = primary_loss + self.lambda_orth * orthogonality_loss
         return total_loss
+
+class KernelSORegularizer(nn.Module):
+    def __init__(
+        self,
+        main_loss_func: callable,
+        model: nn.Module,
+        lambda_orth: float = 1e-4,
+        normalization_mode: str = "naive mse sum correction"
+    ):
+        super(KernelSORegularizer, self).__init__()
+        self.main_loss_func = main_loss_func
+        self.lambda_orth = lambda_orth
+        self.normalization_mode = normalization_mode
+        
+        self.conv_layers = []
+        self.linear_layers = []
+        
+        for module in model.modules():
+            if isinstance(module, nn.Conv2d):
+                self.conv_layers.append(module)
+            elif isinstance(module, nn.Linear):
+                self.linear_layers.append(module)
+                
+        if not self.conv_layers and not self.linear_layers:
+            print("Warning: No Conv2d or Linear layers found in the model for Kernel SO Regularization.")
+            
+    def forward(self, output, target):
+        self.last_task_loss = self.main_loss_func(output, target)
+        reg_loss = 0.0
+        
+        # Helper function
+        def compute_P(G, I, D):
+            if self.normalization_mode == "naive mse sum correction":
+                return F.mse_loss(G, I, reduction='mean')
+            elif self.normalization_mode == "correct by input size":
+                return F.mse_loss(G, I, reduction='sum') / D
+            elif self.normalization_mode == "no correction":
+                return F.mse_loss(G, I, reduction='sum')
+            else:
+                raise ValueError(f"Unknown normalization mode: {self.normalization_mode}")
+        
+        # Conv2d Logic
+        for module in self.conv_layers:
+            W = module.weight
+            M = W.shape[0]
+            N = W.shape[1] * W.shape[2] * W.shape[3]
+            W_reshaped = W.view(M, N)
+            
+            if M < N:
+                G = torch.matmul(W_reshaped, W_reshaped.t())
+                I = torch.eye(M, device=W.device)
+                reg_loss += compute_P(G, I, M)
+            else:
+                G = torch.matmul(W_reshaped.t(), W_reshaped)
+                I = torch.eye(N, device=W.device)
+                reg_loss += compute_P(G, I, N)
+                
+        # Linear Logic
+        for module in self.linear_layers:
+            W = module.weight
+            M, N = W.shape
+            
+            if M < N:
+                G = torch.matmul(W, W.t())
+                I = torch.eye(M, device=W.device)
+                reg_loss += compute_P(G, I, M)
+            else:
+                G = torch.matmul(W.t(), W)
+                I = torch.eye(N, device=W.device)
+                reg_loss += compute_P(G, I, N)
+                
+        self.last_reg_loss = reg_loss * self.lambda_orth
+        return self.last_task_loss + self.last_reg_loss

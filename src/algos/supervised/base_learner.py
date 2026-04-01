@@ -12,7 +12,7 @@ from typing import Callable, Optional, Union, Any
 from torch.optim import optimizer
 from omegaconf import DictConfig
 from configs.configurations import *
-from src.losses.orthogonality import RegularizedLoss_SVD_conv
+from src.losses.orthogonality import RegularizedLoss_SVD_conv, KernelSORegularizer
 
 class Learner(ABC):
     """
@@ -74,7 +74,7 @@ class Learner(ABC):
                                    weight_decay=weight_decay)
         
         else:
-            raise ValueErr∫or(f'Optimizer {opt} not implemented')
+            raise ValueError(f'Optimizer {opt} not implemented')
         
         return optimizer
     
@@ -93,12 +93,23 @@ class Learner(ABC):
         if hasattr(self.config, 'additional_regularization') and self.config.additional_regularization:
             lambda_orth = getattr(self.config, 'lambda_orth', 1e-4)
             
-            return RegularizedLoss_SVD_conv(
-                main_loss_func=main_loss_func,
-                model=self.net,
-                lambda_orth=lambda_orth,
-                allow_svd_values_negative=False  # Default to False for now
-            )
+            if self.config.additional_regularization == 'SVD_Orthogonal':
+                return RegularizedLoss_SVD_conv(
+                    main_loss_func=main_loss_func,
+                    model=self.net,
+                    lambda_orth=lambda_orth,
+                    allow_svd_values_negative=False  # Default to False for now
+                )
+            elif self.config.additional_regularization == 'Kernel SO':
+                normalization_mode = getattr(self.config, 'normalization_mode', "naive mse sum correction")
+                return KernelSORegularizer(
+                    main_loss_func=main_loss_func,
+                    model=self.net,
+                    lambda_orth=lambda_orth,
+                    normalization_mode=normalization_mode
+                )
+            else:
+                raise ValueError(f"Unsupported additional_regularization: {self.config.additional_regularization}")
         else:
             return main_loss_func
 

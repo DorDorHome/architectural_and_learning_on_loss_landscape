@@ -90,8 +90,16 @@ class BaseLearnerConfig:
     loss: str = 'cross_entropy'
     # for more complicated implementations that need to keep track of previous features
     # or for specialized regularization such as orthogonality regularization for SVD_Conv2d layers
+    # 'SVD_Orthogonal' or 'Kernel SO'
     additional_regularization: Optional[Union[None, str]] = None
     lambda_orth: Optional[Union[None, float]] = None
+    
+    # Normalization mode for Kernel SO regularization:
+    # - "naive mse sum correction": uses F.mse_loss with reduction='mean' (1/D^2 ||G - I||_F^2)
+    # - "correct by input size": uses F.mse_loss with reduction='sum' divided by D (1/D ||G - I||_F^2)
+    # - "no correction": uses F.mse_loss with reduction='sum' (||G - I||_F^2)
+    normalization_mode: str = "naive mse sum correction"
+    
     
     to_perturb: Optional[bool] = False
     perturb_scale: Optional[float] = 0.1
@@ -115,6 +123,14 @@ class ContinuousBackpropConfig(BaseLearnerConfig):
     class Config:
         version_base = "1.1"
 
+
+@dataclass
+class SRRCBPConfig(ContinuousBackpropConfig):
+    type: str = 'srr_cbp'
+    lambda_0: float = 0.1
+    gamma: float = 0.99
+    class Config:
+        version_base = "1.1"
 
 @dataclass
 class RRContinuousBackpropConfig(ContinuousBackpropConfig):
@@ -253,7 +269,7 @@ class ExperimentConfig:
     batch_size: int = 128
     data: DataConfig = field(default_factory=DataConfig)
     net: Union[NetConfig, GrokkingTransformerConfig] = field(default_factory=lambda: NetConfig(type='ConvNet'))
-    learner: Union[BackpropConfig, ContinuousBackpropConfig, RRContinuousBackpropConfig] = field(default_factory=BackpropConfig)
+    learner: Union[BackpropConfig, ContinuousBackpropConfig, RRContinuousBackpropConfig, SRRCBPConfig] = field(default_factory=BackpropConfig)
     evaluation: Union[EvaluationConfig, None] = field(default_factory=EvaluationConfig)
     track_rank: bool = False
     prop_for_approx_or_l1_rank: float = 0.99
