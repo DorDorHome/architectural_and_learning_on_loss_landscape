@@ -43,6 +43,9 @@ class RankRestoringCBP2_for_ConvNet(Learner):
         netparams = netconfig.netparams if netconfig is not None else None
         super().__init__(net, config, netparams)
 
+        self.use_grad_clip = getattr(config, 'use_grad_clip', False)
+        self.grad_clip_max_norm = getattr(config, 'grad_clip_max_norm', 1.0)
+
         # Initialize AdamGnT optimizer (required for proper state management)
         if config.opt == 'adam':
             self.opt = AdamGnT(
@@ -157,6 +160,8 @@ class RankRestoringCBP2_for_ConvNet(Learner):
 
         # Backward pass and optimizer step
         loss.backward()
+        if self.use_grad_clip:
+            torch.nn.utils.clip_grad_norm_(self.net.parameters(), max_norm=self.grad_clip_max_norm)
         self.opt.step()
         self.opt.zero_grad()
 

@@ -52,6 +52,9 @@ class ContinualBackprop_for_FC(Learner):
         self.accumulate = config.accumulate
         self.outgoing_random = config.outgoing_random  # NOTE: currently unused in GnT init
 
+        self.use_grad_clip = getattr(config, 'use_grad_clip', False)
+        self.grad_clip_max_norm = getattr(config, 'grad_clip_max_norm', 1.0)
+
         if config.opt == 'adam':
             self.opt = AdamGnT(
                 self.net.parameters(),
@@ -97,6 +100,8 @@ class ContinualBackprop_for_FC(Learner):
         # do the backward pass and take a gradient step
         self.opt.zero_grad()
         loss.backward()
+        if self.use_grad_clip:
+            torch.nn.utils.clip_grad_norm_(self.net.parameters(), max_norm=self.grad_clip_max_norm)
         self.opt.step()
 
         # take a generate-and-test step
@@ -128,6 +133,9 @@ class ContinuousBackprop_for_ConvNet(Learner):
         self.init = config.init
         self.util_type = config.util_type
         self.maturity_threshold = config.maturity_threshold
+
+        self.use_grad_clip = getattr(config, 'use_grad_clip', False)
+        self.grad_clip_max_norm = getattr(config, 'grad_clip_max_norm', 1.0)
 
         if config.opt == 'adam':
             self.opt = AdamGnT(
@@ -233,6 +241,8 @@ class ContinuousBackprop_for_ConvNet(Learner):
 
         # do the backward pass and take a gradient step
         loss.backward()
+        if self.use_grad_clip:
+            torch.nn.utils.clip_grad_norm_(self.net.parameters(), max_norm=self.grad_clip_max_norm)
         self.opt.step()
         
         # Clear grads before structural adaptation; GnT may inspect or create params expecting clean .grad buffers

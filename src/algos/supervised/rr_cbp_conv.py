@@ -23,6 +23,9 @@ class RankRestoringCBP_for_ConvNet(Learner):
         netparams = netconfig.netparams if netconfig is not None else None
         super().__init__(net, config, netparams)
 
+        self.use_grad_clip = getattr(config, 'use_grad_clip', False)
+        self.grad_clip_max_norm = getattr(config, 'grad_clip_max_norm', 1.0)
+
         if config.opt == "adam":
             self.opt = AdamGnT(
                 self.net.parameters(),
@@ -63,6 +66,8 @@ class RankRestoringCBP_for_ConvNet(Learner):
 
         self.opt.zero_grad()
         loss.backward()
+        if self.use_grad_clip:
+            torch.nn.utils.clip_grad_norm_(self.net.parameters(), max_norm=self.grad_clip_max_norm)
         self.opt.step()
 
         self.opt.zero_grad()
