@@ -81,6 +81,7 @@ class BaseLearnerConfig:
     enable_cuda1_workarounds: bool = False  # Enable CPU eigendecomposition workarounds for cuda:1
     # Structural category of network; inferred if None.
     network_class: Optional[str] = None
+    init: str = 'kaiming'
     opt: str = 'adam' #or 'sgd'
     step_size: float= 0.001
     beta_1: float = 0.9
@@ -105,6 +106,9 @@ class BaseLearnerConfig:
     perturb_scale: Optional[float] = 0.1
     # previous_features: Optional[Union[None, torch.Tensor]] = None
     # latest_gradients: Optional[Union[None, torch.Tensor]] = None
+    
+    log_rank_metrics_every: int = 1
+    
     class Config:
         version_base = "1.1"
 
@@ -115,7 +119,6 @@ class ContinuousBackpropConfig(BaseLearnerConfig):
     decay_rate_utility_track: float = 0.9
     maturity_threshold: int = 100
     util_type: str = 'contribution'
-    init: str = 'kaiming'
     accumulate: bool = False
     outgoing_random: bool = False
     use_grad_clip: bool = False
@@ -145,7 +148,7 @@ class RRContinuousBackpropConfig(ContinuousBackpropConfig):
     diag_sigma_only: bool = False
     orthonormalize_batch: bool = True
     improve_conditioning_if_saturated: bool = True
-    log_rank_metrics_every: int = 0
+    log_rank_metrics_every: int = 1
     covariance_dtype: Optional[str] = None
     sigma_eig_floor: float = 1e-6
     projector_reg_epsilon: float = 1e-6
@@ -180,7 +183,7 @@ class RRCBP2Config(ContinuousBackpropConfig):
     # Bias centering: 'mean' or 'median'
     center_bias: str = 'mean'
     
-    # Σ-geometry settings
+    # Σ-geometry settings (only for rr_cbp_e_2)
     diag_sigma_only: bool = False
     sigma_eig_floor: float = 1e-6
     covariance_dtype: Optional[str] = None
@@ -189,7 +192,7 @@ class RRCBP2Config(ContinuousBackpropConfig):
     orthonormalize_batch: bool = True
     
     # Logging
-    log_rank_metrics_every: int = 0
+    log_rank_metrics_every: int = 1
     
     # ===== RR-CBP-E2 (Energy-Aware) Settings =====
     # Set use_energy_budget=True to enable energy-aware mode (rr_cbp_e_2)
