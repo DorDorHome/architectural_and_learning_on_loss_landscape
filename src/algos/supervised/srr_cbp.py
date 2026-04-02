@@ -25,8 +25,9 @@ class SRR_CBP_for_FC(Learner):
         self.accumulate = config.accumulate
         self.outgoing_random = config.outgoing_random
         
-        self.lambda_0 = config.lambda_0
-        self.gamma = config.gamma
+        self.SO_reg_lambda = config.SO_reg_lambda
+        self.aso_age_decay_rate = config.aso_age_decay_rate
+        self.aso_normalization_mode = config.aso_normalization_mode
         self.use_grad_clip = config.use_grad_clip
         self.grad_clip_max_norm = config.grad_clip_max_norm
 
@@ -118,15 +119,25 @@ class SRR_CBP_for_FC(Learner):
                 
                 cov = torch.matmul(A_young, A_mature.t())
                 
-                weights = (self.gamma ** ages[young_idx]) / (2 * m**2)
+                weights = (self.aso_age_decay_rate ** ages[young_idx]) / (2 * m**2)
                 
                 # Squared L2 norm of each row in cov
                 row_norms_sq = torch.sum(cov ** 2, dim=1)
                 
                 layer_aso_loss = torch.sum(weights * row_norms_sq)
+                
+                if self.aso_normalization_mode == "naive mse sum correction":
+                    layer_aso_loss = layer_aso_loss / (len(young_idx) * len(mature_idx))
+                elif self.aso_normalization_mode == "correct by input size":
+                    layer_aso_loss = layer_aso_loss / len(young_idx)
+                elif self.aso_normalization_mode == "no correction":
+                    pass
+                else:
+                    raise ValueError(f"Unknown aso_normalization_mode: {self.aso_normalization_mode}")
+                    
                 aso_loss = aso_loss + layer_aso_loss
                 
-        aso_loss = self.lambda_0 * aso_loss
+        aso_loss = self.SO_reg_lambda * aso_loss
         total_loss = task_loss + aso_loss
 
         self.opt.zero_grad()
@@ -158,8 +169,9 @@ class SRR_CBP_for_ConvNet(Learner):
         self.util_type = config.util_type
         self.maturity_threshold = config.maturity_threshold
         
-        self.lambda_0 = config.lambda_0
-        self.gamma = config.gamma
+        self.SO_reg_lambda = config.SO_reg_lambda
+        self.aso_age_decay_rate = config.aso_age_decay_rate
+        self.aso_normalization_mode = config.aso_normalization_mode
         self.use_grad_clip = config.use_grad_clip
         self.grad_clip_max_norm = config.grad_clip_max_norm
 
@@ -294,14 +306,24 @@ class SRR_CBP_for_ConvNet(Learner):
                 
                 cov = torch.matmul(A_young, A_mature.t())
                 
-                weights = (self.gamma ** ages[young_idx]) / (2 * m**2)
+                weights = (self.aso_age_decay_rate ** ages[young_idx]) / (2 * m**2)
                 
                 row_norms_sq = torch.sum(cov ** 2, dim=1)
                 
                 layer_aso_loss = torch.sum(weights * row_norms_sq)
+                
+                if self.aso_normalization_mode == "naive mse sum correction":
+                    layer_aso_loss = layer_aso_loss / (len(young_idx) * len(mature_idx))
+                elif self.aso_normalization_mode == "correct by input size":
+                    layer_aso_loss = layer_aso_loss / len(young_idx)
+                elif self.aso_normalization_mode == "no correction":
+                    pass
+                else:
+                    raise ValueError(f"Unknown aso_normalization_mode: {self.aso_normalization_mode}")
+                    
                 aso_loss = aso_loss + layer_aso_loss
                 
-        aso_loss = self.lambda_0 * aso_loss
+        aso_loss = self.SO_reg_lambda * aso_loss
         total_loss = task_loss + aso_loss
 
         self.opt.zero_grad()

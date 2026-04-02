@@ -9,7 +9,7 @@
 \caption{Soft Rank-Restoring Continual Backpropagation (SRR-CBP)}
 \begin{algorithmic}
   \Require step size $\alpha$, replacement rate $\rho$, EMA decay $\eta$,
-           maturity threshold $M$, initial ASO penalty $\lambda_0$, decay rate $\gamma$,
+           maturity threshold $M$, initial ASO penalty $\lambda_{\text{SO}}$, decay rate $\gamma_{\text{aso}}$,
            layer activation function $\phi$ (e.g., ReLU).
 
   \State Initialize network weights $W \sim \mathcal{D}_{\mathrm{init}}$ \Comment{Layer weights $W^{(\ell)} \in \mathbb{R}^{n_\ell \times d_\ell}$}
@@ -31,12 +31,12 @@
         \State $A_{\mathrm{mature}} \gets \mathrm{stop\_gradient}\big(A^{(\ell)}_{\mathcal{M}_\ell, :}\big)$ \Comment{Crucial: Do not backprop into mature units}
         \For{$i \in \mathcal{Y}_\ell$}
           \State $a_i \gets A^{(\ell)}_{i, :}$ \Comment{Shape: $1 \times m$}
-          \State $\mathcal{L}_{\mathrm{ASO}} \gets \mathcal{L}_{\mathrm{ASO}} + \frac{\gamma^{a_{\ell,i}}}{2m^2} \| a_i A_{\mathrm{mature}}^\top \|_2^2$
+          \State $\mathcal{L}_{\mathrm{ASO}} \gets \mathcal{L}_{\mathrm{ASO}} + \frac{\gamma_{\text{aso}}^{a_{\ell,i}}}{2m^2} \| a_i A_{\mathrm{mature}}^\top \|_2^2$
         \EndFor
       \EndIf
     \EndFor
 
-    \State $\mathcal{L}_{\mathrm{ASO}} \gets \lambda_0 \cdot \mathcal{L}_{\mathrm{ASO}}$ \Comment{Apply global ASO penalty rate}
+    \State $\mathcal{L}_{\mathrm{ASO}} \gets \lambda_{\text{SO}} \cdot \mathcal{L}_{\mathrm{ASO}}$ \Comment{Apply global ASO penalty rate}
     \State $\mathcal{L}_{\mathrm{total}} \gets \mathcal{L}_{\mathrm{task}} + \mathcal{L}_{\mathrm{ASO}}$
     \State $g_t \gets \nabla_W \mathcal{L}_{\mathrm{total}}$
     \State $W \gets \mathrm{OptimizerStep}(W, g_t; \alpha)$ \Comment{Automatically orthogonalizes young units}
@@ -95,7 +95,7 @@
 \begin{algorithmic}
   \Require step size $\alpha$, replacement rate $\rho$, EMA decay $\eta$,
            maturity threshold $M$, feature variance decay $\beta$, 
-           initial ASO penalty $\lambda_0$, decay rate $\gamma$,
+           initial ASO penalty $\lambda_{\text{SO}}$, decay rate $\gamma_{\text{aso}}$,
            layer activation function $\phi$ (e.g., ReLU),
            stability constant $\epsilon \gets 10^{-8}$.
 
@@ -122,12 +122,12 @@
         \State $A_{\mathrm{mature}} \gets \mathrm{stop\_gradient}\big(A^{(\ell)}_{\mathcal{M}_\ell, :}\big)$ \Comment{Crucial: Do not backprop into mature units}
         \For{$i \in \mathcal{Y}_\ell$}
           \State $a_i \gets A^{(\ell)}_{i, :}$ \Comment{Shape: $1 \times m$}
-          \State $\mathcal{L}_{\mathrm{ASO}} \gets \mathcal{L}_{\mathrm{ASO}} + \frac{\gamma^{a_{\ell,i}}}{2m^2} \| a_i A_{\mathrm{mature}}^\top \|_2^2$
+          \State $\mathcal{L}_{\mathrm{ASO}} \gets \mathcal{L}_{\mathrm{ASO}} + \frac{\gamma_{\text{aso}}^{a_{\ell,i}}}{2m^2} \| a_i A_{\mathrm{mature}}^\top \|_2^2$
         \EndFor
       \EndIf
     \EndFor
 
-    \State $\mathcal{L}_{\mathrm{ASO}} \gets \lambda_0 \cdot \mathcal{L}_{\mathrm{ASO}}$ \Comment{Apply global ASO penalty rate}
+    \State $\mathcal{L}_{\mathrm{ASO}} \gets \lambda_{\text{SO}} \cdot \mathcal{L}_{\mathrm{ASO}}$ \Comment{Apply global ASO penalty rate}
     \State $\mathcal{L}_{\mathrm{total}} \gets \mathcal{L}_{\mathrm{task}} + \mathcal{L}_{\mathrm{ASO}}$
     \State $g_t \gets \nabla_W \mathcal{L}_{\mathrm{total}}$
     \State $W \gets \mathrm{OptimizerStep}(W, g_t; \alpha)$ \Comment{Automatically orthogonalizes young units}

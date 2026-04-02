@@ -7,8 +7,8 @@ Implement Soft Rank-Restoring Continual Backpropagation (SRR-CBP) using forward 
 - Add a new dataclass `SRRCBPConfig` that inherits from `ContinuousBackpropConfig`.
 - Add the new hyperparameters required for the ASO loss:
   - `type: str = 'srr_cbp'`
-  - `lambda_0: float = 0.1` (Initial ASO penalty)
-  - `gamma: float = 0.99` (Decay rate for ASO penalty)
+  - `SO_reg_lambda: float = 0.1` (Initial ASO penalty)
+  - `aso_age_decay_rate: float = 0.99` (Decay rate for ASO penalty)
 
 ## 2. Learner Implementation (`src/algos/supervised/srr_cbp.py`)
 Create a new file to house the SRR-CBP learners.
@@ -35,10 +35,10 @@ Create a new file to house the SRR-CBP learners.
         - Extract `A_mature = A[mature_idx, :].detach()` (crucial: stop gradient).
         - Extract `A_young = A[young_idx, :]`.
         - Compute the covariance matrix: `cov = torch.matmul(A_young, A_mature.t())`.
-        - Calculate the penalty weights for young units: `weights = (gamma ** ages[young_idx]) / (2 * m**2)`.
+        - Calculate the penalty weights for young units: `weights = (aso_age_decay_rate ** ages[young_idx]) / (2 * m**2)`.
         - Compute the squared L2 norm of each row in `cov` and multiply by `weights`.
         - Add the sum to `aso_loss`.
-    - Multiply the accumulated `aso_loss` by `lambda_0`: `aso_loss = lambda_0 * aso_loss`.
+    - Multiply the accumulated `aso_loss` by `SO_reg_lambda`: `aso_loss = SO_reg_lambda * aso_loss`.
   - Add `aso_loss` to the task loss: `total_loss = task_loss + aso_loss`.
   - Perform backward pass on `total_loss`: `total_loss.backward()`.
   - Step the optimizer and zero gradients.
@@ -55,5 +55,5 @@ Create a new file to house the SRR-CBP learners.
 - [ ] Add `SRRCBPConfig` to `configs/configurations.py`
 - [ ] Create `src/algos/supervised/srr_cbp.py` with `SRR_CBP_for_ConvNet` and `SRR_CBP_for_FC`
 - [ ] Implement forward hooks for pre-activations in learner `__init__`
-- [ ] Implement ASO loss computation in learner `learn` method (with global `lambda_0` multiplication)
+- [ ] Implement ASO loss computation in learner `learn` method (with global `SO_reg_lambda` multiplication)
 - [ ] Register learners in `supervised_factory.py`

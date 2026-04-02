@@ -27,7 +27,7 @@ isProject: false
 - Add a new dataclass `SRRCBPConfig` that inherits from `ContinuousBackpropConfig`.
 - Add the new hyperparameters required for the ASO loss:
   - `type: str = 'srr_cbp'`
-  - `lambda_0: float = 0.1` (Initial ASO penalty)
+  - `SO_reg_lambda: float = 0.1` (Initial ASO penalty)
   - `gamma: float = 0.99` (Decay rate for ASO penalty)
 
 ## 2. Learner Implementation (`src/algos/supervised/srr_cbp.py`)
@@ -56,7 +56,7 @@ Create a new file to house the SRR-CBP learners.
         - Extract `A_mature = A[mature_idx, :].detach()` (crucial: stop gradient).
         - Extract `A_young = A[young_idx, :]`.
         - Compute the covariance matrix: `cov = torch.matmul(A_young, A_mature.t())`.
-        - Calculate the penalty weights for young units: `weights = lambda_0 * (gamma ** ages[young_idx]) / (2 * m**2)`.
+        - Calculate the penalty weights for young units: `weights = SO_reg_lambda * (aso_age_decay_rate ** ages[young_idx]) / (2 * m**2)`.
         - Compute the squared L2 norm of each row in `cov` and multiply by `weights`.
         - Add the sum to `aso_loss`.
   - Add `aso_loss` to the task loss: `total_loss = task_loss + aso_loss`.
