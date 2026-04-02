@@ -1,0 +1,42 @@
+type: 'rr_cbp2'
+network_class: ${net.network_class}  # Use the network class from the net configuration
+# as BaseLearnerConfig
+device: ${device}
+opt:  'sgd'
+init: 'kaiming'
+loss: ${loss_functions.${task_shift_mode}}
+step_size: 0.01 # 0.01 for SGD, 0.001 for Adam
+beta_1: 0.95
+beta_2: 0.999
+weight_decay: 0.02 # L2 regularization strength , use 0.001 for labelled regression tasks
+to_perturb: false
+perturb_scale: 0.05
+momentum: 0.9
+log_rank_metrics_every: 1
+
+# as ContinuousBackpropConfig (shared with cbp, and other rr_cbp variants)
+neurons_replacement_rate: 0.001
+decay_rate_utility_track: 0.9
+maturity_threshold: 100
+util_type: 'adaptable_contribution' #options: 'weight', 'contribution', 'zero_contribution', 'adaptation', 'adaptable_contribution', 'feature_by_input' 
+accumulate: False
+outgoing_random: False
+
+# Gradient clipping options
+use_grad_clip: true  #on only for drifting_values       # Enable gradient clipping to prevent gradient explosion
+grad_clip_max_norm: 1.0      # Maximum norm for gradient clipping
+
+
+# for rr_cbp specific params:
+diag_sigma_only: false
+## Covariance EMA settings
+sigma_ema_beta: 0.95 #original: 0.0
+sigma_ridge: 0.03 #recommended 0.05 for rr_cbp_2, and rr_cbp_e_2
+max_proj_trials: 4
+proj_eps: 1e-6
+center_bias: 'mean'
+orthonormalize_batch: True
+
+use_energy_budget: bool = False # also handled to be false in supervisor factory
+# nullspace_seed_epsilon: 0.0 # not used for rr_cbp2, setting for rr_cbp_e_2 and srr_cbp_e
+# improve_conditioning_if_saturated: True # not used for rr_cbp2, setting for rr_cbp_e_2 and srr_cbp_e
