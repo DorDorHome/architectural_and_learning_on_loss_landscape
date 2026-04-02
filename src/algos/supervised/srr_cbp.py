@@ -27,6 +27,8 @@ class SRR_CBP_for_FC(Learner):
         
         self.lambda_0 = config.lambda_0
         self.gamma = config.gamma
+        self.use_grad_clip = config.use_grad_clip
+        self.grad_clip_max_norm = config.grad_clip_max_norm
 
         if config.opt == 'adam':
             self.opt = AdamGnT(
@@ -129,6 +131,10 @@ class SRR_CBP_for_FC(Learner):
 
         self.opt.zero_grad()
         total_loss.backward()
+        
+        if self.use_grad_clip:
+            torch.nn.utils.clip_grad_norm_(self.net.parameters(), self.grad_clip_max_norm)
+            
         self.opt.step()
 
         self.opt.zero_grad()
@@ -154,6 +160,8 @@ class SRR_CBP_for_ConvNet(Learner):
         
         self.lambda_0 = config.lambda_0
         self.gamma = config.gamma
+        self.use_grad_clip = config.use_grad_clip
+        self.grad_clip_max_norm = config.grad_clip_max_norm
 
         if config.opt == 'adam':
             self.opt = AdamGnT(
@@ -298,6 +306,10 @@ class SRR_CBP_for_ConvNet(Learner):
 
         self.opt.zero_grad()
         total_loss.backward()
+        
+        if self.use_grad_clip:
+            torch.nn.utils.clip_grad_norm_(self.net.parameters(), self.grad_clip_max_norm)
+            
         self.opt.step()
         
         self.opt.zero_grad()
