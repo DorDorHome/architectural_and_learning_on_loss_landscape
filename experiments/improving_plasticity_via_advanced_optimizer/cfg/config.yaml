@@ -1,6 +1,6 @@
 defaults:
-   - _self_
-  - learner: 'srr_cbp'   # 'srr_cbp',  'rr_cbp_e_2'  'rr_cbp2' 'rr_cbp' #options: 'backprop' 'basic_continous_backprop', 'rr_cbp'
+  - _self_
+  - learner: 'srr_cbp'
 
 
 # represent experiments config:
@@ -9,7 +9,7 @@ run_id: 0
 seed: None
 # debug:
 debug_mode: False  # Disable debug mode for performance
-device: 'mps'  # Options: 'cuda:0', 'cuda:1', 'cpu'. Set via command line: device=cuda:1
+device: 'cuda:0'  # Options: 'cuda:0', 'cuda:1', 'cpu'. Set via command line: device=cuda:1
 
 # GPU workarounds for cuda:1 cuSOLVER issues``
 # Enable this when using cuda:1 to work around eigendecomposition failures
@@ -94,7 +94,7 @@ layers_identifier: None
 data:
   dataset: 'MNIST'
   use_torchvision: True
-  data_path: ${oc.env:DATASET_PATH, '/hdda/datasets'}  # '/home/sfchan/dataset'  #'/hdda/datasets' 
+  data_path: '/home/sfchan/dataset' #${oc.env:DATASET_PATH, '/hdda/datasets'}  # '/home/sfchan/dataset'  #'/hdda/datasets' 
   num_classes: 10
 
 # network architecture:

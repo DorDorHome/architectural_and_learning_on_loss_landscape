@@ -8,7 +8,7 @@ loss: ${loss_functions.${task_shift_mode}}
 step_size: 0.01 # 0.01 for SGD, 0.001 for Adam
 beta_1: 0.95
 beta_2: 0.999
-weight_decay: 0.02 # L2 regularization strength , use 0.001 for labelled regression tasks
+weight_decay: 0 # L2 regularization strength , use 0.001 for labelled regression tasks
 to_perturb: false
 perturb_scale: 0.05
 momentum: 0.9
@@ -22,6 +22,10 @@ util_type: 'adaptable_contribution' #options: 'weight', 'contribution', 'zero_co
 accumulate: False
 outgoing_random: False
 
+#uniquely for srr_cbp and its variants
+SO_reg_lambda: 0.1
+aso_age_decay_rate: 0.99
+aso_normalization_mode: "correct by input size"
 
 # Gradient clipping options
 use_grad_clip: true  #on only for drifting_values       # Enable gradient clipping to prevent gradient explosion

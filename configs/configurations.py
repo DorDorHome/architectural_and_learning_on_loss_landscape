@@ -130,9 +130,9 @@ class ContinuousBackpropConfig(BaseLearnerConfig):
 @dataclass
 class SRRCBPConfig(ContinuousBackpropConfig):
     type: str = 'srr_cbp'
-    SO_reg_lambda: float = 0.1
+    SO_reg_lambda: float = 0.01
     aso_age_decay_rate: float = 0.99
-    aso_normalization_mode: str = "no correction"
+    aso_normalization_mode: str = "correct by input size" #options: "no correction", "correct by input size", "naive mse sum correction"    
     class Config:
         version_base = "1.1"
 
