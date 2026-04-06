@@ -506,6 +506,10 @@ def main(cfg: ExperimentConfig) -> Any:
         # Catch any other unexpected errors
         print(f"Unexpected error during training: {e}")
         raise
+    finally:
+        if cfg.use_wandb:
+            import wandb
+            wandb.finish()
 
 if __name__ == "__main__":
 
