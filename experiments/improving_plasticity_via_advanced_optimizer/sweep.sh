@@ -2,65 +2,76 @@
 
 # ==============================================================================
 # Purpose:
-# This script runs a hyperparameter sweep for train_with_improved_optimizer.py
-# across an arbitrary number of GPUs concurrently. It dynamically detects free
-# GPUs by checking their memory usage using nvidia-smi. If a GPU has less than
-# 500MB of memory used, it is considered free and a new job is assigned to it.
-# This maximizes resource usage without duplicating jobs.
-#
-# Usage Instructions:
-# 1. Make the script executable (already done): chmod +x sweep.sh
-# 2. Run the script: ./sweep.sh
+# Run a hyperparameter sweep for train_with_improved_optimizer.py
+# across an arbitrary number of GPUs concurrently.
 # ==============================================================================
 
 # Define hyperparameter arrays to sweep
-step_sizes=(0.01 0.005 0.001)
-replacement_rates=(0.001 0.01)
+replacement_rates=(0.002 0.005 0.001) # 0.01 is too high, 0.005 might be too high, 0.002 seems ideal
+age_decay_rates=(0.99 0.999 0.9)
+util_types=("contribution" "adaptable_contribution") # add or remove options as needed
+normalization_modes=("correct by input size" "naive mse sum correction" "no correction" )
+reg_lambdas=(0.01 0.001 0.1 0.0001)
 
-# Threshold for considering a GPU "free" (in MB)
-MEM_THRESHOLD=500
 
-# Function to get the ID of a free GPU
+# Get total number of GPUs
+num_gpus=$(nvidia-smi --query-gpu=count --format=csv,noheader | head -n 1)
+
+# Array to track the PID of the job currently running on each GPU
+gpu_pids=()
+for ((i=0; i<num_gpus; i++)); do
+    gpu_pids[$i]=""
+done
+
+# Function to get the ID of a free GPU by checking if its assigned process is still running
 get_free_gpu() {
-    local num_gpus=$(nvidia-smi --query-gpu=count --format=csv,noheader | head -n 1)
-    
     for (( i=0; i<$num_gpus; i++ )); do
-        local mem_used=$(nvidia-smi --query-gpu=memory.used --format=csv,noheader,nounits -i $i)
-        if [ "$mem_used" -lt "$MEM_THRESHOLD" ]; then
+        local pid="${gpu_pids[$i]}"
+        # If no PID is assigned, or the assigned PID is no longer running (kill -0 checks status)
+        if [ -z "$pid" ] || ! kill -0 "$pid" 2>/dev/null; then
             echo "$i"
             return 0
         fi
     done
     
-    # Return -1 if no GPU is free
+    # Return -1 if all GPUs are currently running a process
     echo "-1"
     return 1
 }
 
 # Iterate through all combinations of hyperparameters
-for lr in "${step_sizes[@]}"; do
-    for rr in "${replacement_rates[@]}"; do
-        
-        # Loop until a free GPU is found
-        free_gpu=$(get_free_gpu)
-        while [ "$free_gpu" -eq "-1" ]; do
-            echo "No free GPUs available. Waiting 10 seconds..."
-            sleep 10
-            free_gpu=$(get_free_gpu)
+for rr in "${replacement_rates[@]}"; do
+    for decay in "${age_decay_rates[@]}"; do
+        for util in "${util_types[@]}"; do
+            for norm_mode in "${normalization_modes[@]}"; do
+                for lambda in "${reg_lambdas[@]}"; do
+                    
+                    # Loop until a free GPU is found
+                    free_gpu=$(get_free_gpu)
+                    while [ "$free_gpu" -eq "-1" ]; do
+                        sleep 2
+                        free_gpu=$(get_free_gpu)
+                    done
+                    
+                    echo "Found free GPU: cuda:$free_gpu. Launching lambda=$lambda, decay=$decay, util=$util, norm_mode='$norm_mode', rr=$rr..."
+                    
+                    # Launch the job in the background
+                    # Note: We wrap norm_mode in quotes because it contains spaces
+                    python train_with_improved_optimizer.py \
+                        learner=srr_cbp \
+                        learner.SO_reg_lambda=$lambda \
+                        learner.aso_age_decay_rate=$decay \
+                        "learner.aso_normalization_mode=$norm_mode" \
+                        learner.neurons_replacement_rate=$rr \
+                        learner.util_type=$util \
+                        device="cuda:$free_gpu" &
+                        
+                    # Record the PID of the background process we just launched to that GPU
+                    gpu_pids[$free_gpu]=$!
+                    
+                done
+            done
         done
-        
-        echo "Found free GPU: cuda:$free_gpu. Launching LR=$lr, RR=$rr..."
-        
-        # Launch the job in the background
-        python train_with_improved_optimizer.py \
-            learner.step_size=$lr \
-            learner.neurons_replacement_rate=$rr \
-            device="cuda:$free_gpu" &
-            
-        # Sleep for a few seconds to allow the process to allocate GPU memory
-        # This prevents the next iteration from mistakenly thinking the same GPU is still free
-        sleep 5
-        
     done
 done
 

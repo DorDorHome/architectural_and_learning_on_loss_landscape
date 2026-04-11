@@ -233,6 +233,7 @@ def main(cfg: ExperimentConfig) -> Any:
         np.random.seed(worker_seed)
         random.seed(worker_seed)
 
+    success = False
     # Wrap the entire training in try-catch to handle NaN properly
     try:
         # loop though the tasks
@@ -498,6 +499,8 @@ def main(cfg: ExperimentConfig) -> Any:
                     if cfg.use_json:
                         save_data_json(data, run_dir, filename=f'run_{cfg.run_id}.json')
 
+        success = True
+
     except ValueError as e:
         # NaN/Inf errors will propagate as ValueError - let them stop the script
         print(f"Training stopped due to numerical instability: {e}")
@@ -509,7 +512,7 @@ def main(cfg: ExperimentConfig) -> Any:
     finally:
         if cfg.use_wandb:
             import wandb
-            wandb.finish()
+            wandb.finish(exit_code=0 if success else 1)
 
 if __name__ == "__main__":
 
