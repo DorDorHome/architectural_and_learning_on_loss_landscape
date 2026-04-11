@@ -26,7 +26,7 @@ import os
 # Force CPU eigendecomposition to avoid CUDA errors on cuda:1
 os.environ['SIGMA_FORCE_CPU_EIGH'] = '1'
 os.environ['LLA_PREFER_GPU_EIGH'] = '0'
-print("⚠️  Forcing CPU eigendecomposition workarounds for cuda:1 stability")
+print("WARNING: Forcing CPU eigendecomposition workarounds for cuda:1 stability")
 
 import random
 # import pickle
@@ -96,7 +96,7 @@ def main(cfg: ExperimentConfig) -> Any:
     if hasattr(cfg, 'enable_cuda1_workarounds') and cfg.enable_cuda1_workarounds:
         os.environ['SIGMA_FORCE_CPU_EIGH'] = '1'
         os.environ['LLA_PREFER_GPU_EIGH'] = '0'
-        print("⚠️  cuda:1 workarounds enabled - using CPU eigendecomposition")
+        print("WARNING: cuda:1 workarounds enabled - using CPU eigendecomposition")
         print("   (SIGMA_FORCE_CPU_EIGH=1, LLA_PREFER_GPU_EIGH=0)")
         print("   Set enable_cuda1_workarounds=False in config to disable")
 
