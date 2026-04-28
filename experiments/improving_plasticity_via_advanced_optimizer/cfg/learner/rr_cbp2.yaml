@@ -2,17 +2,17 @@ type: 'rr_cbp2'
 network_class: ${net.network_class}  # Use the network class from the net configuration
 # as BaseLearnerConfig
 device: ${device}
-opt:  'sgd'
-init: 'kaiming'
-loss: ${loss_functions.${task_shift_mode}}
+opt:  'sgd' #mainly use sgd, but "adam" is available. Remember to change the step size accordingly.
+init: 'kaiming' #don't change this unless you have a good reason.
+loss: ${loss_functions.${task_shift_mode}} #the loss function to use.
 step_size: 0.01 # 0.01 for SGD, 0.001 for Adam
-beta_1: 0.95
-beta_2: 0.999
+beta_1: 0.95 #only used for adam.
+beta_2: 0.999 #only used for adam.
 weight_decay: 0.02 # L2 regularization strength , use 0.001 for labelled regression tasks
-to_perturb: false
-perturb_scale: 0.05
-momentum: 0.9
-log_rank_metrics_every: 1
+to_perturb: false #whether to perturb the weights.
+perturb_scale: 0.05 #the scale of the perturbation.
+momentum: 0.9 #only used for sgd.
+log_rank_metrics_every: 1 #how often to log the rank metrics.
 
 # as ContinuousBackpropConfig (shared with cbp, and other rr_cbp variants)
 neurons_replacement_rate: 0.001

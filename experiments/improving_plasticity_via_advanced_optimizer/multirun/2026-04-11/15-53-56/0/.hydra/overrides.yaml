@@ -1,0 +1,3 @@
+- device=cuda\:0
+- learner.aso_normalization_mode='correct by input size'
+- wandb.project=srr_cbp_hyperparameter_tuning
