@@ -7,6 +7,13 @@ from src.algos.gnt import ConvGnT_for_ConvNet, GnT_for_FC
 from src.algos.AdamGnT import AdamGnT
 from configs.configurations import SRRCBPConfig, NetConfig
 
+
+def _canonical_aso_normalization_mode(mode: str) -> str:
+    if mode == "naive mse_sum correction":
+        return "naive mse sum correction"
+    return mode
+
+
 class SRR_CBP_for_FC(Learner):
     def __init__(
             self,
@@ -27,7 +34,7 @@ class SRR_CBP_for_FC(Learner):
         
         self.SO_reg_lambda = config.SO_reg_lambda
         self.aso_age_decay_rate = config.aso_age_decay_rate
-        self.aso_normalization_mode = config.aso_normalization_mode
+        self.aso_normalization_mode = _canonical_aso_normalization_mode(config.aso_normalization_mode)
         self.use_grad_clip = config.use_grad_clip
         self.grad_clip_max_norm = config.grad_clip_max_norm
 
@@ -171,7 +178,7 @@ class SRR_CBP_for_ConvNet(Learner):
         
         self.SO_reg_lambda = config.SO_reg_lambda
         self.aso_age_decay_rate = config.aso_age_decay_rate
-        self.aso_normalization_mode = config.aso_normalization_mode
+        self.aso_normalization_mode = _canonical_aso_normalization_mode(config.aso_normalization_mode)
         self.use_grad_clip = config.use_grad_clip
         self.grad_clip_max_norm = config.grad_clip_max_norm
 
