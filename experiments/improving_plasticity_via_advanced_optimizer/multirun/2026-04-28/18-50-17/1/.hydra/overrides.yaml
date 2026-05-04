@@ -1,0 +1,3 @@
+- device=cuda\:1
+- learner.aso_normalization_mode="naive mse_sum correction"
+- wandb.project=srr_cbp_hyperparameter_tuning
