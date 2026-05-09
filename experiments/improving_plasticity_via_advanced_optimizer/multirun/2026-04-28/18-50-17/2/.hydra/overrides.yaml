@@ -1,3 +1,0 @@
-- device=cuda\:1
-- learner.aso_normalization_mode="no correction"
-- wandb.project=srr_cbp_hyperparameter_tuning
