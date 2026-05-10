@@ -1,6 +1,8 @@
 .crossnote/
 .markdownlint.json
 
+**/multirun/
+
 /rc/models/__pycache__/
 /src/data_loading/__pycache__/
 /src/algos/supervised/__pycache__/

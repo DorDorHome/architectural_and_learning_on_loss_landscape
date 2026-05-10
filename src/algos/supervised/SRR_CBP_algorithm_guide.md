@@ -4,7 +4,7 @@
 ## Soft Rank-Restoring Continual Backpropagation (SRR-CBP)
 
 
-
+```latex
 \begin{algorithm}
 \caption{Soft Rank-Restoring Continual Backpropagation (SRR-CBP)}
 \begin{algorithmic}
@@ -82,8 +82,7 @@
   \EndFor
 \end{algorithmic}
 \end{algorithm}
-
-
+```
 
 ## SRR-CBP-E (With Empirical Variance Scaling)
 

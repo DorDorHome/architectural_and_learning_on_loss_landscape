@@ -45,6 +45,8 @@ class RankRestoringCBP2_for_ConvNet(Learner):
 
         self.use_grad_clip = getattr(config, 'use_grad_clip', False)
         self.grad_clip_max_norm = getattr(config, 'grad_clip_max_norm', 1.0)
+        self.to_perturb = getattr(config, 'to_perturb', False)
+        self.perturb_scale = getattr(config, 'perturb_scale', 0.0)
 
         # Initialize AdamGnT optimizer (required for proper state management)
         if config.opt == 'adam':
@@ -174,7 +176,21 @@ class RankRestoringCBP2_for_ConvNet(Learner):
                 _, fresh_features = self.net.predict(x)
                 self.previous_features = fresh_features
 
+        if self.to_perturb:
+            self.perturb()
+
         return loss.detach(), output.detach()
+
+    def perturb(self):
+        with torch.no_grad():
+            for i in range(int(len(self.net.layers)/2)+1):
+                # Only perturb layers that have weight and bias attributes
+                if hasattr(self.net.layers[i * 2], 'weight') and self.net.layers[i * 2].weight is not None:
+                    self.net.layers[i * 2].weight += \
+                        torch.empty(self.net.layers[i * 2].weight.shape, device=self.device).normal_(mean=0, std=self.perturb_scale)
+                if hasattr(self.net.layers[i * 2], 'bias') and self.net.layers[i * 2].bias is not None:
+                    self.net.layers[i * 2].bias += \
+                        torch.empty(self.net.layers[i * 2].bias.shape, device=self.device).normal_(mean=0, std=self.perturb_scale)
 
     def get_replacement_stats(self):
         """Get replacement statistics from the GnT module."""

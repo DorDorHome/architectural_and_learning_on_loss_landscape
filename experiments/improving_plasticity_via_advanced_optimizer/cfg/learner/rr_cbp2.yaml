@@ -23,20 +23,20 @@ accumulate: False
 outgoing_random: False
 
 # Gradient clipping options
-use_grad_clip: true  #on only for drifting_values       # Enable gradient clipping to prevent gradient explosion
+use_grad_clip: true   # Enabling gradient clipping can prevent gradient explosion. #especially for drifting_values, explosion can happen frequently     
 grad_clip_max_norm: 1.0      # Maximum norm for gradient clipping
 
 
 # for rr_cbp specific params:
 diag_sigma_only: false
 ## Covariance EMA settings
-sigma_ema_beta: 0.95 #original: 0.0
+sigma_ema_beta: 0.95 
 sigma_ridge: 0.03 #recommended 0.05 for rr_cbp_2, and rr_cbp_e_2
 max_proj_trials: 4
 proj_eps: 1e-6
 center_bias: 'mean'
 orthonormalize_batch: True
 
-use_energy_budget: bool = False # also handled to be false in supervisor factory
+use_energy_budget: False # also handled to be false in supervisor factory
 # nullspace_seed_epsilon: 0.0 # not used for rr_cbp2, setting for rr_cbp_e_2 and srr_cbp_e
 # improve_conditioning_if_saturated: True # not used for rr_cbp2, setting for rr_cbp_e_2 and srr_cbp_e
