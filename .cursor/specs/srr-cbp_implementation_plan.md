@@ -1,7 +1,7 @@
 # Implementation Plan for SRR-CBP
 
 ## Overview
-Implement Soft Rank-Restoring Continual Backpropagation (SRR-CBP) using forward hooks to compute the Asymmetric Soft Orthogonality (ASO) loss, reusing the base GnT classes from `gnt.py` (which contain the recent `use_map` improvements) for the replacement phase.
+Implement Soft Rank-Restoring Continual Backpropagation (SRR-CBP) using forward hooks to compute the Asymmetric Soft Orthogonality (ASO) loss, reusing the base GnT classes from `gnt.py` (which contain the recent `use_map` improvements)  for the replacement phase.
 
 ## 1. Configuration Updates (`configs/configurations.py`)
 - Add a new dataclass `SRRCBPConfig` that inherits from `ContinuousBackpropConfig`.
@@ -10,7 +10,7 @@ Implement Soft Rank-Restoring Continual Backpropagation (SRR-CBP) using forward 
   - `SO_reg_lambda: float = 0.1` (Initial ASO penalty)
   - `aso_age_decay_rate: float = 0.99` (Decay rate for ASO penalty)
 
-## 2. Learner Implementation (`src/algos/supervised/srr_cbp.py`)
+## 2. Leaner Implementation (`src/algos/supervised/srr_cbp.py`)
 Create a new file to house the SRR-CBP learners.
 
 ### `SRR_CBP_for_ConvNet` and `SRR_CBP_for_FC`

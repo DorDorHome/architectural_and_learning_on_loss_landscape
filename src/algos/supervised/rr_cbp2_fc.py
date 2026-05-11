@@ -130,16 +130,6 @@ class RankRestoringCBP2_for_FC(Learner):
 
         return loss.detach(), output.detach()
 
-    def perturb(self):
-        with torch.no_grad():
-            for i in range(int(len(self.net.layers)/2)+1):
-                if hasattr(self.net.layers[i * 2], 'weight') and self.net.layers[i * 2].weight is not None:
-                    self.net.layers[i * 2].weight += \
-                        torch.empty(self.net.layers[i * 2].weight.shape, device=self.device).normal_(mean=0, std=self.perturb_scale)
-                if hasattr(self.net.layers[i * 2], 'bias') and self.net.layers[i * 2].bias is not None:
-                    self.net.layers[i * 2].bias += \
-                        torch.empty(self.net.layers[i * 2].bias.shape, device=self.device).normal_(mean=0, std=self.perturb_scale)
-
     def get_replacement_stats(self):
         """Get replacement statistics from the GnT module."""
         return self.rr_gnt.get_layer_stats()

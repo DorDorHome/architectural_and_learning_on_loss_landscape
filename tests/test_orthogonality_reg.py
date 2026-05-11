@@ -23,6 +23,14 @@ class MockLearner(Learner):
         return loss.item()
 
 def test_kernel_so_regularizer_convnet():
+
+    """
+    Test that the KernelSORegularizer integrates and runs as expected when applied to a ConvNet model.
+
+    - Checks that convolutional and linear layers are correctly cached by the regularizer.
+    - Verifies that the regularizer's output is a valid loss tensor.
+    - Ensures forward pass and gradient calculation operate with dummy input/output.
+    """
     config = NetParams(input_height=32, input_width=32, num_classes=10)
     model = ConvNet(config)
     
@@ -45,6 +53,17 @@ def test_kernel_so_regularizer_convnet():
     assert loss.item() > 0
 
 def test_kernel_so_regularizer_layer_norm_convnet():
+
+    """
+    Test that the KernelSORegularizer works as expected when applied to 
+    ConvNet_conv_and_FC_LayerNorm, which includes both convolutional and fully-connected layers 
+    with layer normalization.
+
+    - Constructs a NetParams config and attaches a dummy `norm_param` with an elementwise affine property (to satisfy layer norm instantiation).
+    - Instantiates the model and KernelSORegularizer with a dummy loss and regularization strength.
+    - Asserts that conv_layers and linear_layers are both detected as 3 (typical for these architectures).
+    - Runs a dummy forward/target pair through the regularizer, checks returned loss is a valid, positive tensor.
+    """
     # Helper class to mock norm_param
     class DummyNormParam:
         class LayerNormParam:
@@ -73,12 +92,23 @@ def test_kernel_so_regularizer_layer_norm_convnet():
     assert loss.item() > 0
 
 def test_kernel_so_regularizer_known_weights():
+    """
+    Test that KernelSORegularizer computes the expected orthogonality penalty for known weights,
+    across all normalization_mode settings.
+
+    - Uses a simple 2x2 Linear layer whose weights are a scaled identity matrix (orthogonal but scaled).
+    - For each normalization mode, computes expected penalty value:
+      - "no correction"    : ||G - I||_F^2, where G = W W^T.
+      - "correct by input size": divides penalty by input size.
+      - "naive mse sum correction": computes mean squared error elementwise.
+    - Asserts that returned penalty matches analytic result.
+    """
     # Create a simple model with known weights
     class SimpleModel(nn.Module):
         def __init__(self):
             super().__init__()
             self.linear = nn.Linear(2, 2, bias=False)
-            # Set weights to an orthogonal matrix scaled by 2
+            # Set weights to an orthogonal  matrix scaled by 2
             # W = [[2, 0], [0, 2]]
             self.linear.weight.data = torch.tensor([[2.0, 0.0], [0.0, 2.0]])
             
