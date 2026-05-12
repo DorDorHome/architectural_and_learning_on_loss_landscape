@@ -136,6 +136,33 @@ class SRRCBPConfig(ContinuousBackpropConfig):
     class Config:
         version_base = "1.1"
 
+
+@dataclass
+class SRRSoftOrthoCBPConfig(ContinuousBackpropConfig):
+    """Configuration for the isolated-flow soft-orthogonality SRR-CBP variants.
+
+    Used by both `srr_aso_cbp` (asymmetric soft orthogonality, requires
+    `aso_maturity_threshold`) and `srr_faso_cbp` (fully age-weighted soft
+    orthogonality, must leave `aso_maturity_threshold=None`). The `type`
+    field is the user-facing discriminator and selects the regularizer
+    inside the shared learner classes.
+
+    The `maturity_threshold` field inherited from `ContinuousBackpropConfig`
+    continues to drive the GnT replacement logic in both modes; it is
+    independent of `aso_maturity_threshold`.
+    """
+    type: str = 'srr_aso_cbp'
+    SO_reg_lambda: float = 0.01
+    age_decay_rate: float = 0.99
+    # options: "no correction", "correct by input size", "naive mse sum correction"
+    normalization_mode: str = "correct by input size"
+    # ASO: required positive int. FASO: must be None.
+    aso_maturity_threshold: Optional[int] = None
+    # Default False matches the spec definition A = W H (no bias).
+    include_bias_in_A_reg: bool = False
+    class Config:
+        version_base = "1.1"
+
 @dataclass
 class RRContinuousBackpropConfig(ContinuousBackpropConfig):
     type: str = 'rr_cbp'
@@ -273,7 +300,7 @@ class ExperimentConfig:
     batch_size: int = 128
     data: DataConfig = field(default_factory=DataConfig)
     net: Union[NetConfig, GrokkingTransformerConfig] = field(default_factory=lambda: NetConfig(type='ConvNet'))
-    learner: Union[BackpropConfig, ContinuousBackpropConfig, RRContinuousBackpropConfig, SRRCBPConfig] = field(default_factory=BackpropConfig)
+    learner: Union[BackpropConfig, ContinuousBackpropConfig, RRContinuousBackpropConfig, SRRCBPConfig, SRRSoftOrthoCBPConfig] = field(default_factory=BackpropConfig)
     evaluation: Union[EvaluationConfig, None] = field(default_factory=EvaluationConfig)
     track_rank: bool = False
     prop_for_approx_or_l1_rank: float = 0.99
