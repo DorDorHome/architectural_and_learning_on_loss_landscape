@@ -15,7 +15,7 @@ momentum: 0.9
 log_rank_metrics_every: 1
 
 # as ContinuousBackpropConfig (GnT-side maturity threshold is independent of aso_maturity_threshold below)
-neurons_replacement_rate: 0.001
+neurons_replacement_rate: 0.002 
 decay_rate_utility_track: 0.9
 maturity_threshold: 100
 util_type: 'adaptable_contribution'

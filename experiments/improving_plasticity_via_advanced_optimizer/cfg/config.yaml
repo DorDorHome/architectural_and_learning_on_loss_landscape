@@ -1,6 +1,6 @@
 defaults:
   - _self_
-  - learner: 'srr_cbp'
+  - learner: 'srr_faso_cbp' #'srr_aso_cbp' #  'srr_cbp'  'srr_faso_cbp'
 
 
 # represent experiments config:
@@ -94,7 +94,7 @@ layers_identifier: None
 data:
   dataset: 'MNIST'
   use_torchvision: True
-  data_path: '/home/sfchan/dataset' #${oc.env:DATASET_PATH, '/hdda/datasets'}  # '/home/sfchan/dataset'  #'/hdda/datasets' 
+  data_path: '/hdda/datasets' #${oc.env:DATASET_PATH, '/hdda/datasets'}  # '/home/sfchan/dataset'  #'/hdda/datasets' 
   num_classes: 10
 
 # network architecture:
