@@ -18,14 +18,14 @@ log_rank_metrics_every: 1
 neurons_replacement_rate: 0.001 # 0.01 is too high, 0.005 might be too high, 0.002 seems ideal
 decay_rate_utility_track: 0.9
 maturity_threshold: 100
-util_type: 'adaptable_contribution' #options: 'weight', 'contribution', 'zero_contribution', 'adaptation', 'adaptable_contribution', 'feature_by_input' 
+util_type: 'contribution' #options: 'weight', 'contribution', 'zero_contribution', 'adaptation', 'adaptable_contribution', 'feature_by_input' 
 accumulate: False
 outgoing_random: False
 
 #uniquely for srr_cbp and its variants
-SO_reg_lambda: 0.02
+SO_reg_lambda: 0.05
 aso_age_decay_rate: 0.99
-aso_normalization_mode: "naive mse sum correction"
+aso_normalization_mode: "no correction" # options: "no correction", "correct by input size", "naive mse sum correction"
 
 # Gradient clipping options
 use_grad_clip: true  #on only for drifting_values       # Enable gradient clipping to prevent gradient explosion
