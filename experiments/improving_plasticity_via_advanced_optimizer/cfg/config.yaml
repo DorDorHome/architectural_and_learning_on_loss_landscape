@@ -1,6 +1,6 @@
 defaults:
   - _self_
-  - learner: 'srr_faso_cbp' #'srr_aso_cbp' #  'srr_cbp'  'srr_faso_cbp'
+  - learner: 'srr_aso_cbp' #'srr_aso_cbp' #  'srr_cbp'  'srr_faso_cbp'
 
 
 # represent experiments config:
