@@ -23,7 +23,7 @@ accumulate: False
 outgoing_random: False
 
 # Soft-orthogonality regularization (ASO)
-SO_reg_lambda: 0.0
+SO_reg_lambda: 0.05
 age_decay_rate: 0.99
 normalization_mode: "naive mse sum correction"  # "no correction" | "correct by input size" | "naive mse sum correction"
 aso_maturity_threshold: 100  # required for ASO; defines young vs mature for the regularizer
