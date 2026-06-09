@@ -1,0 +1,142 @@
+# ============================================================
+#  Statistical Analysis Config — Plasticity Experiments
+#
+#  Matches: experiments/improving_plasticity_via_advanced_optimizer/
+#  Project: effects_of_optimizer_continuous_input_deformation
+# ============================================================
+
+# --- 1. W&B source -----------------------------------------
+# Fill in your W&B entity (username or team name). Get it from wandb.ai
+wandb:
+  entity: "alvin-wb"                       # REQUIRED: e.g. "your-username" or "your-team"
+  project: "effects_of_optimizer_continuous_input_deformation"
+
+# --- 2. Run filtering --------------------------------------
+filters:
+  state: ["finished"]
+  tags: []
+  name_regex: null
+  created_after: null
+  created_before: null
+
+  config_filters: {}
+    # Optional: restrict to specific configs, e.g.:
+    # net.type: "ConvNet_FC_layer_norm"
+    # learner.type: ["backprop", "rr_cbp2", "rr_cbp_e_2"]
+
+  summary_filters: {}
+  max_runs: null
+
+# --- 3. Variable selection ---------------------------------
+variables:
+  config_keys:
+    - "learner.type"
+    - "learner.step_size"
+    - "learner.weight_decay"
+    - "learner.opt"
+    - "net.type"
+    - "batch_size"
+    - "num_tasks"
+    - "epochs"
+    - "task_shift_mode"
+
+  summary_metrics: []
+
+  # History metrics logged by train_with_improved_optimizer.py
+  # (logged when epoch % rank_measure_freq_to_epoch == 0, i.e. every 10 epochs)
+  history_metrics:
+    - "global_epoch"
+    - "task_idx"
+    - "epoch_loss"
+    - "epoch_accuracy"
+    - "layer_0_num_dead_units"
+    - "layer_1_num_dead_units"
+    - "effective_rank_normalized_aurc"
+    - "effective_rank_rank_drop_gini"
+    - "effective_rank_rank_decay_centroid"
+
+  history_sampling:
+    method: "last_per_group"       # One row per task_idx (last epoch of each task)
+    group_by: "task_idx"
+    sort_by: "global_epoch"
+
+  history_post_filters: {}
+    # Optional: limit task range, e.g.:
+    # task_idx: {min: 100}
+    # task_idx: [0, 100, 200, 300, 400, 499]
+
+  derived_metrics: []
+
+# --- 4. Analysis specification -----------------------------
+analysis:
+  type: "regression"
+
+  regression:
+    dependent_variable: "epoch_loss"
+    independent_variables:
+      - "layer_0_num_dead_units"
+      - "layer_1_num_dead_units"
+      - "effective_rank_normalized_aurc"
+
+    regression_type: "ols"
+    alpha: 1.0
+    transforms: []
+
+    group_by: "learner__type"      # Stratify by learner; compare backprop vs rr_cbp2 vs rr_cbp_e_2
+    compare_groups: true
+
+    diagnostics:
+      r_squared: true
+      adjusted_r_squared: true
+      ssr: true
+      sse: true
+      sst: true
+      aic: true
+      bic: true
+      f_statistic: true
+      log_likelihood: true
+      confidence_intervals: true
+      p_values: true
+      standardized_coefficients: true
+      durbin_watson: true
+      jarque_bera: true
+      breusch_pagan: true
+      goldfeld_quandt: true
+      condition_number: true
+      vif: true
+      cooks_distance: true
+      leverage: true
+      dffits: true
+
+    plots:
+      partial_regression: true
+      partial_residual: true
+      residuals_vs_fitted: true
+      qq_plot: true
+      scale_location: true
+      cooks_distance: true
+      leverage_vs_residuals: true
+      correlation_heatmap: true
+      pairplot: true
+
+  trajectory:
+    x_axis: "task_idx"
+    y_variables:
+      - "epoch_loss"
+      - "epoch_accuracy"
+    group_by: "learner__type"
+    summary_statistics:
+      - "mean"
+      - "std"
+    comparisons:
+      - "auc"
+      - "final_vs_initial"
+      - "max_degradation"
+
+  output:
+    save_figures: true
+    figure_format: "png"
+    figure_dpi: 150
+    output_dir: "outputs"            # Saved under analysis/outputs/
+    print_summary: true
+    save_summary_csv: true

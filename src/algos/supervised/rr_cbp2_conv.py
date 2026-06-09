@@ -43,6 +43,11 @@ class RankRestoringCBP2_for_ConvNet(Learner):
         netparams = netconfig.netparams if netconfig is not None else None
         super().__init__(net, config, netparams)
 
+        self.use_grad_clip = getattr(config, 'use_grad_clip', False)
+        self.grad_clip_max_norm = getattr(config, 'grad_clip_max_norm', 1.0)
+        self.to_perturb = getattr(config, 'to_perturb', False)
+        self.perturb_scale = getattr(config, 'perturb_scale', 0.0)
+
         # Initialize AdamGnT optimizer (required for proper state management)
         if config.opt == 'adam':
             self.opt = AdamGnT(
@@ -69,7 +74,7 @@ class RankRestoringCBP2_for_ConvNet(Learner):
 
         # Initialize the RR-GnT2 module for generate-and-test
         self.rr_gnt = RR_GnT2_for_ConvNet(
-            net=self.net.layers,
+            net=self.net,
             hidden_activation=hidden_activation,
             opt=self.opt,
             config=config,
@@ -83,6 +88,29 @@ class RankRestoringCBP2_for_ConvNet(Learner):
         Calculate the spatial dimensions (H x W) of the last convolutional layer
         before it gets flattened into a linear layer.
         """
+        # Support Map-based topology first
+        if hasattr(self.net, "get_plasticity_map"):
+            try:
+                plasticity_map = self.net.get_plasticity_map()
+                for item in plasticity_map:
+                    current_layer = item['weight_module']
+                    outgoing_module = item['outgoing_module']
+                    
+                    # Detect the Conv2d -> Linear transition
+                    if isinstance(current_layer, Conv2d) and isinstance(outgoing_module, Linear):
+                        # Calculate spatial area: In_Features (Linear) / Out_Channels (Conv)
+                        num_last_filter_outputs = outgoing_module.in_features // current_layer.out_channels
+                        return max(1, int(num_last_filter_outputs))
+                
+                # If loop finishes without finding transition, return 1 (default)
+                return 1
+            except Exception:
+                # Fallback to legacy check logic if map parsing fails
+                pass
+        
+        
+        
+        # Legacy Logic: Relies on self.net.layers list and stride-2 assumption
         layers = cast(Sequence[Module], self.net.layers)
         last_conv_idx = -1
         first_linear_idx = -1
@@ -134,6 +162,8 @@ class RankRestoringCBP2_for_ConvNet(Learner):
 
         # Backward pass and optimizer step
         loss.backward()
+        if self.use_grad_clip:
+            torch.nn.utils.clip_grad_norm_(self.net.parameters(), max_norm=self.grad_clip_max_norm)
         self.opt.step()
         self.opt.zero_grad()
 
@@ -145,6 +175,9 @@ class RankRestoringCBP2_for_ConvNet(Learner):
             with torch.no_grad():
                 _, fresh_features = self.net.predict(x)
                 self.previous_features = fresh_features
+
+        if self.to_perturb:
+            self.perturb()
 
         return loss.detach(), output.detach()
 

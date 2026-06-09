@@ -97,11 +97,3 @@ class Backprop(Learner):
             self.perturb()
             
         return loss.item(), output.detach()
-    
-    def perturb(self):
-        with torch.no_grad():
-            for i in range(int(len(self.net.layers)/2)+1):
-                self.net.layers[i * 2].bias +=\
-                    torch.empty(self.net.layers[i * 2].bias.shape, device=self.device).normal_(mean=0, std=self.perturb_scale)
-                self.net.layers[i * 2].weight +=\
-                    torch.empty(self.net.layers[i * 2].weight.shape, device=self.device).normal_(mean=0, std=self.perturb_scale)

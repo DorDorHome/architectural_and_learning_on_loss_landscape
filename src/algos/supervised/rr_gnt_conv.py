@@ -55,15 +55,27 @@ class RR_GnT_for_ConvNet(ConvGnT_for_ConvNet):
         self._logger = logging.getLogger(__name__)
         self._conv_output_multipliers: List[int] = []
         for layer_idx in range(self.num_hidden_layers):
-            current_layer = self.net[layer_idx * 2]
-            next_layer = self.net[layer_idx * 2 + 2]
+            if self.use_map:
+                map_item = self.plasticity_map[layer_idx]
+                current_layer = map_item['weight_module']
+                next_layer = map_item['outgoing_module']
+            else:
+                current_layer = self.net[layer_idx * 2]
+                next_layer = self.net[layer_idx * 2 + 2]
+                
             if isinstance(current_layer, Conv2d) and isinstance(next_layer, Linear):
                 self._conv_output_multipliers.append(num_last_filter_outputs)
             else:
                 self._conv_output_multipliers.append(1)
+        
+                
         self.hidden_activation = hidden_activation or "linear"
         self._leaky_slope = 0.01
-        for module in net:
+        
+        
+        # FIX: Safer iteration for LeakyReLU parameter detection
+        network_modules = net if isinstance(net, list) else net.modules()
+        for module in network_modules:
             if isinstance(module, torch.nn.LeakyReLU):
                 self._leaky_slope = float(module.negative_slope)
                 break
@@ -90,7 +102,13 @@ class RR_GnT_for_ConvNet(ConvGnT_for_ConvNet):
             for layer_idx, count in enumerate(num_features_to_replace):
                 if count == 0:
                     continue
-                current_layer = self.net[layer_idx * 2]
+                
+                # Use Map Logic or legacy
+                if self.use_map:
+                    current_layer = self.plasticity_map[layer_idx]['weight_module']
+                else:
+                    current_layer = self.net[layer_idx * 2]
+
                 self._ensure_covariance(layer_idx, current_layer)
                 sigma_state = self.layer_covariances[layer_idx]
                 assert sigma_state is not None
@@ -149,7 +167,12 @@ class RR_GnT_for_ConvNet(ConvGnT_for_ConvNet):
         )
 
     def _compute_layer_inputs(self, layer_idx: int, features: List[Tensor], batch_input: Tensor) -> Tensor:
-        current_layer = self.net[layer_idx * 2]
+        # use Map Logic or legacy
+        if self.use_map:
+            current_layer = self.plasticity_map[layer_idx]['weight_module']
+        else:
+            current_layer = self.net[layer_idx * 2]
+
         if isinstance(current_layer, Conv2d):
             layer_input = batch_input if layer_idx == 0 else features[layer_idx - 1]
             patches = F.unfold(
@@ -170,7 +193,12 @@ class RR_GnT_for_ConvNet(ConvGnT_for_ConvNet):
         raise TypeError("Unsupported layer type in ConvNet RR-CBP")
 
     def _kept_indices(self, layer_idx: int, replace_idx: Tensor) -> Tensor:
-        layer = self.net[layer_idx * 2]
+        # Use Map Logic or legacy
+        if self.use_map:
+            layer = self.plasticity_map[layer_idx]['weight_module']
+        else:
+            layer = self.net[layer_idx * 2]
+
         if isinstance(layer, Conv2d):
             total = layer.out_channels
         elif isinstance(layer, Linear):
@@ -191,8 +219,18 @@ class RR_GnT_for_ConvNet(ConvGnT_for_ConvNet):
         H_prev: Tensor,
         activations: Tensor,
     ) -> LayerReplacementStats:
-        layer = self.net[layer_idx * 2]
-        next_layer = self.net[layer_idx * 2 + 2]
+        # Use Map Logic or legacy
+        if self.use_map:
+            map_item = self.plasticity_map[layer_idx]
+            layer = map_item['weight_module']
+            next_layer = map_item['outgoing_module']
+            # Correct bias compensation check for norms
+            should_compensate = not map_item.get('outgoing_feeds_into_norm', False)
+        else:
+            layer = self.net[layer_idx * 2]
+            next_layer = self.net[layer_idx * 2 + 2]
+            should_compensate = True
+
         config = self.rr_config
 
         weight_matrix = self._flatten_weight(layer)
@@ -257,7 +295,8 @@ class RR_GnT_for_ConvNet(ConvGnT_for_ConvNet):
         recent_saturated = 0
 
         for idx_pos, unit_idx in enumerate(replace_input_idx.tolist()):
-            if self.ages[layer_idx][unit_idx] > 0:
+            # Only compensate bias if appropriate
+            if should_compensate and self.ages[layer_idx][unit_idx] > 0:
                 bias_corrected_act = self.mean_feature_act[layer_idx][unit_idx] / (
                     1 - self.decay_rate ** self.ages[layer_idx][unit_idx]
                 )
@@ -369,7 +408,14 @@ class RR_GnT_for_ConvNet(ConvGnT_for_ConvNet):
         bias_corrected_act: Tensor,
     ) -> None:
         if isinstance(next_layer, Conv2d):
-            contribution = (next_layer.weight.data[:, unit_idx, ...] * bias_corrected_act).sum(dim=(1, 2))
+            # Ensure proper broadcasting for Conv bias compensation
+            if isinstance(current_layer, Conv2d):
+               # Conv->Conv usually (In, H, W) vs (Out, In, k, k)
+               # Standard logic
+               contribution = (next_layer.weight.data[:, unit_idx, ...] * bias_corrected_act).sum(dim=(1, 2))
+            else:
+                contribution = (next_layer.weight.data[:, unit_idx, ...] * bias_corrected_act).sum(dim=(1, 2))
+           
             next_layer.bias.data += contribution.to(device=next_layer.bias.device, dtype=next_layer.bias.dtype)
         elif isinstance(next_layer, Linear):
             cols = self._resolve_output_columns(
@@ -424,7 +470,14 @@ class RR_GnT_for_ConvNet(ConvGnT_for_ConvNet):
                 noise = noise / norm.view(-1, 1, 1)
                 next_layer.weight.data[:, unit_idx, ...] = epsilon * noise
         elif isinstance(next_layer, Linear):
-            cols = self._resolve_output_columns(layer_idx, idx_pos, replace_input_idx, replace_output_idx, self.net[layer_idx * 2])
+            
+            if self.use_map:
+                current_layer = self.plasticity_map[layer_idx]['weight_module']
+            else:
+                current_layer = self.net[layer_idx * 2]
+                  
+            
+            cols = self._resolve_output_columns(layer_idx, idx_pos, replace_input_idx, replace_output_idx, current_layer)
             if cols.numel() > 0:
                 next_layer.weight.data[:, cols] = 0.0
                 if use_seed:
@@ -465,7 +518,13 @@ class RR_GnT_for_ConvNet(ConvGnT_for_ConvNet):
         activations: Tensor,
         stats: LayerReplacementStats,
     ) -> Dict[str, float]:
-        weight = self._flatten_weight(self.net[layer_idx * 2])
+        # Use Map Logic or legacy
+        if self.use_map:
+            layer = self.plasticity_map[layer_idx]['weight_module']
+        else:
+            layer = self.net[layer_idx * 2]
+            
+        weight = self._flatten_weight(layer)
         
         # Try to compute gram matrix, but if GPU is corrupted, return placeholder metrics
         try:
@@ -562,8 +621,16 @@ class RR_GnT_for_ConvNet(ConvGnT_for_ConvNet):
         replace_input_idx: Tensor,
         replace_output_idx: Tensor,
     ) -> None:
-        layer = self.net[layer_idx * 2]
-        next_layer = self.net[layer_idx * 2 + 2]
+        
+        #  Use Map Logic or legacy
+        if self.use_map:
+            map_item = self.plasticity_map[layer_idx]
+            layer = map_item['weight_module']
+            next_layer = map_item['outgoing_module']
+        else:
+            layer = self.net[layer_idx * 2]
+            next_layer = self.net[layer_idx * 2 + 2]
+            
         if isinstance(self.opt, AdamGnT) and replace_input_idx.numel() > 0:
             self.opt.state[layer.weight]["exp_avg"][replace_input_idx, ...] = 0.0
             self.opt.state[layer.weight]["exp_avg_sq"][replace_input_idx, ...] = 0.0

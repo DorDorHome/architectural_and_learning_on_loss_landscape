@@ -26,6 +26,9 @@ class RankRestoringCBP_for_FC(Learner):
                 f"RankRestoringCBP_for_FC requires net.type == 'FC', got {getattr(self.net, 'type', None)}"
             )
 
+        self.use_grad_clip = getattr(config, 'use_grad_clip', False)
+        self.grad_clip_max_norm = getattr(config, 'grad_clip_max_norm', 1.0)
+
         if config.opt == 'adam':
             self.opt = AdamGnT(
                 self.net.parameters(),
@@ -63,6 +66,8 @@ class RankRestoringCBP_for_FC(Learner):
 
         self.opt.zero_grad()
         loss.backward()
+        if self.use_grad_clip:
+            torch.nn.utils.clip_grad_norm_(self.net.parameters(), max_norm=self.grad_clip_max_norm)
         self.opt.step()
 
         if self.rr_gnt.rr_config.rrcbp_enabled:

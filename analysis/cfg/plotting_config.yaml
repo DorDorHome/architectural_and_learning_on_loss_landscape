@@ -1,0 +1,345 @@
+# ==========================================
+# PLOTTING PIPELINE CONFIGURATION
+# ==========================================
+
+# --- 1. W&B Source -----------------------------------------
+wandb:
+  entity: "alvin-wb"                       
+  project: "effects_of_optimizer_continuous_input_deformation"
+
+# --- 2. Metric Computation & Processing --------------------
+metric_computation:
+  # Instructs the AI on exactly how to extract the "end of task" state
+  history_sampling:
+    method: "last_per_group"       # Keep only one row per task
+    group_by: "task_idx"           # Group the raw dataframe by the task index
+    sort_by: "global_epoch"        # Sort by global time to ensure we get the final epoch
+  
+  # Parameters for calculating \hat{L}_t
+  forward_loss:
+    window_size: 10           # The 'w' future tasks to look ahead
+    metric_to_average: "epoch_loss" # Can be 'epoch_loss' or 'epoch_accuracy'
+    
+    # Advanced methods for computing the forward representation of plasticity
+    calculation_method: "ema" # Options:
+                              # 'mean' (standard average)
+                              # 'median' (robust to extreme outlier tasks)
+                              # 'ema' (Exponential Moving Average - weights immediate future tasks higher)
+                              # 'linear_decay' (Linearly decreasing weight for further tasks)
+    
+    # Hyperparameters for the specific calculation method
+    ema_alpha: 0.3            # Only used if calculation_method is 'ema'
+
+  # Parameters for aggregating per-layer weight norms into a single scalar
+  weight_norm:
+    # Source pattern: keys matching '*_mean_abs_weight' in W&B history
+    source_pattern: "_mean_abs_weight"
+    # Aggregation: "weight_norm_mean" (mean across layers) or "weight_norm_all" (keep all)
+    aggregation: "weight_norm_mean"
+
+  # Outlier filtering (optional)
+  # Filter out rows with extreme values in specific columns before plotting
+  # Filtering is performed independently for each target group (defined in target_runs).
+  per_target_group_filtering:
+    enabled: false
+    method: "quantile" # "quantile", "iqr", "z_score"
+    columns: ["forward_loss", "epoch_loss"]
+    lower_quantile: 0.01
+    upper_quantile: 0.99
+
+# --- 3. Output & Comparison Settings ----------------------
+global_settings:
+  base_output_dir: "./output_plots"
+  # Optional subfolder under base_output_dir. Plots are saved to:
+  #   ./output_plots/{output_subfolder}/
+  # Set to null to save directly into base_output_dir.
+  output_subfolder: "learner_comparison_on_ConvNet"
+
+  # Global variable scaling (e.g. "log", "log2", "log10")
+  # Applies to ALL plots and statistical analysis.
+  # - Plots: Axis scale will be set to log (ticks show original values).
+  # - Analysis: Data will be transformed before regression (e.g. log(x)).
+  variable_scales:
+    forward_loss: "log"
+    epoch_loss: "log"
+
+# Optional: Override or extend axis display names
+display_names:
+  effective_rank_rank_drop_gini: "Rank Drop Gini (Eff.)"
+  approximate_rank_rank_drop_gini: "Rank Drop Gini (Approx.)"
+  
+
+# 'comparison_name' is used as a prefix for all output filenames, e.g.
+#   basic_cbp_vs_rr_cbp2_future_loss_distribution.png
+# Set to null to use generic names (future_loss_distribution.png, etc.)
+comparison_name: "rr_cbp2_vs_cbp_on_random_walk"
+
+# --- 4. W&B Run Filters -----------------------------------
+# Instructs the AI agent on which runs to pull from the W&B project
+filters:
+  state: ["finished"]
+
+  tags: []
+  name_regex: null
+  created_after: null
+  created_before: null
+  max_runs_per_target: 2
+  # Drop runs that have NaN in any base metric for more than this fraction of
+  # their task_idx rows.  Set to null to keep all runs (NaN rows are still
+  # coerced to numeric NaN and skipped by computations).
+  # E.g. 0.1 means "drop runs where >10% of rows have NaN in any base metric".
+  drop_nan_threshold: 0.1
+  
+  # Agent will dynamically merge this with specific targets in Section 4
+  config_filters:
+    task_shift_param.continuous_input_deformation.drift_mode: "random_walk"
+
+# --- 5. Target Models to Plot ------------------------------
+# 'target_defaults' defines shared config inherited by every entry in 'target_runs'.
+# Each target_runs entry only needs to specify overrides (deep-merged with defaults).
+# This avoids repeating the same net/learner block when only one param varies.
+
+#example use: 
+
+# Type 1: same net+learner, varying hyperparams 
+
+# target_defaults:
+#   net:
+#     type: "ConvNet"
+#   learner:
+#     type: "rr_cbp2"
+#     opt: "sgd"
+#     step_size: 0.01
+#     weight_decay: 0.01
+# target_runs:
+#   - {}                          # no sigma_ridge
+#   - learner: { sigma_ridge: 0.05 }
+#   - learner: { sigma_ridge: 0.1 }
+
+# type 2; different nets, same learner:
+
+# target_defaults:
+#   learner:
+#     type: "rr_cbp2"
+#     opt: "sgd"
+#     step_size: 0.01
+# target_runs:
+#   - net: { type: "ConvNet" }
+#   - net: { type: "ConvNet_conv_and_FC_layer_norm" }
+
+# Type 3 — different learners, same net:
+# target_defaults:
+#   net:
+#     type: "ConvNet"
+# target_runs:
+#   - learner: { type: "basic_continous_backprop", opt: "sgd", step_size: 0.01 }
+#   - learner: { type: "rr_cbp2", opt: "sgd", step_size: 0.01, sigma_ridge: 0.05 }
+
+target_defaults:
+  net:
+    type: "ConvNet"
+  # learner:
+  #   type: "rr_cbp_e_2"
+  #   opt: "sgd"
+  #   step_size: 0.01
+  #   sigma_ridge: 0.05
+
+target_runs:
+  # - {}                          # plain defaults (no sigma_ridge)
+  - learner:
+      type: "basic_continous_backprop"
+      weight_decay: 0.01
+  - learner:
+      type: "rr_cbp2"
+      weight_decay: 0.01
+      sigma_ridge: 0.1
+
+
+
+# --- 6. Plot-Specific Configurations -----------------------
+plots:
+
+  # 6.1 Distribution of raw future epoch_loss values at selected task checkpoints
+  future_loss_distribution:
+    enabled: True
+    color_code_by: "learner.type"
+    plot_type: "violin"           # 'box' or 'violin'
+    task_idx_interval: 10         # Plot at every N-th task_idx (0, 10, 20, ...)
+    window_size: 10               # How many future tasks to gather epoch_loss from
+    metric: "epoch_loss"          # The raw metric to gather from the forward window
+
+  # 6.2 Parallel Coordinates
+  parallel_coordinates:
+    enabled: True
+    # Each axis: name + whether higher values are "better" (top of axis = good).
+    # higher_is_better: False inverts the axis so low values sit at the top.
+    variables_order:
+      # - name: "task_idx"
+      #   higher_is_better: True
+      - name: "effective_rank_rank_drop_gini"
+        higher_is_better: False
+      - name: "forward_loss"
+        higher_is_better: False   # Lower loss is better → inverted axis
+      - name: "epoch_loss"
+        higher_is_better: False
+      # - name: "effective_rank"
+      #   higher_is_better: False     
+      - name: "weight_norm_mean"
+        higher_is_better: False
+
+    color_mapping:
+      # If 'learner.type', it colors lines by model type (good for multi-target)
+      # If 'task_idx', it creates a time gradient (good for single-target)
+      color_by: "learner.type" 
+    # To prevent 500-line clutter, subsample by task_idx interval:
+    task_idx_interval: 10
+    line_width: 0.9
+    line_alpha: 0.40
+
+    # Summary lines: highlight the beginning and ending snapshots per target.
+    # 'metric' chooses which loss variable the endpoint is anchored to:
+    #   "forward_loss" — ending line is at (last_task - forward_loss_window) so
+    #                     forward_loss has a full window.
+    #   "epoch_loss"   — ending line is simply the last task_idx.
+    summary_lines:
+      enabled: True
+      metric: "forward_loss"
+
+  # 6.3 Phase Space Portrait (Advance-Coordinate Embedding)
+  phase_space:
+    enabled: True
+    color_code_by: "learner.type"
+    task_idx_interval: 10
+    line_width: 1.2
+    line_alpha: 0.4
+
+    # Aggregate plot: single .png with all targets, mean trajectory per target.
+    plot_aggregate_runs: True
+    label_for_good_bad_basin_aggregate: True   # Show "desirable basin" & "loss of plasticity attractor" labels
+
+    # Per-target subplots: one .png per target, each with subplots of all runs.
+    plot_separate_subplots_per_target: True
+    label_for_good_bad_basin_per_target: False # Show "desirable basin" & "loss of plasticity attractor" labels
+
+    x_axis:
+      metric: "effective_rank_rank_drop_gini"
+      scale: "linear"
+      higher_is_better: False   # Higher gini = more concentrated rank drop = healthier
+
+    y_axis:
+      metric: "forward_loss"
+      scale: "log"             # Use log scale to catch exponential forgetting
+      higher_is_better: False  # Lower loss = better; axis inverted so "up" = good
+
+  # 6.4 Scatter Plot Matrix (Pairwise Scatterplots)
+  scatter_matrix:
+    enabled: True
+    # Variables to include in the matrix, in the order they appear on the diagonal.
+    # Each pairwise combination will be plotted.
+    variables:
+      - "effective_rank_rank_drop_gini"
+      - "forward_loss"
+      - "epoch_loss"
+      - "weight_norm_mean"
+
+    # Combined plot: all targets in one grid, color-coded by target.
+    plot_combined: True
+
+    # Per-target plots: one .png per target (no color coding needed).
+    plot_per_target: True
+
+    # Subsample by task_idx to reduce clutter (null = no subsampling)
+    task_idx_interval: 20
+    # Marker appearance
+    marker_size: 15
+    marker_alpha: 0.6
+    # Show diagonal histograms/KDE for each variable
+    diagonal: "kde"  # "hist", "kde", or "none"
+
+    # Add a best fit line to each scatter plot (per target)
+    add_best_fit_line: False
+
+    # Variable-specific scaling (e.g. "log" or "linear")
+    # If "log", the axis will be set to log scale and label appended with "(log scale)"
+    # MOVED TO GLOBAL SETTINGS
+    # variable_scales:
+    #   forward_loss: "log"
+    #   epoch_loss: "log"
+
+# --- 7. Statistical Analysis --------------------------------
+# Configuration for run_statistical_analysis.py
+analysis:
+  type: "regression"
+
+  regression:
+    dependent_variable: "epoch_loss"
+    independent_variables:
+      - "layer_0_num_dead_units"
+      - "layer_1_num_dead_units"
+      - "effective_rank_normalized_aurc"
+      # - "weight_norm_mean"  # Can include computed metrics
+      # - "forward_loss"
+
+    regression_type: "ols"
+    alpha: 1.0
+    transforms: []
+    univariate: true
+
+    group_by: "learner__type"      # Stratify by learner; compare backprop vs rr_cbp2 vs rr_cbp_e_2
+    compare_groups: true
+
+    diagnostics:
+      r_squared: true
+      adjusted_r_squared: true
+      ssr: true
+      sse: true
+      sst: true
+      aic: true
+      bic: true
+      f_statistic: true
+      log_likelihood: true
+      confidence_intervals: true
+      p_values: true
+      standardized_coefficients: true
+      durbin_watson: true
+      jarque_bera: true
+      breusch_pagan: true
+      goldfeld_quandt: true
+      condition_number: true
+      vif: true
+      cooks_distance: true
+      leverage: true
+      dffits: true
+
+    plots:
+      partial_regression: true
+      partial_residual: true
+      residuals_vs_fitted: true
+      qq_plot: true
+      scale_location: true
+      cooks_distance: true
+      leverage_vs_residuals: true
+      correlation_heatmap: true
+      pairplot: true
+
+  trajectory:
+    x_axis: "task_idx"
+    y_variables:
+      - "epoch_loss"
+      - "epoch_accuracy"
+    group_by: "learner__type"
+    summary_statistics:
+      - "mean"
+      - "std"
+    comparisons:
+      - "auc"
+      - "final_vs_initial"
+      - "max_degradation"
+
+  output:
+    save_figures: true
+    figure_format: "png"
+    figure_dpi: 150
+    output_dir: "outputs"            # Saved under analysis/outputs/
+    print_summary: true
+    save_summary_csv: true

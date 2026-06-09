@@ -11,7 +11,17 @@ from src.algos.supervised.rr_cbp_conv import RankRestoringCBP_for_ConvNet
 from src.algos.supervised.rr_cbp_fc import RankRestoringCBP_for_FC
 from src.algos.supervised.rr_cbp2_fc import RankRestoringCBP2_for_FC
 from src.algos.supervised.rr_cbp2_conv import RankRestoringCBP2_for_ConvNet
-from configs.configurations import RRContinuousBackpropConfig, RRCBP2Config
+from src.algos.supervised.srr_cbp import SRR_CBP_for_ConvNet, SRR_CBP_for_FC
+from src.algos.supervised.srr_soft_ortho_cbp import (
+    SRR_SoftOrtho_CBP_for_ConvNet,
+    SRR_SoftOrtho_CBP_for_FC,
+)
+from configs.configurations import (
+    RRContinuousBackpropConfig,
+    RRCBP2Config,
+    SRRCBPConfig,
+    SRRSoftOrthoCBPConfig,
+)
 from typing import Optional
 import warnings
 
@@ -129,6 +139,58 @@ def create_learner(config: DictConfig, net, netconfig=None):
             return RankRestoringCBP2_for_ConvNet(net, config, netconfig)
         raise ValueError(
             f"Unsupported network_class '{net_cls}' for rank-restoring CBP2 (net.type={getattr(net, 'type', None)})"
+        )
+    elif normalized_type == 'srr_cbp':
+        if not isinstance(config, SRRCBPConfig):
+            if isinstance(config, DictConfig):
+                config = SRRCBPConfig(**OmegaConf.to_container(config, resolve=True))
+            elif isinstance(config, dict):
+                config = SRRCBPConfig(**config)
+            else:
+                raise TypeError("SRR-CBP requires SRRCBPConfig-compatible config")
+            try:
+                config.network_class = net_cls
+            except Exception:
+                pass
+        if net_cls == 'fc':
+            return SRR_CBP_for_FC(net, config, netconfig)
+        if net_cls == 'conv':
+            return SRR_CBP_for_ConvNet(net, config, netconfig)
+        raise ValueError(
+            f"Unsupported network_class '{net_cls}' for SRR-CBP (net.type={getattr(net, 'type', None)})"
+        )
+    elif normalized_type in {'srr_aso_cbp', 'srr_faso_cbp'}:
+        # Isolated-flow soft-orthogonality variants (autograd-leakage fix).
+        # - 'srr_aso_cbp':  asymmetric (young vs mature)
+        # - 'srr_faso_cbp': fully age-weighted (every unit)
+        if not isinstance(config, SRRSoftOrthoCBPConfig):
+            if isinstance(config, DictConfig):
+                config_dict = OmegaConf.to_container(config, resolve=True)
+            elif isinstance(config, dict):
+                config_dict = dict(config)
+            else:
+                raise TypeError(
+                    "srr_aso_cbp / srr_faso_cbp require an "
+                    "SRRSoftOrthoCBPConfig-compatible config"
+                )
+            # Preserve the YAML-supplied type so the class can dispatch on it.
+            config_dict['type'] = normalized_type
+            config = SRRSoftOrthoCBPConfig(**config_dict)
+            try:
+                config.network_class = net_cls
+            except Exception:
+                pass
+        else:
+            # Ensure dispatch matches the requested learner type when the
+            # caller already passed an SRRSoftOrthoCBPConfig instance.
+            config.type = normalized_type
+        if net_cls == 'fc':
+            return SRR_SoftOrtho_CBP_for_FC(net, config, netconfig)
+        if net_cls == 'conv':
+            return SRR_SoftOrtho_CBP_for_ConvNet(net, config, netconfig)
+        raise ValueError(
+            f"Unsupported network_class '{net_cls}' for {normalized_type} "
+            f"(net.type={getattr(net, 'type', None)})"
         )
     else:
         raise ValueError(f"Unsupported learner type: {learner_type}")

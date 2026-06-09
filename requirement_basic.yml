@@ -4,12 +4,13 @@ channels:
   - defaults
 dependencies:
   # Base Python and core scientific stack
-  - python=3.9
+  - python=3.10
   - pip
   - numpy
   - scipy
   - pandas
   - matplotlib
+  - seaborn
   - pillow
   - tqdm
   - psutil
@@ -19,7 +20,8 @@ dependencies:
   # PyTorch from Conda (CPU/GPU resolved by Conda)
   - pytorch
   - torchvision
-  
+  - statsmodels
+  - scikit-learn
   # Anything not conveniently available via Conda goes under pip
   - pip:
       - stable-baselines3[extra]

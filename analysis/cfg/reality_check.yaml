@@ -1,0 +1,68 @@
+# ==========================================
+# REALITY CHECK CONFIGURATION
+# ==========================================
+
+wandb:
+  entity: "alvin-wb"                       
+  project: "effects_of_optimizer_continuous_input_deformation"
+
+metric_computation:
+  history_sampling:
+    method: "last_per_group"
+    group_by: "task_idx"
+    sort_by: "global_epoch"
+  
+  forward_loss:
+    window_size: 100
+    metric_to_average: "epoch_loss"
+    calculation_method: "ema"
+    ema_alpha: 0.3
+
+  weight_norm:
+    source_pattern: "_mean_abs_weight"
+    aggregation: "weight_norm_mean"
+
+global_settings:
+  base_output_dir: "./output_plots"
+  output_subfolder: "reality_check"
+  # Disable log scales for this check to see the raw values
+  variable_scales:
+    forward_loss: "linear"
+    epoch_loss: "linear"
+
+comparison_name: "reality_check"
+
+filters:
+  state: ["finished"]
+  max_runs_per_target: 1  # Only 1 run for speed
+  config_filters:
+    task_shift_param.continuous_input_deformation.drift_mode: "random_walk"
+
+target_defaults:
+  net:
+    type: "ConvNet"
+
+target_runs:
+  - learner:
+      type: "basic_continous_backprop"
+      weight_decay: 0.01
+
+plots:
+  future_loss_distribution:
+    enabled: False
+  parallel_coordinates:
+    enabled: False
+  phase_space:
+    enabled: False
+  scatter_matrix:
+    enabled: True
+    variables:
+      - "epoch_loss"
+      - "forward_loss"
+    plot_combined: True
+    plot_per_target: False
+    task_idx_interval: 1
+    marker_size: 20
+    marker_alpha: 0.8
+    diagonal: "kde"
+    add_best_fit_line: True

@@ -48,6 +48,11 @@ class RankRestoringCBP2_for_FC(Learner):
                 f"RankRestoringCBP2_for_FC requires net.type == 'FC', got {getattr(self.net, 'type', None)}"
             )
 
+        self.use_grad_clip = getattr(config, 'use_grad_clip', False)
+        self.grad_clip_max_norm = getattr(config, 'grad_clip_max_norm', 1.0)
+        self.to_perturb = getattr(config, 'to_perturb', False)
+        self.perturb_scale = getattr(config, 'perturb_scale', 0.0)
+
         # Initialize AdamGnT optimizer (required for proper state management)
         if config.opt == 'adam':
             self.opt = AdamGnT(
@@ -71,7 +76,7 @@ class RankRestoringCBP2_for_FC(Learner):
 
         # Initialize the RR-GnT2 module for generate-and-test
         self.rr_gnt = RR_GnT2_for_FC(
-            net=self.net.layers,
+            net=self.net, 
             hidden_activation=hidden_activation,
             opt=self.opt,
             config=config,
@@ -106,6 +111,8 @@ class RankRestoringCBP2_for_FC(Learner):
         # Backward pass and optimizer step
         self.opt.zero_grad()
         loss.backward()
+        if self.use_grad_clip:
+            torch.nn.utils.clip_grad_norm_(self.net.parameters(), max_norm=self.grad_clip_max_norm)
         self.opt.step()
 
         # Generate-and-test with Σ-orthogonal replacement
@@ -117,6 +124,9 @@ class RankRestoringCBP2_for_FC(Learner):
             with torch.no_grad():
                 _, fresh_features = self.net.predict(x)
                 self.previous_features = fresh_features
+
+        if self.to_perturb:
+            self.perturb()
 
         return loss.detach(), output.detach()
 

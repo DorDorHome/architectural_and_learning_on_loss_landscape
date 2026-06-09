@@ -41,8 +41,29 @@ class GnT_for_FC(object):
     ):
         super(GnT_for_FC, self).__init__()
         self.device = device
-        self.net = net
-        self.num_hidden_layers = int(len(self.net)/2)
+        
+        
+        # self.net = net
+        # self.num_hidden_layers = int(len(self.net)/2)
+        
+        # --- REFACTORED INIT LOGIC ---
+        self.plasticity_map = None
+        self.use_map = False
+
+        if hasattr(net, 'get_plasticity_map'):
+            self.plasticity_map = net.get_plasticity_map()
+            self.use_map = True
+            self.net = net
+            self.num_hidden_layers = len(self.plasticity_map)
+        elif hasattr(net, 'layers'):
+            self.net = net.layers
+            self.num_hidden_layers = int(len(self.net)/2)
+        else:
+            self.net = net
+            self.num_hidden_layers = int(len(self.net)/2)
+        # -----------------------------
+        
+        
         self.loss_func = loss_func
         self.accumulate = accumulate
 
@@ -62,12 +83,40 @@ class GnT_for_FC(object):
         """
         Utility of all features/neurons
         """
-        self.util = [torch.zeros(self.net[i * 2].out_features).to(self.device) for i in range(self.num_hidden_layers)]
-        self.bias_corrected_util = \
-            [torch.zeros(self.net[i * 2].out_features).to(self.device) for i in range(self.num_hidden_layers)]
-        self.ages = [torch.zeros(self.net[i * 2].out_features).to(self.device) for i in range(self.num_hidden_layers)]
+        
+        self.util = []
+        self.bias_corrected_util = []
+        self.ages = []
+        self.mean_feature_act = []
+        
+        for i in range(self.num_hidden_layers):
+            if self.use_map:
+                layer = self.plasticity_map[i]['weight_module']
+            else:
+                layer = self.net[i * 2]
+                
+            # Handle both Linear (out_features) only.
+            if hasattr(layer, 'out_features'):
+                out_feats = layer.out_features
+            else:
+                # Fallback or error if using an unsupported layer type provided by map
+                raise AttributeError(f"Layer {layer} in plasticity map doesn't have .out_features")
+            # --------
+            self.util.append(torch.zeros(out_feats).to(self.device))
+            self.bias_corrected_util.append(torch.zeros(out_feats).to(self.device))
+            self.ages.append(torch.zeros(out_feats).to(self.device))
+            self.mean_feature_act.append(torch.zeros(out_feats).to(self.device))
+
+        
+        # self.util = [torch.zeros(self.net[i * 2].out_features).to(self.device) for i in range(self.num_hidden_layers)]
+        # self.bias_corrected_util = \
+        #     [torch.zeros(self.net[i * 2].out_features).to(self.device) for i in range(self.num_hidden_layers)]
+        # self.ages = [torch.zeros(self.net[i * 2].out_features).to(self.device) for i in range(self.num_hidden_layers)]
+        
+        # self.mean_feature_act = [torch.zeros(self.net[i * 2].out_features).to(self.device) for i in range(self.num_hidden_layers)]
+
+
         self.m = torch.nn.Softmax(dim=1)
-        self.mean_feature_act = [torch.zeros(self.net[i * 2].out_features).to(self.device) for i in range(self.num_hidden_layers)]
         self.accumulated_num_features_to_replace = [0 for i in range(self.num_hidden_layers)]
 
         """
@@ -78,6 +127,35 @@ class GnT_for_FC(object):
 
     def compute_bounds(self, hidden_activation, init='kaiming'):
         if hidden_activation in ['swish', 'elu']: hidden_activation = 'relu'
+        
+        # --- Use Map or Legacy ---
+        if self.use_map:
+            bounds = []
+            for i in range(self.num_hidden_layers):
+                # Map doesn't strictly store indices, but we strictly need the current layer's in_features
+                # and hidden_activation logic.
+                layer = self.plasticity_map[i]['weight_module']
+                if init == 'default':
+                    b = sqrt(1 / layer.in_features)
+                elif init == 'xavier':
+                    b = torch.nn.init.calculate_gain(nonlinearity=hidden_activation) * \
+                        sqrt(6 / (layer.in_features + layer.out_features))
+                elif init == 'lecun':
+                    b = sqrt(3 / layer.in_features)
+                else:
+                    b = torch.nn.init.calculate_gain(nonlinearity=hidden_activation) * \
+                        sqrt(3 / layer.in_features)
+                bounds.append(b)
+            # Last layer bound (heuristic from original code) usually looks at the "next" layer of the last block
+            # For now, we append a dummy bound or replicate the last one to be safe, 
+            # as gen_new_features loop index goes up to num_hidden_layers
+            # The original code did: bounds.append(1 * sqrt(3 / net[last*2].in_features))
+            # We will approximate this using the last layer in map
+            last_layer = self.plasticity_map[-1]['weight_module']
+            bounds.append(1 * sqrt(3 / last_layer.in_features))
+            return bounds
+        # -----------------------------------
+        # legacy logic starts here
         if init == 'default':
             bounds = [sqrt(1 / self.net[i * 2].in_features) for i in range(self.num_hidden_layers)]
         elif init == 'xavier':
@@ -104,24 +182,32 @@ class GnT_for_FC(object):
             self.mean_feature_act[layer_idx] -= - (1 - self.decay_rate) * features.mean(dim=0)
             bias_corrected_act = self.mean_feature_act[layer_idx] / bias_correction
 
-            current_layer = self.net[layer_idx * 2]
-            next_layer = self.net[layer_idx * 2 + 2]
-            output_wight_mag = next_layer.weight.data.abs().mean(dim=0)
-            input_wight_mag = current_layer.weight.data.abs().mean(dim=1)
+            # --- Use Map or Legacy ---
+            if self.use_map:
+                map_item = self.plasticity_map[layer_idx]
+                current_layer = map_item['weight_module']
+                next_layer = map_item['outgoing_module']
+            else:
+                current_layer = self.net[layer_idx * 2]
+                next_layer = self.net[layer_idx * 2 + 2]
+            # -----------------------------------
+            
+            output_weight_mag = next_layer.weight.data.abs().mean(dim=0)
+            input_weight_mag = current_layer.weight.data.abs().mean(dim=1)
 
             if self.util_type == 'weight':
-                new_util = output_wight_mag
+                new_util = output_weight_mag
             elif self.util_type == 'contribution':
-                new_util = output_wight_mag * features.abs().mean(dim=0)
+                new_util = output_weight_mag * features.abs().mean(dim=0)
             elif self.util_type == 'adaptation':
-                new_util = 1/input_wight_mag
+                new_util = 1/input_weight_mag
             elif self.util_type == 'zero_contribution':
-                new_util = output_wight_mag * (features - bias_corrected_act).abs().mean(dim=0)
+                new_util = output_weight_mag * (features - bias_corrected_act).abs().mean(dim=0)
             elif self.util_type == 'adaptable_contribution':
-                new_util = output_wight_mag * (features - bias_corrected_act).abs().mean(dim=0) / input_wight_mag
+                new_util = output_weight_mag * (features - bias_corrected_act).abs().mean(dim=0) / input_weight_mag
             elif self.util_type == 'feature_by_input':
-                input_wight_mag = self.net[layer_idx*2].weight.data.abs().mean(dim=1)
-                new_util = (features - bias_corrected_act).abs().mean(dim=0) / input_wight_mag
+                input_weight_mag = self.net[layer_idx*2].weight.data.abs().mean(dim=1)
+                new_util = (features - bias_corrected_act).abs().mean(dim=0) / input_weight_mag
             else:
                 new_util = 0
 
@@ -210,8 +296,24 @@ class GnT_for_FC(object):
             for i in range(self.num_hidden_layers):
                 if num_features_to_replace[i] == 0:
                     continue
-                current_layer = self.net[i * 2]
-                next_layer = self.net[i * 2 + 2]
+                
+                
+                # --- REFACTOR: Map or Legacy ---
+                if self.use_map:
+                    map_item = self.plasticity_map[i]
+                    current_layer = map_item['weight_module']
+                    next_layer = map_item['outgoing_module']
+                    
+                    # CRITICAL FIX: We check if the OUTGOING module feeds into a norm.
+                    # If the next layer is normalized, bias compensation is useless/harmful.
+                    should_compensate = not map_item.get('outgoing_feeds_into_norm', False)
+                else:
+                    current_layer = self.net[i * 2]
+                    next_layer = self.net[i * 2 + 2]
+                    # Legacy fallback: We assume standard FC/Conv blocks DO tolerate compensation
+                    should_compensate = True
+                # -------------------------------
+                
                 current_layer.weight.data[features_to_replace[i], :] *= 0.0
                 # noinspection PyArgumentList
                 current_layer.weight.data[features_to_replace[i], :] += \
@@ -221,9 +323,11 @@ class GnT_for_FC(object):
                 """
                 # Update bias to correct for the removed features and set the outgoing weights and ages to zero
                 """
-                next_layer.bias.data += (next_layer.weight.data[:, features_to_replace[i]] * \
-                                                self.mean_feature_act[i][features_to_replace[i]] / \
-                                                (1 - self.decay_rate ** self.ages[i][features_to_replace[i]])).sum(dim=1)
+                if should_compensate:
+                    next_layer.bias.data += (next_layer.weight.data[:, features_to_replace[i]] * \
+                                                    self.mean_feature_act[i][features_to_replace[i]] / \
+                                                    (1 - self.decay_rate ** self.ages[i][features_to_replace[i]])).sum(dim=1)
+                
                 next_layer.weight.data[:, features_to_replace[i]] = 0
                 self.ages[i][features_to_replace[i]] = 0
 
@@ -237,16 +341,50 @@ class GnT_for_FC(object):
                 # input weights
                 if num_features_to_replace[i] == 0:
                     continue
-                self.opt.state[self.net[i * 2].weight]['exp_avg'][features_to_replace[i], :] = 0.0
-                self.opt.state[self.net[i * 2].bias]['exp_avg'][features_to_replace[i]] = 0.0
-                self.opt.state[self.net[i * 2].weight]['exp_avg_sq'][features_to_replace[i], :] = 0.0
-                self.opt.state[self.net[i * 2].bias]['exp_avg_sq'][features_to_replace[i]] = 0.0
-                self.opt.state[self.net[i * 2].weight]['step'][features_to_replace[i], :] = 0
-                self.opt.state[self.net[i * 2].bias]['step'][features_to_replace[i]] = 0
-                # output weights
-                self.opt.state[self.net[i * 2 + 2].weight]['exp_avg'][:, features_to_replace[i]] = 0.0
-                self.opt.state[self.net[i * 2 + 2].weight]['exp_avg_sq'][:, features_to_replace[i]] = 0.0
-                self.opt.state[self.net[i * 2 + 2].weight]['step'][:, features_to_replace[i]] = 0
+                
+                # --- REFACTOR: Map or Legacy ---
+                if self.use_map:
+                    map_item = self.plasticity_map[i]
+                    curr_weight = map_item['weight_module'].weight
+                    curr_bias = map_item['weight_module'].bias
+                    next_weight = map_item['outgoing_module'].weight
+                else:
+                    curr_weight = self.net[i * 2].weight
+                    curr_bias = self.net[i * 2].bias
+                    next_weight = self.net[i * 2 + 2].weight
+                # -------------------------------
+
+
+                # Check if state exists before clearing (prevent crash on frozen/grad-less layers)
+                
+                # Current Weights
+                if curr_weight in self.opt.state and 'exp_avg' in self.opt.state[curr_weight]:
+                    self.opt.state[curr_weight]['exp_avg'][features_to_replace[i], :] = 0.0
+                    self.opt.state[curr_weight]['exp_avg_sq'][features_to_replace[i], :] = 0.0
+                    self.opt.state[curr_weight]['step'][features_to_replace[i], :] = 0
+                
+                # Current Bias
+                if curr_bias in self.opt.state and 'exp_avg' in self.opt.state[curr_bias]:
+                    self.opt.state[curr_bias]['exp_avg'][features_to_replace[i]] = 0.0
+                    self.opt.state[curr_bias]['exp_avg_sq'][features_to_replace[i]] = 0.0
+                    self.opt.state[curr_bias]['step'][features_to_replace[i]] = 0
+                
+                # Next Weights (Outgoing)
+                if next_weight in self.opt.state and 'exp_avg' in self.opt.state[next_weight]:
+                     self.opt.state[next_weight]['exp_avg'][:, features_to_replace[i]] = 0.0
+                     self.opt.state[next_weight]['exp_avg_sq'][:, features_to_replace[i]] = 0.0
+                     self.opt.state[next_weight]['step'][:, features_to_replace[i]] = 0
+
+                # self.opt.state[curr_weight]['exp_avg'][features_to_replace[i], :] = 0.0
+                # self.opt.state[curr_bias]['exp_avg'][features_to_replace[i]] = 0.0
+                # self.opt.state[curr_weight]['exp_avg_sq'][features_to_replace[i], :] = 0.0
+                # self.opt.state[curr_bias]['exp_avg_sq'][features_to_replace[i]] = 0.0
+                # self.opt.state[curr_weight]['step'][features_to_replace[i], :] = 0
+                # self.opt.state[curr_bias]['step'][features_to_replace[i]] = 0
+                # # output weights
+                # self.opt.state[next_weight]['exp_avg'][:, features_to_replace[i]] = 0.0
+                # self.opt.state[next_weight]['exp_avg_sq'][:, features_to_replace[i]] = 0.0
+                # self.opt.state[next_weight]['step'][:, features_to_replace[i]] = 0
 
     def gen_and_test(self, features):
         """
@@ -273,9 +411,29 @@ class ConvGnT_for_ConvNet(object):
                  num_last_filter_outputs=4, util_type='contribution',
                  maturity_threshold=100, device='cpu'):
         super(ConvGnT_for_ConvNet, self).__init__()
+        self.plasticity_map = None
+        self.use_map = False
 
-        self.net = net
-        self.num_hidden_layers = int(len(self.net)/2)
+        if hasattr(net, 'get_plasticity_map'):
+            # Case 1: Advanced Model with Explicit Map
+            self.plasticity_map = net.get_plasticity_map()
+            self.use_map = True
+            self.net = net
+            self.num_hidden_layers = len(self.plasticity_map)
+        elif hasattr(net, 'layers'):
+            # Case 2: Standard Model passed as Object (Robustness/Transition)
+            # Unwrap the layers so legacy logic works
+            self.net = net.layers
+            self.num_hidden_layers = int(len(self.net)/2)
+        else:
+            # Case 3: Legacy Usage (Passing list/Sequential directly)
+            self.net = net
+            self.num_hidden_layers = int(len(self.net)/2)
+        
+        
+
+        # self.net = net
+        # self.num_hidden_layers = int(len(self.net)/2)
         self.util_type = util_type
         self.device = device
 
@@ -300,18 +458,36 @@ class ConvGnT_for_ConvNet(object):
              = [], [], [], [], []
 
         for i in range(self.num_hidden_layers):
-            if isinstance(self.net[i * 2], Conv2d):
-                self.util.append(zeros(self.net[i * 2].out_channels).to(self.device))
-                self.bias_corrected_util.append(zeros(self.net[i * 2].out_channels).to(self.device))
-                self.ages.append(zeros(self.net[i * 2].out_channels).to(self.device))
-                self.mean_feature_act.append(zeros(self.net[i * 2].out_channels).to(self.device))
-                self.mean_abs_feature_act.append(zeros(self.net[i * 2].out_channels).to(self.device))
-            elif isinstance(self.net[i * 2], Linear):
-                self.util.append(zeros(self.net[i * 2].out_features).to(self.device))
-                self.bias_corrected_util.append(zeros(self.net[i * 2].out_features).to(self.device))
-                self.ages.append(zeros(self.net[i * 2].out_features).to(self.device))
-                self.mean_feature_act.append(zeros(self.net[i * 2].out_features).to(self.device))
-                self.mean_abs_feature_act.append(zeros(self.net[i * 2].out_features).to(self.device))
+            if self.use_map:
+                current_layer = self.plasticity_map[i]['weight_module']
+            else:
+                current_layer = self.net[i * 2]
+                
+            # Robust dimension check
+            if hasattr(current_layer, 'out_channels'):
+                out_feats = current_layer.out_channels
+            else:
+                out_feats = current_layer.out_features
+                
+            self.util.append(zeros(out_feats).to(self.device))
+            self.bias_corrected_util.append(zeros(out_feats).to(self.device))
+            self.ages.append(zeros(out_feats).to(self.device))
+            self.mean_feature_act.append(zeros(out_feats).to(self.device))
+            self.mean_abs_feature_act.append(zeros(out_feats).to(self.device))
+
+            
+            # if isinstance(self.net[i * 2], Conv2d):
+            #     self.util.append(zeros(self.net[i * 2].out_channels).to(self.device))
+            #     self.bias_corrected_util.append(zeros(self.net[i * 2].out_channels).to(self.device))
+            #     self.ages.append(zeros(self.net[i * 2].out_channels).to(self.device))
+            #     self.mean_feature_act.append(zeros(self.net[i * 2].out_channels).to(self.device))
+            #     self.mean_abs_feature_act.append(zeros(self.net[i * 2].out_channels).to(self.device))
+            # elif isinstance(self.net[i * 2], Linear):
+            #     self.util.append(zeros(self.net[i * 2].out_features).to(self.device))
+            #     self.bias_corrected_util.append(zeros(self.net[i * 2].out_features).to(self.device))
+            #     self.ages.append(zeros(self.net[i * 2].out_features).to(self.device))
+            #     self.mean_feature_act.append(zeros(self.net[i * 2].out_features).to(self.device))
+            #     self.mean_abs_feature_act.append(zeros(self.net[i * 2].out_features).to(self.device))
 
         self.accumulated_num_features_to_replace = [0 for i in range(self.num_hidden_layers)]
         self.m = torch.nn.Softmax(dim=1)
@@ -327,13 +503,34 @@ class ConvGnT_for_ConvNet(object):
         self.num_new_features_to_replace = []
         for i in range(self.num_hidden_layers):
             with no_grad():
-                if isinstance(self.net[i * 2], Linear):
-                    self.num_new_features_to_replace.append(self.replacement_rate * self.net[i * 2].out_features)
-                elif isinstance(self.net[i * 2], Conv2d):
-                    self.num_new_features_to_replace.append(self.replacement_rate * self.net[i * 2].out_channels)
+                if self.use_map:
+                    layer = self.plasticity_map[i]['weight_module']
+                else:
+                    layer = self.net[i * 2]
+
+                if isinstance(layer, Linear):
+                    self.num_new_features_to_replace.append(self.replacement_rate * layer.out_features)
+                elif isinstance(layer, Conv2d):
+                    self.num_new_features_to_replace.append(self.replacement_rate * layer.out_channels)
+
+                # if isinstance(self.net[i * 2], Linear):
+                #     self.num_new_features_to_replace.append(self.replacement_rate * self.net[i * 2].out_features)
+                # elif isinstance(self.net[i * 2], Conv2d):
+                #     self.num_new_features_to_replace.append(self.replacement_rate * self.net[i * 2].out_channels)
 
     def compute_bounds(self, hidden_activation, init='kaiming'):
         if hidden_activation in ['swish', 'elu']: hidden_activation = 'relu'
+        if self.use_map:
+            bounds = []
+            gain = calculate_gain(nonlinearity=hidden_activation)
+            for i in range(self.num_hidden_layers):
+                layer = self.plasticity_map[i]['weight_module']
+                bounds.append(get_layer_bound(layer=layer, init=init, gain=gain))
+            # Heuristic for output layer
+            bounds.append(get_layer_bound(layer=self.plasticity_map[-1]['weight_module'], init=init, gain=1))
+            return bounds
+        
+        
         bounds = []
         gain = calculate_gain(nonlinearity=hidden_activation)
         for i in range(self.num_hidden_layers):
@@ -346,22 +543,32 @@ class ConvGnT_for_ConvNet(object):
             self.util[layer_idx] *= self.decay_rate
             bias_correction = 1 - self.decay_rate ** self.ages[layer_idx]
 
-            current_layer = self.net[layer_idx * 2]
-            next_layer = self.net[layer_idx * 2 + 2]
+            # --- REFACTOR: Use Map or Legacy ---
+            if self.use_map:
+                map_item = self.plasticity_map[layer_idx]
+                current_layer = map_item['weight_module']
+                next_layer = map_item['outgoing_module']
+            else:
+                current_layer = self.net[layer_idx * 2]
+                next_layer = self.net[layer_idx * 2 + 2]
+            # -----------------------------------
+
+            # current_layer = self.net[layer_idx * 2]
+            # next_layer = self.net[layer_idx * 2 + 2]
 
             if isinstance(next_layer, Linear):
-                output_wight_mag = next_layer.weight.data.abs().mean(dim=0)
+                output_weight_mag = next_layer.weight.data.abs().mean(dim=0)
             elif isinstance(next_layer, Conv2d):
-                output_wight_mag = next_layer.weight.data.abs().mean(dim=(0, 2, 3))
+                output_weight_mag = next_layer.weight.data.abs().mean(dim=(0, 2, 3))
 
             self.mean_feature_act[layer_idx] *= self.decay_rate
             self.mean_abs_feature_act[layer_idx] *= self.decay_rate
             if isinstance(current_layer, Linear):
-                input_wight_mag = current_layer.weight.data.abs().mean(dim=1)
+                input_weight_mag = current_layer.weight.data.abs().mean(dim=1)
                 self.mean_feature_act[layer_idx] += (1 - self.decay_rate) * features.mean(dim=0)
                 self.mean_abs_feature_act[layer_idx] += (1 - self.decay_rate) * features.abs().mean(dim=0)
             elif isinstance(current_layer, Conv2d):
-                input_wight_mag = current_layer.weight.data.abs().mean(dim=(1, 2, 3))
+                input_weight_mag = current_layer.weight.data.abs().mean(dim=(1, 2, 3))
                 if isinstance(next_layer, Conv2d):
                     self.mean_feature_act[layer_idx] += (1 - self.decay_rate) * features.mean(dim=(0, 2, 3))
                     self.mean_abs_feature_act[layer_idx] += (1 - self.decay_rate) * features.abs().mean(dim=(0, 2, 3))
@@ -371,8 +578,20 @@ class ConvGnT_for_ConvNet(object):
 
             bias_corrected_act = self.mean_feature_act[layer_idx] / bias_correction
 
+            # If we're using random utilities, avoid touching any of the
+            # util-type-specific math below.
+            if self.util_type == 'random':
+                self.bias_corrected_util[layer_idx] = rand(self.util[layer_idx].shape)
+                return
+
+            # Default to "no update" for unsupported util types so we never
+            # reference an uninitialized tensor.
+            new_util = torch.zeros_like(self.util[layer_idx])
+
+            if self.util_type == 'weight':
+                new_util = output_weight_mag
             if self.util_type == 'adaptation':
-                new_util = 1 / input_wight_mag
+                new_util = 1 / input_weight_mag
             elif self.util_type in ['contribution', 'zero_contribution', 'adaptable_contribution']:
                 if self.util_type == 'contribution':
                     bias_corrected_act = 0
@@ -384,20 +603,47 @@ class ConvGnT_for_ConvNet(object):
                             bias_corrected_act = bias_corrected_act.repeat_interleave(self.num_last_filter_outputs).view(1, -1)
                 if isinstance(next_layer, Linear):
                     if isinstance(current_layer, Linear):
-                        new_util = output_wight_mag * (features - bias_corrected_act).abs().mean(dim=0)
+                        new_util = output_weight_mag * (features - bias_corrected_act).abs().mean(dim=0)
                     elif isinstance(current_layer, Conv2d):
-                        new_util = (output_wight_mag * (features - bias_corrected_act).abs().mean(dim=0)).view(-1, self.num_last_filter_outputs).mean(dim=1)
+                        new_util = (output_weight_mag * (features - bias_corrected_act).abs().mean(dim=0)).view(-1, self.num_last_filter_outputs).mean(dim=1)
                 elif isinstance(next_layer, Conv2d):
-                    new_util = output_wight_mag * (features - bias_corrected_act).abs().mean(dim=(0, 2, 3))
-                if self.util_type == 'adaptable_contribution':
-                    new_util = new_util / input_wight_mag
+                    #new_util = output_weight_mag * (features - bias_corrected_act).abs().mean(dim=(0, 2, 3))
+                    # --- CRITICAL FIX START ---
+                    # Ensure shapes are broadcastable manually or fallback to magnitude
+                    diff = (features - bias_corrected_act).abs()
+                    diff_mean = diff.mean(dim=(0, 2, 3)) # Shape: [Channels]
 
-            if self.util_type == 'random':
-                self.bias_corrected_util[layer_idx] = rand(self.util[layer_idx].shape)
-            else:
-                self.util[layer_idx] += (1 - self.decay_rate) * new_util
-                # correct the bias in the utility computation
-                self.bias_corrected_util[layer_idx] = self.util[layer_idx] / bias_correction
+                    if output_weight_mag.shape == diff_mean.shape:
+                         new_util = output_weight_mag * diff_mean
+                    elif output_weight_mag.numel() == diff_mean.numel():
+                         new_util = output_weight_mag.view_as(diff_mean) * diff_mean
+                    else:
+                         # Fallback to prevent crash (e.g. 3 vs 32 mismatch)
+                         # This happens if 'next_layer' in the map is not consistent with feature dimensions
+                         new_util = output_weight_mag 
+                    # --- CRITICAL FIX END ---
+
+                
+                
+                if self.util_type == 'adaptable_contribution':
+                    new_util = new_util / input_weight_mag
+
+            elif self.util_type == 'feature_by_input':
+                # Contribution normalized by incoming weight magnitude
+                if isinstance(current_layer, Linear):
+                    diff_mean = (features - bias_corrected_act).abs().mean(dim=0)
+                else:
+                    # Conv2d
+                    if isinstance(next_layer, Conv2d):
+                        diff_mean = (features - bias_corrected_act.view(1, -1, 1, 1)).abs().mean(dim=(0, 2, 3))
+                    else:
+                        diff_mean = (features - bias_corrected_act.repeat_interleave(self.num_last_filter_outputs).view(1, -1)).abs().mean(dim=0)
+                        diff_mean = diff_mean.view(-1, self.num_last_filter_outputs).mean(dim=1)
+                new_util = diff_mean / input_weight_mag
+
+            self.util[layer_idx] += (1 - self.decay_rate) * new_util
+            # correct the bias in the utility computation
+            self.bias_corrected_util[layer_idx] = self.util[layer_idx] / bias_correction
 
     def test_features(self, features):
         """
@@ -451,7 +697,19 @@ class ConvGnT_for_ConvNet(object):
             num_features_to_replace[i] = num_new_features_to_replace
             features_to_replace_input_indices[i] = new_features_to_replace
             features_to_replace_output_indices[i] = new_features_to_replace
-            if isinstance(self.net[i * 2], Conv2d) and isinstance(self.net[i * 2 + 2], Linear):
+            
+            # --- REFACTOR: Use Map or Legacy ---
+            if self.use_map:
+                map_item = self.plasticity_map[i]
+                current_layer = map_item['weight_module']
+                next_layer = map_item['outgoing_module']
+            else:
+                current_layer = self.net[i * 2]
+                next_layer = self.net[i * 2 + 2]
+            # -------
+            
+            # if isinstance(self.net[i * 2], Conv2d) and isinstance(self.net[i * 2 + 2], Linear):
+            if isinstance(current_layer, Conv2d) and isinstance(next_layer, Linear):
                 features_to_replace_output_indices[i] = \
                     (new_features_to_replace*self.num_last_filter_outputs).repeat_interleave(self.num_last_filter_outputs) + \
                     tensor([i for i in range(self.num_last_filter_outputs)]).repeat(new_features_to_replace.size()[0]).to(self.device)
@@ -467,16 +725,49 @@ class ConvGnT_for_ConvNet(object):
                 # input weights
                 if num_features_to_replace[i] == 0:
                     continue
+                # --- REFACTOR: Use Map or Legacy ---
+                if self.use_map:
+                    map_item = self.plasticity_map[i]
+                    curr_bias = map_item['weight_module'].bias
+                    curr_weight = map_item['weight_module'].weight
+                    next_weight = map_item['outgoing_module'].weight
+                else:
+                    curr_bias = self.net[i * 2].bias
+                    curr_weight = self.net[i * 2].weight
+                    next_weight = self.net[i * 2 + 2].weight
+                # -----------------------------------
+                # Input Weights
+                if curr_bias in self.opt.state and 'exp_avg' in self.opt.state[curr_bias]:
+                    self.opt.state[curr_bias]['exp_avg'][features_to_replace_input_indices[i]] = 0.0
+                    self.opt.state[curr_bias]['exp_avg_sq'][features_to_replace_input_indices[i]] = 0.0
+                    self.opt.state[curr_bias]['step'][features_to_replace_input_indices[i]] = 0
+                    
+                if curr_weight in self.opt.state and 'exp_avg' in self.opt.state[curr_weight]:
+                    self.opt.state[curr_weight]['exp_avg_sq'][features_to_replace_input_indices[i], :] = 0.0
+                    self.opt.state[curr_weight]['step'][features_to_replace_input_indices[i], :] = 0
+                    # Note: Original code missed clearing 'exp_avg' for curr_weight in ConvGnT, adding it here for consistency if needed, 
+                    # but following your previous snippet exactly for safety:
+                    # Your previous snippet didn't have exp_avg for curr_weight here, likely unintentional or specific to Sparse updates?
+                    # Assuming standard Adam:
+                    if 'exp_avg' in self.opt.state[curr_weight]:
+                         self.opt.state[curr_weight]['exp_avg'][features_to_replace_input_indices[i], :] = 0.0
+
+                # Output Weights
+                if next_weight in self.opt.state and 'exp_avg' in self.opt.state[next_weight]:
+                    self.opt.state[next_weight]['exp_avg'][:, features_to_replace_output_indices[i]] = 0.0
+                    self.opt.state[next_weight]['exp_avg_sq'][:, features_to_replace_output_indices[i]] = 0.0
+                    self.opt.state[next_weight]['step'][:, features_to_replace_output_indices[i]] = 0
+                
                 # input weights
-                self.opt.state[self.net[i * 2].bias]['exp_avg'][features_to_replace_input_indices[i]] = 0.0
-                self.opt.state[self.net[i * 2].weight]['exp_avg_sq'][features_to_replace_input_indices[i], :] = 0.0
-                self.opt.state[self.net[i * 2].bias]['exp_avg_sq'][features_to_replace_input_indices[i]] = 0.0
-                self.opt.state[self.net[i * 2].weight]['step'][features_to_replace_input_indices[i], :] = 0
-                self.opt.state[self.net[i * 2].bias]['step'][features_to_replace_input_indices[i]] = 0
-                # output weights
-                self.opt.state[self.net[i * 2 + 2].weight]['exp_avg'][:, features_to_replace_output_indices[i]] = 0.0
-                self.opt.state[self.net[i * 2 + 2].weight]['exp_avg_sq'][:, features_to_replace_output_indices[i]] = 0.0
-                self.opt.state[self.net[i * 2 + 2].weight]['step'][:, features_to_replace_output_indices[i]] = 0
+                # self.opt.state[self.net[i * 2].bias]['exp_avg'][features_to_replace_input_indices[i]] = 0.0
+                # self.opt.state[self.net[i * 2].weight]['exp_avg_sq'][features_to_replace_input_indices[i], :] = 0.0
+                # self.opt.state[self.net[i * 2].bias]['exp_avg_sq'][features_to_replace_input_indices[i]] = 0.0
+                # self.opt.state[self.net[i * 2].weight]['step'][features_to_replace_input_indices[i], :] = 0
+                # self.opt.state[self.net[i * 2].bias]['step'][features_to_replace_input_indices[i]] = 0
+                # # output weights
+                # self.opt.state[self.net[i * 2 + 2].weight]['exp_avg'][:, features_to_replace_output_indices[i]] = 0.0
+                # self.opt.state[self.net[i * 2 + 2].weight]['exp_avg_sq'][:, features_to_replace_output_indices[i]] = 0.0
+                # self.opt.state[self.net[i * 2 + 2].weight]['step'][:, features_to_replace_output_indices[i]] = 0
 
     def gen_new_features(self, features_to_replace_input_indices, features_to_replace_output_indices, num_features_to_replace):
         """
@@ -486,9 +777,19 @@ class ConvGnT_for_ConvNet(object):
             for i in range(self.num_hidden_layers):
                 if num_features_to_replace[i] == 0:
                     continue
-                current_layer = self.net[i * 2]
-                next_layer = self.net[i * 2 + 2]
+                # --- REFACTOR: Map or Legacy ---
+                if self.use_map:
+                    map_item = self.plasticity_map[i]
+                    current_layer = map_item['weight_module']
+                    next_layer = map_item['outgoing_module']
+                    should_compensate = not map_item.get('outgoing_feeds_into_norm', False)
+                else:
+                    current_layer = self.net[i * 2]
+                    next_layer = self.net[i * 2 + 2]
+                    should_compensate = True
+                # -------------------------------
 
+                # Reset INPUT weights
                 if isinstance(current_layer, Linear):
                     current_layer.weight.data[features_to_replace_input_indices[i], :] *= 0.0
                     current_layer.weight.data[features_to_replace_input_indices[i], :] -= - \
@@ -501,6 +802,51 @@ class ConvGnT_for_ConvNet(object):
                             uniform_(-self.bounds[i], self.bounds[i]).to(self.device)
 
                 current_layer.bias.data[features_to_replace_input_indices[i]] *= 0.0
+                """
+                # Update bias to correct for the removed features
+                """
+                if should_compensate:
+                    # Calculate scalar correction factor: (1 / (1 - decay^age)) * Mean_Act
+                    correction_scalar = self.mean_feature_act[i][features_to_replace_input_indices[i]] / \
+                                        (1 - self.decay_rate ** self.ages[i][features_to_replace_input_indices[i]])
+
+                    if isinstance(next_layer, Conv2d):
+                        # --- Case A: Conv -> Conv ---
+                        # Weight shape: (Out, In, K, K)
+                        # We must sum over (input_channels, K, K) to get a 1D vector for bias
+                        
+                        # Reshape scalar to (1, N_replaced, 1, 1) to broadcast over filters
+                        c_term = correction_scalar.view(1, -1, 1, 1)
+                        
+                        # Slice weights: (Out, N_replaced, K, K)
+                        w_slice = next_layer.weight.data[:, features_to_replace_output_indices[i]]
+                        
+                        # Multiply and Sum over (dim 1, 2, 3) -> result shape (Out)
+                        bias_update = (w_slice * c_term).sum(dim=(1, 2, 3))
+                        next_layer.bias.data += bias_update
+
+                    elif isinstance(next_layer, Linear):
+                        # --- Case B: Conv -> Linear (Flattened) or Linear -> Linear ---
+                        
+                        if isinstance(current_layer, Conv2d):
+                            # Special handling: correction_scalar has size (N_filters).
+                            # Linears input is (N_filters * H * W).
+                            # We must repeat the scalar to match the expanded indices.
+                            expansion_factor = self.num_last_filter_outputs # e.g. 64 (8*8)
+                            c_term = correction_scalar.repeat_interleave(expansion_factor)
+                        else:
+                            # Standard Linear->Linear
+                            c_term = correction_scalar
+
+                        # Weight shape: (Out, In_Features)
+                        # Slice: (Out, N_replaced_expanded)
+                        w_slice = next_layer.weight.data[:, features_to_replace_output_indices[i]]
+                        
+                        # Multiply and Sum over dim 1 -> result shape (Out)
+                        bias_update = (w_slice * c_term).sum(dim=1)
+                        next_layer.bias.data += bias_update # Add to existing bias
+
+                
                 """
                 # Set the outgoing weights and ages to zero
                 """

@@ -1,3 +1,8 @@
+defaults:
+  - _self_
+  - learner: 'srr_aso_cbp' #'srr_aso_cbp' #  'srr_cbp'  'srr_faso_cbp'
+
+
 # represent experiments config:
 runs: 1
 run_id: 0
@@ -6,7 +11,7 @@ seed: None
 debug_mode: False  # Disable debug mode for performance
 device: 'cuda:0'  # Options: 'cuda:0', 'cuda:1', 'cpu'. Set via command line: device=cuda:1
 
-# GPU workarounds for cuda:1 cuSOLVER issues
+# GPU workarounds for cuda:1 cuSOLVER issues``
 # Enable this when using cuda:1 to work around eigendecomposition failures
 # This forces CPU eigendecomposition for matrix operations in rank-restoring
 enable_cuda1_workarounds: False # Set to False when using cuda:0 or other GPUs
@@ -89,12 +94,12 @@ layers_identifier: None
 data:
   dataset: 'MNIST'
   use_torchvision: True
-  data_path: '/home/sfchan/dataset'  # '/home/sfchan/dataset'  #'/hdda/datasets' 
+  data_path: '/hdda/datasets' #${oc.env:DATASET_PATH, '/hdda/datasets'}  # '/home/sfchan/dataset'  #'/hdda/datasets' 
   num_classes: 10
 
 # network architecture:
 net:
-  type: "ConvNet_batch_norm" #options are: "ConvNet_batch_norm", "ConvNet_FC_layer_norm", "ConvNet_conv_and_FC_layer_norm" "ConvNet_norm", "vgg_custom" #options: "ConvNet", "vgg_custom" , "resnet_custom" , 'full_rank_resnet_custom'
+  type: "ConvNet_conv_and_FC_layer_norm" # "ConvNet_FC_layer_norm" #options are: "ConvNet_batch_norm", "ConvNet_FC_layer_norm", "ConvNet_conv_and_FC_layer_norm" "ConvNet_norm", "vgg_custom" #options: "ConvNet", "vgg_custom" , "resnet_custom" , 'full_rank_resnet_custom'
   network_class: "conv"
   device: ${device}
   netparams:
@@ -116,42 +121,44 @@ net:
     allow_svd_values_negative: True
     num_hidden_layers: 1
 
-# learning algorithm:
-learner:
-  type: 'basic_continous_backprop' # 'rr_cbp_e_2'  'rr_cbp2' 'rr_cbp' #options: 'backprop' 'basic_continous_backprop', 'rr_cbp'
-  network_class: ${net.network_class}  # Use the network class from the net configuration
-  init: 'kaiming'
-  device: ${device}
-  opt:  'sgd'
-  loss: ${loss_functions.${task_shift_mode}}
-  step_size: 0.01 # 0.01 for SGD, 0.001 for Adam
-  beta_1: 0.95
-  beta_2: 0.999
-  weight_decay: 0.02 # L2 regularization strength , use 0.001 for labelled regression tasks
-  to_perturb: false
-  perturb_scale: 0.05
-  momentum: 0.9
-  neurons_replacement_rate: 0.001
-  decay_rate_utility_track: 0.9
-  maturity_threshold: 100
-  util_type: 'contribution'
-  accumulate: False
-  outgoing_random: False
-# for rr_cbp specific params:
-  diag_sigma_only: false
-  sigma_ema_beta: 0.95 #original: 0.0
-  sigma_ridge: 0.05 #recommended 0.05 for rr_cbp_2, and rr_cbp_e_2
-  max_proj_trials: 4
-  proj_eps: 1e-6
-  center_bias: 'mean'
-  nullspace_seed_epsilon: 0.0
-  orthonormalize_batch: True
-  improve_conditioning_if_saturated: True
-  log_rank_metrics_every: 1
+# # learning algorithm:
+# learner:
+#   type:  'srr_cbp'   # 'srr_cbp',  'rr_cbp_e_2'  'rr_cbp2' 'rr_cbp' #options: 'backprop' 'basic_continous_backprop', 'rr_cbp'
+#   network_class: ${net.network_class}  # Use the network class from the net configuration
+#   init: 'kaiming'
+#   device: ${device}
+#   opt:  'sgd'
+#   loss: ${loss_functions.${task_shift_mode}}
+#   step_size: 0.01 # 0.01 for SGD, 0.001 for Adam
+#   beta_1: 0.95
+#   beta_2: 0.999
+#   weight_decay: 0.02 # L2 regularization strength , use 0.001 for labelled regression tasks
+#   to_perturb: false
+#   perturb_scale: 0.05
+#   momentum: 0.9
+#   neurons_replacement_rate: 0.001
+#   decay_rate_utility_track: 0.9
+#   maturity_threshold: 100
+#   util_type: 'adaptable_contribution' #options: 'weight', 'contribution', 'zero_contribution', 'adaptation', 'adaptable_contribution', 'feature_by_input' 
+#   accumulate: False
+#   outgoing_random: False
+# # for rr_cbp specific params:
+#   diag_sigma_only: false
 
-  # Gradient clipping options
-  use_grad_clip: true  #on only for drifting_values       # Enable gradient clipping to prevent gradient explosion
-  grad_clip_max_norm: 1.0      # Maximum norm for gradient clipping
+#   # Covariance EMA settings
+#   sigma_ema_beta: 0.95 #original: 0.0
+#   sigma_ridge: 0.03 #recommended 0.05 for rr_cbp_2, and rr_cbp_e_2
+#   max_proj_trials: 4
+#   proj_eps: 1e-6
+#   center_bias: 'mean'
+#   nullspace_seed_epsilon: 0.0
+#   orthonormalize_batch: True
+#   improve_conditioning_if_saturated: True
+#   log_rank_metrics_every: 1
+
+#   # Gradient clipping options
+#   use_grad_clip: true  #on only for drifting_values       # Enable gradient clipping to prevent gradient explosion
+#   grad_clip_max_norm: 1.0      # Maximum norm for gradient clipping
 
 # conditional on task_shift_mode
 loss_functions:

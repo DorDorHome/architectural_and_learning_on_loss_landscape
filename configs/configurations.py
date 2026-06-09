@@ -81,6 +81,7 @@ class BaseLearnerConfig:
     enable_cuda1_workarounds: bool = False  # Enable CPU eigendecomposition workarounds for cuda:1
     # Structural category of network; inferred if None.
     network_class: Optional[str] = None
+    init: str = 'kaiming'
     opt: str = 'adam' #or 'sgd'
     step_size: float= 0.001
     beta_1: float = 0.9
@@ -90,13 +91,24 @@ class BaseLearnerConfig:
     loss: str = 'cross_entropy'
     # for more complicated implementations that need to keep track of previous features
     # or for specialized regularization such as orthogonality regularization for SVD_Conv2d layers
+    # 'SVD_Orthogonal' or 'Kernel SO'
     additional_regularization: Optional[Union[None, str]] = None
     lambda_orth: Optional[Union[None, float]] = None
+    
+    # Normalization mode for Kernel SO regularization:
+    # - "naive mse sum correction": uses F.mse_loss with reduction='mean' (1/D^2 ||G - I||_F^2)
+    # - "correct by input size": uses F.mse_loss with reduction='sum' divided by D (1/D ||G - I||_F^2)
+    # - "no correction": uses F.mse_loss with reduction='sum' (||G - I||_F^2)
+    normalization_mode: str = "naive mse sum correction"
+    
     
     to_perturb: Optional[bool] = False
     perturb_scale: Optional[float] = 0.1
     # previous_features: Optional[Union[None, torch.Tensor]] = None
     # latest_gradients: Optional[Union[None, torch.Tensor]] = None
+    
+    log_rank_metrics_every: int = 1
+    
     class Config:
         version_base = "1.1"
 
@@ -107,7 +119,6 @@ class ContinuousBackpropConfig(BaseLearnerConfig):
     decay_rate_utility_track: float = 0.9
     maturity_threshold: int = 100
     util_type: str = 'contribution'
-    init: str = 'kaiming'
     accumulate: bool = False
     outgoing_random: bool = False
     use_grad_clip: bool = False
@@ -115,6 +126,42 @@ class ContinuousBackpropConfig(BaseLearnerConfig):
     class Config:
         version_base = "1.1"
 
+
+@dataclass
+class SRRCBPConfig(ContinuousBackpropConfig):
+    type: str = 'srr_cbp'
+    SO_reg_lambda: float = 0.01
+    aso_age_decay_rate: float = 0.99
+    aso_normalization_mode: str = "correct by input size" #options: "no correction", "correct by input size", "naive mse sum correction"    
+    class Config:
+        version_base = "1.1"
+
+
+@dataclass
+class SRRSoftOrthoCBPConfig(ContinuousBackpropConfig):
+    """Configuration for the isolated-flow soft-orthogonality SRR-CBP variants.
+
+    Used by both `srr_aso_cbp` (asymmetric soft orthogonality, requires
+    `aso_maturity_threshold`) and `srr_faso_cbp` (fully age-weighted soft
+    orthogonality, must leave `aso_maturity_threshold=None`). The `type`
+    field is the user-facing discriminator and selects the regularizer
+    inside the shared learner classes.
+
+    The `maturity_threshold` field inherited from `ContinuousBackpropConfig`
+    continues to drive the GnT replacement logic in both modes; it is
+    independent of `aso_maturity_threshold`.
+    """
+    type: str = 'srr_aso_cbp'
+    SO_reg_lambda: float = 0.01
+    age_decay_rate: float = 0.99
+    # options: "no correction", "correct by input size", "naive mse sum correction"
+    normalization_mode: str = "correct by input size"
+    # ASO: required positive int. FASO: must be None.
+    aso_maturity_threshold: Optional[int] = None
+    # Default False matches the spec definition A = W H (no bias).
+    include_bias_in_A_reg: bool = False
+    class Config:
+        version_base = "1.1"
 
 @dataclass
 class RRContinuousBackpropConfig(ContinuousBackpropConfig):
@@ -129,7 +176,7 @@ class RRContinuousBackpropConfig(ContinuousBackpropConfig):
     diag_sigma_only: bool = False
     orthonormalize_batch: bool = True
     improve_conditioning_if_saturated: bool = True
-    log_rank_metrics_every: int = 0
+    log_rank_metrics_every: int = 1
     covariance_dtype: Optional[str] = None
     sigma_eig_floor: float = 1e-6
     projector_reg_epsilon: float = 1e-6
@@ -164,7 +211,7 @@ class RRCBP2Config(ContinuousBackpropConfig):
     # Bias centering: 'mean' or 'median'
     center_bias: str = 'mean'
     
-    # Σ-geometry settings
+    # Σ-geometry settings (only for rr_cbp_e_2)
     diag_sigma_only: bool = False
     sigma_eig_floor: float = 1e-6
     covariance_dtype: Optional[str] = None
@@ -173,7 +220,7 @@ class RRCBP2Config(ContinuousBackpropConfig):
     orthonormalize_batch: bool = True
     
     # Logging
-    log_rank_metrics_every: int = 0
+    log_rank_metrics_every: int = 1
     
     # ===== RR-CBP-E2 (Energy-Aware) Settings =====
     # Set use_energy_budget=True to enable energy-aware mode (rr_cbp_e_2)
@@ -253,7 +300,7 @@ class ExperimentConfig:
     batch_size: int = 128
     data: DataConfig = field(default_factory=DataConfig)
     net: Union[NetConfig, GrokkingTransformerConfig] = field(default_factory=lambda: NetConfig(type='ConvNet'))
-    learner: Union[BackpropConfig, ContinuousBackpropConfig, RRContinuousBackpropConfig] = field(default_factory=BackpropConfig)
+    learner: Union[BackpropConfig, ContinuousBackpropConfig, RRContinuousBackpropConfig, SRRCBPConfig, SRRSoftOrthoCBPConfig] = field(default_factory=BackpropConfig)
     evaluation: Union[EvaluationConfig, None] = field(default_factory=EvaluationConfig)
     track_rank: bool = False
     prop_for_approx_or_l1_rank: float = 0.99

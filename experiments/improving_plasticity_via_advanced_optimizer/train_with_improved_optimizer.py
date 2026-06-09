@@ -26,7 +26,7 @@ import os
 # Force CPU eigendecomposition to avoid CUDA errors on cuda:1
 os.environ['SIGMA_FORCE_CPU_EIGH'] = '1'
 os.environ['LLA_PREFER_GPU_EIGH'] = '0'
-print("⚠️  Forcing CPU eigendecomposition workarounds for cuda:1 stability")
+print("WARNING: Forcing CPU eigendecomposition workarounds for cuda:1 stability")
 
 import random
 # import pickle
@@ -96,7 +96,7 @@ def main(cfg: ExperimentConfig) -> Any:
     if hasattr(cfg, 'enable_cuda1_workarounds') and cfg.enable_cuda1_workarounds:
         os.environ['SIGMA_FORCE_CPU_EIGH'] = '1'
         os.environ['LLA_PREFER_GPU_EIGH'] = '0'
-        print("⚠️  cuda:1 workarounds enabled - using CPU eigendecomposition")
+        print("WARNING: cuda:1 workarounds enabled - using CPU eigendecomposition")
         print("   (SIGMA_FORCE_CPU_EIGH=1, LLA_PREFER_GPU_EIGH=0)")
         print("   Set enable_cuda1_workarounds=False in config to disable")
 
@@ -233,6 +233,7 @@ def main(cfg: ExperimentConfig) -> Any:
         np.random.seed(worker_seed)
         random.seed(worker_seed)
 
+    success = False
     # Wrap the entire training in try-catch to handle NaN properly
     try:
         # loop though the tasks
@@ -498,6 +499,8 @@ def main(cfg: ExperimentConfig) -> Any:
                     if cfg.use_json:
                         save_data_json(data, run_dir, filename=f'run_{cfg.run_id}.json')
 
+        success = True
+
     except ValueError as e:
         # NaN/Inf errors will propagate as ValueError - let them stop the script
         print(f"Training stopped due to numerical instability: {e}")
@@ -506,6 +509,10 @@ def main(cfg: ExperimentConfig) -> Any:
         # Catch any other unexpected errors
         print(f"Unexpected error during training: {e}")
         raise
+    finally:
+        if cfg.use_wandb:
+            import wandb
+            wandb.finish(exit_code=0 if success else 1)
 
 if __name__ == "__main__":
 

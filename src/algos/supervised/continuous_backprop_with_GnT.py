@@ -52,6 +52,9 @@ class ContinualBackprop_for_FC(Learner):
         self.accumulate = config.accumulate
         self.outgoing_random = config.outgoing_random  # NOTE: currently unused in GnT init
 
+        self.use_grad_clip = getattr(config, 'use_grad_clip', False)
+        self.grad_clip_max_norm = getattr(config, 'grad_clip_max_norm', 1.0)
+
         if config.opt == 'adam':
             self.opt = AdamGnT(
                 self.net.parameters(),
@@ -73,7 +76,7 @@ class ContinualBackprop_for_FC(Learner):
             raise TypeError(f"ContinualBackprop_for_FC requires net.type == 'FC', got {getattr(self.net,'type',None)}")
 
         self.gnt: Optional[GnT_for_FC] = GnT_for_FC(
-            net=self.net.layers,
+            net=self.net,
             hidden_activation=hidden_activation,
             opt=self.opt,
             replacement_rate=self.neurons_replacement_rate,
@@ -97,6 +100,8 @@ class ContinualBackprop_for_FC(Learner):
         # do the backward pass and take a gradient step
         self.opt.zero_grad()
         loss.backward()
+        if self.use_grad_clip:
+            torch.nn.utils.clip_grad_norm_(self.net.parameters(), max_norm=self.grad_clip_max_norm)
         self.opt.step()
 
         # take a generate-and-test step
@@ -129,6 +134,9 @@ class ContinuousBackprop_for_ConvNet(Learner):
         self.util_type = config.util_type
         self.maturity_threshold = config.maturity_threshold
 
+        self.use_grad_clip = getattr(config, 'use_grad_clip', False)
+        self.grad_clip_max_norm = getattr(config, 'grad_clip_max_norm', 1.0)
+
         if config.opt == 'adam':
             self.opt = AdamGnT(
                 self.net.parameters(),
@@ -152,7 +160,7 @@ class ContinuousBackprop_for_ConvNet(Learner):
 
         # define the generate-and-test object for the given network
         self.gnt = ConvGnT_for_ConvNet(
-            net=self.net.layers,
+            net=self.net,
             hidden_activation=hidden_activation,
             opt=self.opt,
             replacement_rate=self.neurons_replacement_rate,
@@ -173,6 +181,24 @@ class ContinuousBackprop_for_ConvNet(Learner):
         conv layer produces, which is needed for proper feature replacement when
         transitioning from Conv2d to Linear layers.
         """
+        # REFACTOR: Support Map-based topology first
+        if hasattr(self.net, "get_plasticity_map"):
+            try:
+                plasticity_map = self.net.get_plasticity_map()
+                for item in plasticity_map:
+                    current_layer = item['weight_module']
+                    outgoing_module = item['outgoing_module']
+                    
+                    # Detect the Conv2d -> Linear transition
+                    if isinstance(current_layer, nn.Conv2d) and isinstance(outgoing_module, nn.Linear):
+                        # Calculate spatial area: In_Features (Linear) / Out_Channels (Conv)
+                        num_last_filter_outputs = outgoing_module.in_features // current_layer.out_channels
+                        return max(1, int(num_last_filter_outputs))
+                return 1
+            except Exception:
+                pass
+        
+        
         layers = cast(Sequence[nn.Module], self.net.layers)  # type: ignore[assignment]
         last_conv_idx = -1
         first_linear_idx = -1
@@ -215,6 +241,8 @@ class ContinuousBackprop_for_ConvNet(Learner):
 
         # do the backward pass and take a gradient step
         loss.backward()
+        if self.use_grad_clip:
+            torch.nn.utils.clip_grad_norm_(self.net.parameters(), max_norm=self.grad_clip_max_norm)
         self.opt.step()
         
         # Clear grads before structural adaptation; GnT may inspect or create params expecting clean .grad buffers

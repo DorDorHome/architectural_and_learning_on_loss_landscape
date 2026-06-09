@@ -99,7 +99,7 @@ Assuming $\Sigma \succ 0$ and $V$ has full column rank, the orthogonal projector
 Σ-geometry onto $\mathrm{span}(V)$ is
 $$
 \boxed{; P_\Sigma
-= V,(V^\top \Sigma V)^{-1} V^\top \Sigma ;} \tag{2.1}
+= V (V^\top \Sigma V)^{-1} V^\top \Sigma ;} \tag{2.1}
 $$
 
 **Whitened form.** Let $T = \Sigma^{1/2}$ be any SPD square root, and define
@@ -108,7 +108,7 @@ $$
 $$
 Then the Euclidean projector in whitened coordinates is
 $$
-\Pi := \widetilde V, (\widetilde V^\top \widetilde V)^{-1} \widetilde V^\top,
+\Pi := \widetilde V  (\widetilde V^\top \widetilde V)^{-1} \widetilde V^\top,
 $$
 so that
 $$
@@ -147,16 +147,15 @@ $$
 \tilde w = w^\top \Sigma^{1/2}.
 $$
 
-If $w$ is $\Sigma$-orthogonal to all kept rows and $|w|*\Sigma^2 = q$, then in
+If $w$ is $\Sigma$-orthogonal to all kept rows and $|w|_\Sigma^2 = q$, then in
 whitened coordinates $\tilde w$ is a Euclidean orthogonal row with
-$|\tilde w|*2^2 = q$, and
+$|\tilde w|_2^2 = q$, and
 $$
-\widetilde G*{\mathrm{pre}}^{\mathrm{new}}
-:= \widetilde W*{\mathrm{new}} \widetilde W_{\mathrm{new}}^\top
-===============================================================
-
+\widetilde G_{\mathrm{pre}}^{\mathrm{new}}
+:= \widetilde W_{\mathrm{new}} \widetilde W_{\mathrm{new}}^\top
+=
 \begin{bmatrix}
-\widetilde G_{\mathrm{pre}}^{\mathrm{keep}} & 0 \
+\widetilde G_{\mathrm{pre}}^{\mathrm{keep}} & 0 \\
 0 & q
 \end{bmatrix}.
 $$
@@ -173,7 +172,7 @@ mature units. For each unit $(\ell,i)$ we track:
 * EMA of activations $f_{\ell,i}$ and its bias-corrected mean $\widehat f_{\ell,i}$,
 * Utility EMA $u_{\ell,i}$ and its bias-corrected version $\widehat u_{\ell,i}$,
 * Auxiliary EMA $z_{\ell,i}$,
-* Local quantities $S^{\mathrm{in}}*{\ell,i}$, $S^{\mathrm{out}}*{\ell,i}$.
+* Local quantities $S^{\mathrm{in}}_{\ell,i}$, $S^{\mathrm{out}}_{\ell,i}$.
 
 ### 4.1 CBP per-step updates
 
@@ -191,13 +190,13 @@ For each training step $t = 1,\dots,T$:
      $$
    * Compute outgoing and incoming norms (e.g. L1):
      $$
-     S^{\mathrm{out}}*{\ell,i} = \sum*{k} |w_{\ell,i,k}|,
+     S^{\mathrm{out}}_{\ell,i} = \sum_{k} |w_{\ell,i,k}|,
      \qquad
-     S^{\mathrm{in}}*{\ell,i}  = \sum*{j} |w_{\ell-1,j,i}|.
+     S^{\mathrm{in}}_{\ell,i}  = \sum_{j} |w_{\ell-1,j,i}|.
      $$
    * Instantaneous contribution:
      $$
-     c^{\mathrm{inst}}*{\ell,i} = |h*{\ell,i,t} - \widehat f_{\ell,i}|, S^{\mathrm{out}}_{\ell,i}.
+     c^{\mathrm{inst}}_{\ell,i} = |h_{\ell,i,t} - \widehat f_{\ell,i}| S^{\mathrm{out}}_{\ell,i}.
      $$
    * Auxiliary EMA:
      $$
@@ -205,9 +204,9 @@ For each training step $t = 1,\dots,T$:
      $$
    * Adaptivity factor and contribution:
      $$
-     a^{\mathrm{adapt}}*{\ell,i} = (S^{\mathrm{in}}*{\ell,i})^{-1},
+     a^{\mathrm{adapt}}_{\ell,i} = (S^{\mathrm{in}}_{\ell,i})^{-1},
      \qquad
-     y_{\ell,i} = c^{\mathrm{inst}}*{\ell,i}, a^{\mathrm{adapt}}*{\ell,i}.
+     y_{\ell,i} = c^{\mathrm{inst}}_{\ell,i} a^{\mathrm{adapt}}_{\ell,i}.
      $$
    * Utility EMA:
      $$
@@ -225,9 +224,9 @@ For each layer $\ell$:
 
 1. Mature set:
    $$
-   \mathcal{E}*\ell := { i \mid a*{\ell,i} \ge M }.
+   \mathcal{E}_\ell := { i \mid a_{\ell,i} \ge M }.
    $$
-2. Replacement count: $r_\ell := \lceil \rho,N_\ell \rceil$.
+2. Replacement count: $r_\ell := \lceil \rho N_\ell \rceil$.
 3. Replacement indices: let $S_\ell$ be the indices of the $r_\ell$ smallest
    $\widehat u_{\ell,i}$ among $i \in \mathcal{E}_\ell$.
 4. Kept indices: $K_\ell := {1,\dots,N_\ell} \setminus S_\ell$.
@@ -313,9 +312,9 @@ Let $W_{\mathrm{keep}}$ be the kept incoming matrix and $P_\Sigma$ the projector
    $$
    \hat w := (I - P_\Sigma) u.
    $$
-3. If $|\hat w|*\Sigma > 0$, use this direction and normalize:
+3. If $|\hat w|_\Sigma > 0$, use this direction and normalize:
    $$
-   w*{\mathrm{dir}} := \frac{\hat w}{|\hat w|_\Sigma}.
+   w_{\mathrm{dir}} := \frac{\hat w}{|\hat w|_\Sigma}.
    $$
 
 This ensures $\langle w_{\mathrm{dir}}, v_j \rangle_\Sigma = 0$ for all kept $v_j$ and
@@ -428,39 +427,39 @@ To match this through the nonlinearity, set per-unit target preactivation varian
 $$
 q_{\mathrm{tar}} := \frac{v_{\mathrm{tar}}}{\chi_0(\phi)},
 \quad \Rightarrow \quad
-\boxed{; |w|*\Sigma^2 = q*{\mathrm{tar}} ; }.
+\boxed{; |w|_\Sigma^2 = q_{\mathrm{tar}} ; }.
 $$
 
 For ReLU, $\chi_0 = 1/2$, giving the **Σ-aware He rule**
 $$
-|w|*\Sigma^2 = 2 v*{\mathrm{tar}} = \frac{2}{d} \operatorname{tr}(\Sigma).
+|w|_\Sigma^2 = 2 v_{\mathrm{tar}} = \frac{2}{d} \operatorname{tr}(\Sigma).
 $$
 
 ### 6.2 Layer energy budget
 
 Define the **layer preactivation energy**
 $$
-\mathcal{Q}(W;\Sigma) := \sum_{i=1}^N |w_i|*\Sigma^2
+\mathcal{Q}(W;\Sigma) := \sum_{i=1}^N |w_i|_\Sigma^2
 = \operatorname{tr}(W \Sigma W^\top).
 $$
-If each unit targets $q*{\mathrm{tar}}$, the budget is
+If each unit targets $q_{\mathrm{tar}}$, the budget is
 $$
-\boxed{; \mathcal{Q}*{\mathrm{tar}} := N q*{\mathrm{tar}} ; }.
+\boxed{; \mathcal{Q}_{\mathrm{tar}} := N q_{\mathrm{tar}} ; }.
 $$
 For the kept units $W_{\mathrm{keep}}$ define
 $$
-\mathcal{Q}*{\mathrm{used}} := \operatorname{tr}(W*{\mathrm{keep}} \Sigma W_{\mathrm{keep}}^\top),
+\mathcal{Q}_{\mathrm{used}} := \operatorname{tr}(W_{\mathrm{keep}} \Sigma W_{\mathrm{keep}}^\top),
 \qquad
-\mathcal{Q}*{\mathrm{res}} := \max(\mathcal{Q}*{\mathrm{tar}} - \mathcal{Q}_{\mathrm{used}}, 0).
+\mathcal{Q}_{\mathrm{res}} := \max(\mathcal{Q}_{\mathrm{tar}} - \mathcal{Q}_{\mathrm{used}}, 0).
 $$
 
 If we plan to replace $r$ units, a **fair allocation** in the underbudget case is
 $$
-q_{\mathrm{alloc}} := \min\Big{ q_{\mathrm{tar}}, ; \frac{\mathcal{Q}*{\mathrm{res}}}{r} \Big}.
+q_{\mathrm{alloc}} := \min\Big\{ q_{\mathrm{tar}}, \; \frac{\mathcal{Q}_{\mathrm{res}}}{r} \Big\}.
 $$
 Each new unit then has
 $$
-|w|*\Sigma^2 = q_{\mathrm{alloc}}.
+|w|_\Sigma^2 = q_{\mathrm{alloc}}.
 $$
 
 ### 6.3 Overbudget regime and rank-restoring floor
@@ -482,14 +481,14 @@ still want to add nonzero energy to restore rank and improve conditioning.
    := \widetilde W_{\mathrm{keep}} \widetilde W_{\mathrm{keep}}^\top.
    $$
    Choose a target eigenvalue $\lambda_\star$ (e.g.
-   $\lambda_\star = \min{1, 2\lambda_{\min}^{\mathrm{keep}}}$) and set
+   $\lambda_\star = \min\{1, 2\lambda_{\min}^{\mathrm{keep}}\}$) and set
    $$
-   q_{\mathrm{alloc}} := \min\big( q_{\mathrm{tar}}, ; \max(q_{\min}, \lambda_\star) \big).
+   q_{\mathrm{alloc}} := \min\big( q_{\mathrm{tar}}, \; \max(q_{\min}, \lambda_\star) \big).
    $$
 
 In whitened coordinates, each new row contributes a block-diagonal eigenvalue
 $q_{\mathrm{alloc}}$, lifting the spectrum floor up to
-$\min{\lambda_{\min}^{\mathrm{keep}}, q_{\mathrm{alloc}}}$.
+$\min\{\lambda_{\min}^{\mathrm{keep}}, q_{\mathrm{alloc}}}$.
 
 ### 6.4 RR-CBP-E reinit block (pseudocode)
 
@@ -580,9 +579,9 @@ To implement RR-CBP / RR-CBP-E in any framework, the agent needs to realize:
    $$
    M' = \Sigma^{1/2} V V^\top \Sigma^{1/2},
    \quad
-   u_{\min} = \arg\min_{|u|*2=1} u^\top M' u,
+   u_{\min} = \arg\min_{|u|_2=1} u^\top M' u,
    \quad
-   w \propto \Sigma^{-1/2} u*{\min}.
+   w \propto \Sigma^{-1/2} u_{\min}.
    $$
 
 5. **Preactivation Gram**
@@ -608,12 +607,12 @@ To implement RR-CBP / RR-CBP-E in any framework, the agent needs to realize:
    $$
    \mathcal{Q}(W;\Sigma) = \operatorname{tr}(W \Sigma W^\top),
    \quad
-   \mathcal{Q}*{\mathrm{tar}} = N q*{\mathrm{tar}},
+   \mathcal{Q}_{\mathrm{tar}} = N q_{\mathrm{tar}},
    $$
    $$
-   \mathcal{Q}*{\mathrm{used}} = \operatorname{tr}(W*{\mathrm{keep}} \Sigma W_{\mathrm{keep}}^\top),
+   \mathcal{Q}_{\mathrm{used}} = \operatorname{tr}(W_{\mathrm{keep}} \Sigma W_{\mathrm{keep}}^\top),
    \quad
-   \mathcal{Q}*{\mathrm{res}} = \max(\mathcal{Q}*{\mathrm{tar}} - \mathcal{Q}_{\mathrm{used}}, 0).
+   \mathcal{Q}_{\mathrm{res}} = \max(\mathcal{Q}_{\mathrm{tar}} - \mathcal{Q}_{\mathrm{used}}, 0).
    $$
 
 9. **Allocated Σ-norm**

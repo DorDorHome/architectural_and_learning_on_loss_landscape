@@ -1,0 +1,32 @@
+type: 'srr_cbp'
+network_class: ${net.network_class}  # Use the network class from the net configuration
+# as BaseLearnerConfig
+device: ${device}
+opt:  'sgd'
+init: 'kaiming'
+loss: ${loss_functions.${task_shift_mode}}
+step_size: 0.01 # 0.01 for SGD, 0.001 for Adam
+beta_1: 0.95
+beta_2: 0.999
+weight_decay: 0 # L2 regularization strength , use 0.001 for labelled regression tasks
+to_perturb: false
+perturb_scale: 0.05
+momentum: 0.9
+log_rank_metrics_every: 1
+
+# as ContinuousBackpropConfig
+neurons_replacement_rate: 0.001 # 0.01 is too high, 0.005 might be too high, 0.002 seems ideal
+decay_rate_utility_track: 0.9
+maturity_threshold: 100
+util_type: 'contribution' #options: 'weight', 'contribution', 'zero_contribution', 'adaptation', 'adaptable_contribution', 'feature_by_input' 
+accumulate: False
+outgoing_random: False
+
+#uniquely for srr_cbp and its variants
+SO_reg_lambda: 0.05
+aso_age_decay_rate: 0.99
+aso_normalization_mode: "no correction" # options: "no correction", "correct by input size", "naive mse sum correction"
+
+# Gradient clipping options
+use_grad_clip: true  #on only for drifting_values       # Enable gradient clipping to prevent gradient explosion
+grad_clip_max_norm: 1.0      # Maximum norm for gradient clipping

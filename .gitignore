@@ -1,3 +1,8 @@
+.crossnote/
+.markdownlint.json
+
+**/multirun/
+
 /rc/models/__pycache__/
 /src/data_loading/__pycache__/
 /src/algos/supervised/__pycache__/
@@ -48,7 +53,10 @@ experiments/output_vs_input_plasticity/wandb/*
 experiments/output_vs_input_plasticity/wandb
 experiments/output_vs_input_plasticity/outputs
 experiments/output_vs_input_plasticity/outputs/*
-
+analysis/output_plots/*
+analysis/output_plots
+analysis/archived_output_plots/*
+**/.DS_Store
 
 experiments/grokking/outputs/*
 experiments/grokking/outputs
@@ -61,7 +69,7 @@ wandb/*
 analysis/results/*
 analysis/wandb
 analysis/wandb/*
-
+analysis/outputs
 
 test_drift_minimal.py
 test_enhanced_features.py
@@ -87,3 +95,8 @@ experiments/Hessian_and_landscape_plot_with_plasticity_loss/**/*.pt
 experiments/Hessian_and_landscape_plot_with_plasticity_loss/**/*.png
 
 repopack-output.txt
+analysis/archived_output_plots/no filtering on outliners/.DS_Store
+analysis/archived_output_plots/.DS_Store
+.gitignore
+
+.DS_Store
