@@ -578,6 +578,18 @@ class ConvGnT_for_ConvNet(object):
 
             bias_corrected_act = self.mean_feature_act[layer_idx] / bias_correction
 
+            # If we're using random utilities, avoid touching any of the
+            # util-type-specific math below.
+            if self.util_type == 'random':
+                self.bias_corrected_util[layer_idx] = rand(self.util[layer_idx].shape)
+                return
+
+            # Default to "no update" for unsupported util types so we never
+            # reference an uninitialized tensor.
+            new_util = torch.zeros_like(self.util[layer_idx])
+
+            if self.util_type == 'weight':
+                new_util = output_weight_mag
             if self.util_type == 'adaptation':
                 new_util = 1 / input_weight_mag
             elif self.util_type in ['contribution', 'zero_contribution', 'adaptable_contribution']:
@@ -616,12 +628,22 @@ class ConvGnT_for_ConvNet(object):
                 if self.util_type == 'adaptable_contribution':
                     new_util = new_util / input_weight_mag
 
-            if self.util_type == 'random':
-                self.bias_corrected_util[layer_idx] = rand(self.util[layer_idx].shape)
-            else:
-                self.util[layer_idx] += (1 - self.decay_rate) * new_util
-                # correct the bias in the utility computation
-                self.bias_corrected_util[layer_idx] = self.util[layer_idx] / bias_correction
+            elif self.util_type == 'feature_by_input':
+                # Contribution normalized by incoming weight magnitude
+                if isinstance(current_layer, Linear):
+                    diff_mean = (features - bias_corrected_act).abs().mean(dim=0)
+                else:
+                    # Conv2d
+                    if isinstance(next_layer, Conv2d):
+                        diff_mean = (features - bias_corrected_act.view(1, -1, 1, 1)).abs().mean(dim=(0, 2, 3))
+                    else:
+                        diff_mean = (features - bias_corrected_act.repeat_interleave(self.num_last_filter_outputs).view(1, -1)).abs().mean(dim=0)
+                        diff_mean = diff_mean.view(-1, self.num_last_filter_outputs).mean(dim=1)
+                new_util = diff_mean / input_weight_mag
+
+            self.util[layer_idx] += (1 - self.decay_rate) * new_util
+            # correct the bias in the utility computation
+            self.bias_corrected_util[layer_idx] = self.util[layer_idx] / bias_correction
 
     def test_features(self, features):
         """
